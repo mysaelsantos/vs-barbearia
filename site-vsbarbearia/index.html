@@ -171,6 +171,10 @@
             transition: all 0.3s ease-in-out;
             z-index: 1;
         }
+        
+        .price-cards-container {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
 
         /* Estilo para notificação do formulário */
         #form-status {
@@ -286,8 +290,8 @@
             </div>
             
             <!-- Cards de Preços - Matriz -->
-            <div id="services-cards-matriz">
-                <div class="bg-dark p-8 rounded-lg mb-12 reveal">
+            <div id="services-cards-matriz" class="price-cards-container">
+                <div class="bg-dark p-8 rounded-lg mb-12">
                     <h3 class="text-2xl font-bold mb-4 text-center">Preços Promocionais</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="bg-black p-6 rounded-lg border border-gray-800">
@@ -311,7 +315,7 @@
                         <a href="https://app.frizzar.com.br/p/vsbarbearia" target="_blank" class="bg-primary text-black font-bold py-3 px-8 rounded-md hover:bg-yellow-500 transition inline-block">Agendar Agora</a>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 reveal">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div class="bg-dark p-6 rounded-lg border border-gray-800 hover:border-primary transition flex flex-col h-full">
                         <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-6"><i class="fas fa-cut text-black text-2xl"></i></div>
                         <h3 class="text-xl font-bold mb-3">Corte de Cabelo</h3>
@@ -343,8 +347,8 @@
             </div>
 
             <!-- Cards de Preços - Romeu Duarte -->
-            <div id="services-cards-romeu" class="hidden">
-                 <div class="bg-dark p-8 rounded-lg mb-12 reveal">
+            <div id="services-cards-romeu" class="hidden price-cards-container">
+                 <div class="bg-dark p-8 rounded-lg mb-12">
                     <h3 class="text-2xl font-bold mb-4 text-center">Preços Promocionais</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="bg-black p-6 rounded-lg border border-gray-800">
@@ -368,7 +372,7 @@
                         <a href="https://app.frizzar.com.br/p/vsbarbearia" target="_blank" class="bg-primary text-black font-bold py-3 px-8 rounded-md hover:bg-yellow-500 transition inline-block">Agendar Agora</a>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 reveal">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div class="bg-dark p-6 rounded-lg border border-gray-800 hover:border-primary transition flex flex-col h-full">
                         <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-6"><i class="fas fa-cut text-black text-2xl"></i></div>
                         <h3 class="text-xl font-bold mb-3">Corte de Cabelo</h3>
@@ -803,7 +807,25 @@
                 }
             }
             
-            if (btnMatriz && btnRomeu && slider) {
+            function switchPriceCards(showCards, hideCards) {
+                if (hideCards.classList.contains('hidden')) return;
+
+                hideCards.style.opacity = '0';
+
+                setTimeout(() => {
+                    hideCards.classList.add('hidden');
+                    showCards.classList.remove('hidden');
+                    requestAnimationFrame(() => {
+                        showCards.style.opacity = '1';
+                    });
+                }, 300); // Duração da transição em ms
+            }
+
+
+            if (btnMatriz && btnRomeu && slider && cardsMatriz && cardsRomeu) {
+                cardsMatriz.style.opacity = '1';
+                cardsRomeu.style.opacity = '0';
+                
                 window.addEventListener('resize', () => moveSlider(document.querySelector('.price-toggle-btn.active')));
                 moveSlider(btnMatriz); // Initial position
 
@@ -811,16 +833,14 @@
                     moveSlider(btnMatriz);
                     btnMatriz.classList.add('active');
                     btnRomeu.classList.remove('active');
-                    cardsMatriz.classList.remove('hidden');
-                    cardsRomeu.classList.add('hidden');
+                    switchPriceCards(cardsMatriz, cardsRomeu);
                 });
                 
                 btnRomeu.addEventListener('click', () => {
                     moveSlider(btnRomeu);
                     btnRomeu.classList.add('active');
                     btnMatriz.classList.remove('active');
-                    cardsRomeu.classList.remove('hidden');
-                    cardsMatriz.classList.add('hidden');
+                    switchPriceCards(cardsRomeu, cardsMatriz);
                 });
             }
 
