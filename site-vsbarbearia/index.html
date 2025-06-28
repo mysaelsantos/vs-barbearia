@@ -180,6 +180,35 @@
         .price-cards-container {
             transition: opacity 0.3s ease-in-out;
         }
+        
+        /* Animação de Scroll Down */
+        .scroll-down-indicator {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            animation: bounce 2s infinite;
+        }
+        .scroll-down-indicator span {
+            display: block;
+            width: 20px;
+            height: 20px;
+            border-bottom: 3px solid #fff;
+            border-right: 3px solid #fff;
+            transform: rotate(45deg);
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-20px);
+            }
+            60% {
+                transform: translateY(-10px);
+            }
+        }
 
         /* Estilo para notificação do formulário */
         #form-status {
@@ -211,7 +240,7 @@
 
     <!-- Navbar -->
     <nav class="fixed w-full bg-black bg-opacity-90 z-50 border-b border-primary">
-        <div class="container mx-auto px-8 sm:px-16 lg:px-24 py-4 flex justify-between items-center">
+        <div class="container mx-auto px-8 sm:px-16 lg:px-24 py-3 flex justify-between items-center">
             <a href="#home" class="flex items-center">
                 <img src="https://i.postimg.cc/05z5c2wH/Bigode-43.png" alt="Logotipo VS Barbearia - um bigode estilizado" class="h-12 mr-3">
             </a>
@@ -255,14 +284,14 @@
         </div>
         
         <!-- Overlay Image sobre o vídeo -->
-        <img src="https://i.postimg.cc/FzQpwt7G/Subcabe-alho-79.png" alt="Decoração de topo sobreposta ao vídeo" class="absolute left-0 w-full h-auto z-10" style="top: 80px;">
+        <img src="https://i.postimg.cc/FzQpwt7G/Subcabe-alho-79.png" alt="Decoração de topo sobreposta ao vídeo" class="absolute left-0 w-full h-auto z-10" style="top: 68px;">
 
         <div class="container mx-auto px-8 sm:px-16 lg:px-24 py-16 relative z-20">
             <div class="flex flex-col md:flex-row items-center">
                 <div class="md:w-1/2 w-full mb-10 md:mb-0 pt-32 md:pt-16 flex flex-col items-center md:items-start text-center md:text-left reveal">
                     <img src="https://i.postimg.cc/MGmqyRCh/Bigode-45.png" alt="Logotipo grande da VS Barbearia" class="w-32 h-32 mb-6">
                     <h2 class="text-2xl md:text-4xl font-semibold mb-6">Elevando a sua experiência</h2>
-                    <p class="text-base md:text-lg mb-8 text-gray-300 max-w-lg">Mais que uma barbearia, um espaço exclusivo para homens e mulheres que valorizam qualidade e experiência premium em Nova Serrana.</p>
+                    <p class="text-base md:text-lg mb-8 text-gray-300 max-w-lg">Mais que uma barbearia, uma experiência premium para quem valoriza estilo e qualidade.</p>
                     <div class="flex flex-col sm:flex-row gap-4">
                         <a href="https://app.frizzar.com.br/p/vsbarbearia" target="_blank" class="bg-primary text-black font-bold py-3 px-8 rounded-md hover:bg-yellow-500 transition text-center">
                             Agendar Agora
@@ -274,6 +303,10 @@
                 </div>
             </div>
         </div>
+        <!-- Scroll Down Indicator -->
+        <a href="#services" class="scroll-down-indicator" aria-label="Rolar para baixo">
+            <span></span>
+        </a>
     </section>
 
     <!-- Services Section -->
@@ -735,7 +768,8 @@
             <div class="text-center text-gray-500 text-sm">
                 <p>&copy; <span id="current-year"></span> VS Barbearia. Todos os direitos reservados.</p>
             </div>
-            <div class="flex justify-center mt-6">
+            <div class="flex justify-center items-center mt-6">
+                <span class="text-gray-500 text-sm mr-2">Criado por</span>
                 <a href="https://velsites.com.br/" target="_blank">
                     <img src="https://i.postimg.cc/D0pp6j3q/Subcabe-alho-39.png" alt="Desenvolvido por Vel SITES" class="h-10">
                 </a>
