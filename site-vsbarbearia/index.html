@@ -847,28 +847,26 @@
             }
             
             function switchPriceCards(showCards, hideCards) {
-                if (hideCards.classList.contains('hidden')) return;
-
-                hideCards.style.opacity = '0';
-
-                setTimeout(() => {
-                    hideCards.classList.add('hidden');
-                    showCards.classList.remove('hidden');
-                    requestAnimationFrame(() => {
-                        showCards.style.opacity = '1';
-                    });
-                }, 300); // Duração da transição em ms
+                if (showCards.classList.contains('hidden')) {
+                    hideCards.style.opacity = '0';
+                    setTimeout(() => {
+                        hideCards.classList.add('hidden');
+                        showCards.classList.remove('hidden');
+                        requestAnimationFrame(() => {
+                            showCards.style.opacity = '1';
+                        });
+                    }, 300);
+                }
             }
 
-
             if (btnMatriz && btnRomeu && slider && cardsMatriz && cardsRomeu) {
-                cardsMatriz.style.opacity = '1';
                 cardsRomeu.style.opacity = '0';
                 
-                window.addEventListener('resize', () => moveSlider(document.querySelector('.price-toggle-btn.active')));
-                moveSlider(btnMatriz); // Initial position
+                window.addEventListener('resize', () => moveSlider(document.querySelector('.price-toggle-btn.active')), { passive: true });
+                moveSlider(btnMatriz);
 
                 btnMatriz.addEventListener('click', () => {
+                    if (btnMatriz.classList.contains('active')) return;
                     moveSlider(btnMatriz);
                     btnMatriz.classList.add('active');
                     btnRomeu.classList.remove('active');
@@ -876,10 +874,11 @@
                 });
                 
                 btnRomeu.addEventListener('click', () => {
+                    if (btnRomeu.classList.contains('active')) return;
                     moveSlider(btnRomeu);
                     btnRomeu.classList.add('active');
                     btnMatriz.classList.remove('active');
-                    switchPriceCards(cardsRomeu, cardsRomeu);
+                    switchPriceCards(cardsRomeu, cardsMatriz);
                 });
             }
 
