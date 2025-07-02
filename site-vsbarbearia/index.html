@@ -234,9 +234,76 @@
         #form-status.error {
             background-color: #dc2626; /* red-600 */
         }
+
+        /* Pop-up Promocional */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .popup-overlay.visible {
+            display: flex;
+        }
+        .popup-content {
+            position: relative;
+            width: 90%;
+            max-width: 400px;
+        }
+        .popup-content img {
+            width: 100%;
+            height: auto;
+            border-radius: 1rem;
+        }
+        .popup-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border-radius: 50%;
+            border: 2px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .popup-link {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50%; /* Metade inferior da imagem */
+            cursor: pointer;
+            z-index: 2;
+        }
+        @media (min-width: 768px) {
+            .popup-overlay {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-black text-white">
+
+    <!-- Pop-up Promocional -->
+    <div id="promo-popup" class="popup-overlay">
+        <div class="popup-content">
+            <button id="popup-close" class="popup-close">&times;</button>
+            <img src="https://i.postimg.cc/jdcTnVV4/Subcabe-alho-89.png" alt="Promoção de Assinatura">
+            <a href="https://wa.me/5537996719604?text=Vim%20pelo%20site%20e%20quero%20assinar%20o%20plano%20promocional%20'Uma%20Assinatura%2C%20Dois%20Estilos'." target="_blank" class="popup-link" aria-label="Assinar plano promocional"></a>
+        </div>
+    </div>
 
     <!-- Navbar -->
     <nav class="fixed w-full bg-black bg-opacity-90 z-50 border-b border-primary">
@@ -283,9 +350,6 @@
             <div class="video-overlay"></div>
         </div>
         
-        <!-- Overlay Image sobre o vídeo -->
-        <img src="https://i.postimg.cc/FzQpwt7G/Subcabe-alho-79.png" alt="Decoração de topo sobreposta ao vídeo" class="absolute left-0 w-full h-auto z-10" style="top: 52px;">
-
         <div class="container mx-auto px-8 sm:px-16 lg:px-24 py-16 relative z-20">
             <div class="flex flex-col md:flex-row items-center">
                 <div class="w-full mb-10 md:mb-0 pt-20 md:pt-16 flex flex-col items-center md:items-start text-center md:text-left reveal">
@@ -878,7 +942,7 @@
                     moveSlider(btnRomeu);
                     btnRomeu.classList.add('active');
                     btnMatriz.classList.remove('active');
-                    switchPriceCards(cardsRomeu, cardsMatriz);
+                    switchPriceCards(cardsRomeu, cardsRomeu);
                 });
             }
 
@@ -914,6 +978,22 @@
                     if (e.target === lightbox) {
                         closeLightbox();
                     }
+                });
+            }
+
+            // --- POP-UP PROMOCIONAL ---
+            const promoPopup = document.getElementById('promo-popup');
+            const closePopupBtn = document.getElementById('popup-close');
+
+            if (promoPopup && closePopupBtn) {
+                // Mostrar popup apenas em telas mobile e uma vez por sessão
+                if (window.innerWidth < 768 && !sessionStorage.getItem('popupShown')) {
+                    promoPopup.classList.add('visible');
+                    sessionStorage.setItem('popupShown', 'true');
+                }
+
+                closePopupBtn.addEventListener('click', () => {
+                    promoPopup.classList.remove('visible');
                 });
             }
 
