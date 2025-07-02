@@ -300,7 +300,7 @@
     <div id="promo-popup" class="popup-overlay">
         <div class="popup-content">
             <button id="popup-close" class="popup-close">&times;</button>
-            <img src="https://i.postimg.cc/jdcTnVV4/Subcabe-alho-89.png" alt="Promoção de Assinatura">
+            <img src="https://i.postimg.cc/L60gqtCy/Subcabe-alho-93.png" alt="Promoção de Assinatura">
             <a href="https://wa.me/5537996719604?text=Vim%20pelo%20site%20e%20quero%20assinar%20o%20plano%20promocional%20'Uma%20Assinatura%2C%20Dois%20Estilos'." target="_blank" class="popup-link" aria-label="Assinar plano promocional"></a>
         </div>
     </div>
@@ -986,11 +986,14 @@
             const closePopupBtn = document.getElementById('popup-close');
 
             if (promoPopup && closePopupBtn) {
-                // Mostrar popup apenas em telas mobile e uma vez por sessão
-                if (window.innerWidth < 768 && !sessionStorage.getItem('popupShown')) {
-                    promoPopup.classList.add('visible');
-                    sessionStorage.setItem('popupShown', 'true');
-                }
+                // Adiciona um pequeno atraso para garantir que a página carregou
+                setTimeout(() => {
+                    // Mostrar popup apenas em telas mobile e uma vez por sessão
+                    if (window.innerWidth < 768 && !sessionStorage.getItem('popupShown')) {
+                        promoPopup.classList.add('visible');
+                        sessionStorage.setItem('popupShown', 'true');
+                    }
+                }, 500);
 
                 closePopupBtn.addEventListener('click', () => {
                     promoPopup.classList.remove('visible');
