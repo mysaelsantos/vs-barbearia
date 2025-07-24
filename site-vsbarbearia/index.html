@@ -234,76 +234,9 @@
         #form-status.error {
             background-color: #dc2626; /* red-600 */
         }
-
-        /* Pop-up Promocional */
-        .popup-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 2000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-        .popup-overlay.visible {
-            display: flex;
-        }
-        .popup-content {
-            position: relative;
-            width: 90%;
-            max-width: 400px;
-        }
-        .popup-content img {
-            width: 100%;
-            height: auto;
-            border-radius: 1rem;
-        }
-        .popup-close {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 30px;
-            height: 30px;
-            background: rgba(0,0,0,0.5);
-            color: white;
-            border-radius: 50%;
-            border: 2px solid white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            cursor: pointer;
-            line-height: 1;
-        }
-        .popup-link {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 50%; /* Metade inferior da imagem */
-            cursor: pointer;
-            z-index: 2;
-        }
-        @media (min-width: 768px) {
-            .popup-overlay {
-                display: none !important;
-            }
-        }
     </style>
 </head>
 <body class="bg-black text-white">
-
-    <!-- Pop-up Promocional -->
-    <div id="promo-popup" class="popup-overlay">
-        <div class="popup-content">
-            <button id="popup-close" class="popup-close">&times;</button>
-            <img src="https://i.postimg.cc/vmb8qDcR/Subcabe-alho-94.png" alt="Promoção de Assinatura">
-            <a href="https://wa.me/5537996719604?text=Vim%20pelo%20site%20e%20quero%20assinar%20o%20plano%20promocional%20'Uma%20Assinatura%2C%20Dois%20Estilos'." target="_blank" class="popup-link" aria-label="Assinar plano promocional"></a>
-        </div>
-    </div>
 
     <!-- Navbar -->
     <nav class="fixed w-full bg-black bg-opacity-90 z-50 border-b border-primary">
@@ -982,24 +915,6 @@
                 });
             }
 
-            // --- POP-UP PROMOCIONAL ---
-            const promoPopup = document.getElementById('promo-popup');
-            const closePopupBtn = document.getElementById('popup-close');
-
-            if (promoPopup && closePopupBtn) {
-                // Adiciona um pequeno atraso para garantir que a página carregou
-                setTimeout(() => {
-                    // Mostrar popup apenas em telas mobile
-                    if (window.innerWidth < 768) {
-                        promoPopup.classList.add('visible');
-                    }
-                }, 500);
-
-                closePopupBtn.addEventListener('click', () => {
-                    promoPopup.classList.remove('visible');
-                });
-            }
-
             // --- MANIPULAÇÃO DO FORMULÁRIO DE CONTATO ---
             const contactForm = document.getElementById('contact-form');
             if(contactForm) {
@@ -1023,10 +938,10 @@
                         } else {
                              const responseData = await response.json();
                              if (Object.prototype.hasOwnProperty.call(responseData, 'errors')) {
-                                const errorMessage = responseData.errors.map(error => error.message).join(', ');
-                                showStatusMessage(`Erro: ${errorMessage}`, 'error');
+                                 const errorMessage = responseData.errors.map(error => error.message).join(', ');
+                                 showStatusMessage(`Erro: ${errorMessage}`, 'error');
                              } else {
-                                showStatusMessage('Ocorreu um erro ao enviar a mensagem.', 'error');
+                                 showStatusMessage('Ocorreu um erro ao enviar a mensagem.', 'error');
                              }
                         }
                     } catch (error) {
