@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parceria Bob Lanches & VS Barbearia - 50% OFF</title>
+    <!-- SEO e Meta Tags -->
+    <meta name="description" content="Comeu no Bob Lanches? Ganhe 50% de desconto nos serviços da VS Barbearia! Aproveite nossa parceria exclusiva.">
+    <meta name="keywords" content="hamburgueria, bob lanches, vs barbearia, desconto, promoção, nova serrana, corte de cabelo, barba">
+    <!-- Cor do Tema para Navegadores -->
+    <meta name="theme-color" content="#000000">
+    <!-- Favicons (usando os da VS Barbearia como placeholder) -->
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="manifest" href="site.webmanifest">
+    <link rel="shortcut icon" href="favicon.ico">
+    <meta name="msapplication-TileColor" content="#000000">
+    <!-- Scripts e Estilos Externos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        // Configuração do Tailwind CSS para manter a identidade visual
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#fbb62c', // Amarelo característico
+                        dark: '#111111',
+                    },
+                    fontFamily: {
+                        sans: ['Montserrat', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Importação da Fonte e Estilos Globais, mantendo a consistência */
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #000;
+        }
+
+        /* Animações de Rolagem */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Fundo com Vídeo */
+        .video-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; }
+        .video-background video { min-width: 100%; min-height: 100%; width: auto; height: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); object-fit: cover; }
+        .video-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); }
+
+        /* Efeitos de hover */
+        .service-card:hover, .location-card:hover, .gallery-item img {
+            transition: all 0.3s ease;
+        }
+        .service-card:hover, .location-card:hover {
+            transform: translateY(-10px);
+            border-color: #fbb62c;
+        }
+        .gallery-item { overflow: hidden; position: relative; cursor: pointer; }
+        .gallery-item:hover img { transform: scale(1.05); }
+
+        /* Animações do Cabeçalho */
+        @keyframes slideInFromLeft {
+            0% { transform: translateX(-100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideInFromRight {
+            0% { transform: translateX(100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .logo-cq { animation: slideInFromLeft 1s ease-out forwards; }
+        .logo-vs { animation: slideInFromRight 1s ease-out forwards; }
+        .handshake { animation: fadeIn 1s ease-out 0.8s forwards; opacity: 0; }
+
+        /* Lightbox (Galeria) */
+        .lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); display: none; z-index: 1000; align-items: center; justify-content: center; }
+        .lightbox.active { display: flex; }
+        .lightbox-content { max-width: 90%; max-height: 80vh; position: relative; }
+        .lightbox-content img { max-width: 100%; max-height: 80vh; object-fit: contain; }
+        .lightbox-close { position: absolute; top: 20px; right: 20px; color: white; font-size: 30px; cursor: pointer; }
+        .lightbox-nav { position: absolute; top: 50%; width: 100%; display: flex; justify-content: space-between; padding: 0 20px; transform: translateY(-50%); }
+        .lightbox-nav button { background: rgba(0, 0, 0, 0.5); color: white; border: none; width: 50px; height: 50px; border-radius: 50%; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+        /* Botão Flutuante do WhatsApp */
+        .whatsapp-float {
+            position: fixed;
+            width: auto;
+            height: 55px;
+            bottom: 40px;
+            right: 40px;
+            background-color: #25d366;
+            color: #FFF;
+            border-radius: 50px;
+            text-align: center;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+            padding: 0 20px;
+        }
+        .whatsapp-float:hover {
+            transform: scale(1.05);
+        }
+        .whatsapp-float i {
+            font-size: 28px;
+        }
+        .whatsapp-text {
+            font-size: 16px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        @media (max-width: 768px) {
+            .whatsapp-text {
+                display: none;
+            }
+            .whatsapp-float {
+                width: 50px;
+                height: 50px;
+                bottom: 20px;
+                right: 20px;
+                padding: 0;
+            }
+            .whatsapp-float i {
+                font-size: 24px;
+            }
+        }
+        
+        /* Animação de Scroll Down */
+        .scroll-down-indicator {
+            position: absolute;
+            bottom: 5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            animation: bounce 2s infinite;
+        }
+        .scroll-down-indicator span {
+            display: block;
+            width: 20px;
+            height: 20px;
+            border-bottom: 3px solid #fff;
+            border-right: 3px solid #fff;
+            transform: rotate(45deg);
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-20px);
+            }
+            60% {
+                transform: translateY(-10px);
+            }
+        }
+    </style>
+</head>
+<body class="bg-black text-white">
+
+    <!-- Navbar - Adaptada para a parceria -->
+    <nav class="fixed w-full bg-black bg-opacity-90 z-50 border-b border-primary overflow-hidden">
+        <div class="container mx-auto px-8 sm:px-16 lg:px-24 py-3 flex justify-center items-center">
+            <div class="flex items-center space-x-6">
+                <!-- Logo Bob Lanches -->
+                <a href="#home" class="flex items-center logo-cq" title="Página Promocional Bob Lanches">
+                    <img src="https://i.postimg.cc/xjNWXf9p/image.png" alt="Logotipo Bob Lanches" class="h-12">
+                </a>
+                <!-- Ícone de Parceria -->
+                <i class="fas fa-handshake text-primary text-2xl handshake"></i>
+                <!-- Logo VS Barbearia -->
+                <a href="https://vsbarbearia.com.br/" target="_blank" class="flex items-center logo-vs" title="Visitar VS Barbearia">
+                    <img src="https://i.postimg.cc/05z5c2wH/Bigode-43.png" alt="Logotipo VS Barbearia" class="h-10">
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Seção Principal (Hero) -->
+    <section id="home" class="relative min-h-screen flex items-center justify-center text-center pt-16">
+        <div class="video-background">
+            <video autoplay muted loop playsinline>
+                <source src="https://files.catbox.moe/e3ojx0.mp4" type="video/mp4">
+                Seu navegador não suporta a tag de vídeo.
+            </video>
+            <div class="video-overlay"></div>
+        </div>
+        <div class="container mx-auto px-8 sm:px-16 lg:px-24 py-16 relative z-20">
+            <div class="reveal">
+                <h1 class="text-5xl md:text-8xl font-extrabold text-primary mb-4 tracking-tighter">50% <span class="text-white">OFF</span></h1>
+                <h2 class="text-xl md:text-4xl font-semibold mb-2">nos serviços da <strong class="text-primary">VS Barbearia</strong> para clientes <strong class="text-primary">Bob Lanches</strong>!</h2>
+                <p class="text-gray-300 text-sm md:text-base mb-8 italic">Uma parceria de sucesso.</p>
+                <p class="text-base md:text-xl mb-10 text-gray-200 max-w-3xl mx-auto">Matou a fome com o melhor lanche? Agora dê um trato no visual pagando metade do preço! <br><span class="text-xs md:text-sm text-gray-400 mt-2 block">(Oferta válida para a primeira visita)</span></p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="https://wa.me/5537996719604?text=Ol%C3%A1!%20Sou%20o%20Cliente%20Bob%20Lanches.%20Vim%20garantir%20meu%20desconto%20de%2050%25!%20Cupom%3A%205001." target="_blank" class="bg-primary text-black font-bold py-3 px-8 text-base md:py-4 md:px-10 md:text-lg rounded-md hover:bg-yellow-500 transition">
+                        Garantir meu desconto
+                    </a>
+                    <a href="https://vsbarbearia.com.br/" target="_blank" class="border-2 border-primary text-primary font-bold py-3 px-8 text-base md:py-4 md:px-10 md:text-lg rounded-md hover:bg-primary hover:text-black transition">
+                        Conhecer a Barbearia
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- Scroll Down Indicator -->
+        <a href="#services" class="scroll-down-indicator block md:hidden" aria-label="Rolar para baixo">
+            <span></span>
+        </a>
+    </section>
+
+    <!-- Seção de Serviços -->
+    <section id="services" class="py-20 bg-dark">
+        <div class="container mx-auto px-8 sm:px-16 lg:px-24">
+            <div class="text-center mb-12 reveal">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Serviços da Barbearia com <span class="text-primary">50% OFF</span></h2>
+                <div class="w-24 h-1 bg-primary mx-auto"></div>
+                <p class="text-gray-300 mt-4 max-w-2xl mx-auto">Chame no nosso WhatsApp e garanta metade do preço em qualquer um dos nossos principais serviços na sua primeira visita.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 reveal">
+                <!-- Card de Serviço 1 -->
+                <div class="service-card bg-black p-8 rounded-lg border border-gray-800 flex flex-col items-center text-center">
+                    <i class="fas fa-cut text-primary text-5xl mb-4"></i>
+                    <h3 class="text-2xl font-bold mb-3">Corte de Cabelo</h3>
+                    <p class="text-gray-400 mb-4 flex-grow">Cortes modernos e clássicos, executados por especialistas para realçar seu estilo.</p>
+                    <div class="text-center">
+                        <p class="text-gray-500 text-lg line-through">De R$ 50,00</p>
+                        <p class="text-primary font-bold text-4xl">Por R$ 25,00</p>
+                    </div>
+                </div>
+
+                <!-- Card de Serviço 2 -->
+                <div class="service-card bg-black p-8 rounded-lg border-2 border-primary flex flex-col items-center text-center">
+                     <i class="fas fa-user-alt text-primary text-5xl mb-4"></i>
+                    <h3 class="text-2xl font-bold mb-3">Barba</h3>
+                    <p class="text-gray-400 mb-4 flex-grow">Modelagem e cuidados com toalha quente para uma barba impecável e bem alinhada.</p>
+                    <div class="text-center">
+                        <p class="text-gray-500 text-lg line-through">De R$ 50,00</p>
+                        <p class="text-primary font-bold text-4xl">Por R$ 25,00</p>
+                    </div>
+                </div>
+
+                <!-- Card de Serviço 3 -->
+                <div class="service-card bg-black p-8 rounded-lg border border-gray-800 flex flex-col items-center text-center">
+                     <i class="fas fa-star text-primary text-5xl mb-4"></i>
+                    <h3 class="text-2xl font-bold mb-3">Combo (Cabelo + Barba)</h3>
+                    <p class="text-gray-400 mb-4 flex-grow">O pacote completo para um visual renovado, combinando o melhor dos dois mundos.</p>
+                    <div class="text-center">
+                        <p class="text-gray-500 text-lg line-through">De R$ 100,00</p>
+                        <p class="text-primary font-bold text-4xl">Por R$ 50,00</p>
+                    </div>
+                </div>
+            </div>
+             <div class="mt-12 text-center reveal">
+                <p class="text-gray-300 mb-6">Pronto para renovar o visual?</p>
+                <a href="https://wa.me/5537996719604?text=Ol%C3%A1!%20Sou%20o%20Cliente%20Bob%20Lanches.%20Vim%20garantir%20meu%20desconto%20de%2050%25!%20Cupom%3A%205001." target="_blank" class="inline-flex items-center bg-primary text-black font-bold py-3 px-8 rounded-md hover:bg-yellow-500 transition">
+                    <i class="fab fa-whatsapp mr-3 text-xl"></i>Garantir meu desconto
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção de Endereços -->
+    <section id="locations" class="py-20 bg-black">
+        <div class="container mx-auto px-8 sm:px-16 lg:px-24">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Nossas <span class="text-primary">Unidades</span></h2>
+                <div class="w-24 h-1 bg-primary mx-auto"></div>
+                <p class="text-gray-300 mt-4 max-w-2xl mx-auto">Visite uma de nossas unidades estrategicamente localizadas em Nova Serrana e aproveite a sua oferta.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10 reveal">
+                <!-- Unidade Matriz -->
+                <div class="location-card bg-dark rounded-xl overflow-hidden flex flex-col border border-transparent">
+                    <div class="h-64 bg-gray-800 relative">
+                        <img src="https://i.postimg.cc/hjqKP47s/image.png" alt="Interior da Unidade Matriz da VS Barbearia" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-6 flex flex-col flex-grow">
+                        <h3 class="text-xl font-bold mb-2">Unidade Matriz (Shopping Tropical)</h3>
+                        <div class="space-y-3 mb-6 flex-grow">
+                            <p class="flex items-start"><i class="fas fa-map-pin text-primary mr-3 mt-1"></i><span>Av. Cel. Pacífico Pinto da Fonseca, 170</span></p>
+                            <p class="flex items-start"><i class="fas fa-clock text-primary mr-3 mt-1"></i><span>Seg a Sáb: 8h às 20h</span></p>
+                        </div>
+                        <div class="flex flex-wrap gap-3">
+                            <a href="https://wa.me/5537996719604?text=Ol%C3%A1!%20Sou%20o%20Cliente%20Bob%20Lanches.%20Vim%20garantir%20meu%20desconto%20de%2050%25!%20Cupom%3A%205001." target="_blank" class="inline-block bg-primary text-black font-bold py-2 px-6 rounded-md hover:bg-yellow-500 transition"><i class="fab fa-whatsapp mr-2"></i>Agendar</a>
+                            <a href="https://maps.app.goo.gl/CuV8XPC29G7335E9A" target="_blank" class="inline-block bg-blue-600 text-white font-bold py-2 px-6 rounded-md hover:bg-blue-700 transition"><i class="fas fa-map-marker-alt mr-2"></i>Ver Rota</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Unidade Romeu Duarte -->
+                <div class="location-card bg-dark rounded-xl overflow-hidden flex flex-col border border-transparent">
+                    <div class="h-64 bg-gray-800 relative">
+                        <img src="https://i.postimg.cc/hPwbjhKV/image.png" alt="Interior da Unidade Romeu Duarte da VS Barbearia" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-6 flex flex-col flex-grow">
+                        <h3 class="text-xl font-bold mb-2">Unidade Romeu Duarte</h3>
+                        <div class="space-y-3 mb-6 flex-grow">
+                            <p class="flex items-start"><i class="fas fa-map-pin text-primary mr-3 mt-1"></i><span>Rua Francisco de Paula Batista Freitas, 538</span></p>
+                             <p class="flex items-start"><i class="fas fa-clock text-primary mr-3 mt-1"></i><span>Seg a Sáb: 8h às 20h</span></p>
+                        </div>
+                        <div class="flex flex-wrap gap-3">
+                            <a href="https://wa.me/5537996719604?text=Ol%C3%A1!%20Sou%20o%20Cliente%20Bob%20Lanches.%20Vim%20garantir%20meu%20desconto%20de%2050%25!%20Cupom%3A%205001." target="_blank" class="inline-block bg-primary text-black font-bold py-2 px-6 rounded-md hover:bg-yellow-500 transition"><i class="fab fa-whatsapp mr-2"></i>Agendar</a>
+                            <a href="https://maps.app.goo.gl/irHEHy6ELasM1o887" target="_blank" class="inline-block bg-blue-600 text-white font-bold py-2 px-6 rounded-md hover:bg-blue-700 transition"><i class="fas fa-map-marker-alt mr-2"></i>Ver Rota</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery" class="py-20 bg-dark">
+        <div class="container mx-auto px-8 sm:px-16 lg:px-24">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Nossos <span class="text-primary">Trabalhos</span></h2>
+                <div class="w-24 h-1 bg-primary mx-auto"></div>
+                <p class="text-gray-300 mt-4 max-w-2xl mx-auto">Confira alguns dos nossos melhores cortes e estilos.</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 reveal">
+                <div class="gallery-item rounded-lg"><img src="https://i.postimg.cc/FR0KwsH0/Save-Clip-App-. . . -n.jpg" alt="Corte de cabelo masculino estilo degradê com risco na lateral." class="w-full h-96 object-cover"></div>
+                <div class="gallery-item rounded-lg"><img src="https://i.postimg.cc/3w4NCZMS/Save-Clip-App-. . . -n.jpg" alt="Homem com cabelo penteado para trás e barba bem aparada." class="w-full h-96 object-cover"></div>
+                <div class="gallery-item rounded-lg"><img src="https://i.postimg.cc/hPcJWxxv/Save-Clip-App-. . . -n.jpg" alt="Corte de cabelo curto com textura e finalização moderna." class="w-full h-96 object-cover"></div>
+                <div class="gallery-item rounded-lg"><img src="https://i.postimg.cc/c4hvsHMm/Save-Clip-App-. . . -n.jpg" alt="Corte de cabelo infantil masculino com degradê suave." class="w-full h-96 object-cover"></div>
+                <div class="gallery-item rounded-lg"><img src="https://i.postimg.cc/t4gY7jBH/Save-Clip-App-. . . -n.jpg" alt="Close-up de um corte de cabelo com degradê navalhado perfeito." class="w-full h-96 object-cover"></div>
+                <div class="gallery-item rounded-lg"><img src="https://i.postimg.cc/66L303SX/Save-Clip-App-. . . -n.jpg" alt="Barba modelada e alinhada com precisão." class="w-full h-96 object-cover"></div>
+                <div class="gallery-item rounded-lg"><img src="https://i.postimg.cc/GtQmh7Y2/Save-Clip-App-. . . -n.jpg" alt="Corte de cabelo com finalização pompadour e barba cheia." class="w-full h-96 object-cover"></div>
+                <div class="gallery-item rounded-lg"><img src="https://i.postimg.cc/L5RsSKJw/Save-Clip-App-. . 295740606770-n.jpg" alt="Cliente satisfeito mostrando seu novo corte de cabelo na cadeira da barbearia." class="w-full h-96 object-cover"></div>
+            </div>
+            <div class="mt-12 text-center reveal">
+                <a href="https://www.instagram.com/vsbarbearians" target="_blank" class="inline-flex items-center bg-black border-2 border-primary text-primary font-bold py-3 px-8 rounded-md hover:bg-primary hover:text-black transition">
+                    <i class="fab fa-instagram mr-2 text-xl"></i>Siga-nos no Instagram
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Lightbox (Galeria Modal) -->
+    <div id="lightbox" class="lightbox">
+        <div class="lightbox-content">
+            <img id="lightbox-img" src="" alt="Imagem da galeria em tamanho ampliado">
+            <div class="lightbox-nav">
+                <button id="prev-img" aria-label="Imagem anterior"><i class="fas fa-chevron-left"></i></button>
+                <button id="next-img" aria-label="Próxima imagem"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+        <button id="lightbox-close" class="lightbox-close" aria-label="Fechar galeria"><i class="fas fa-times"></i></button>
+    </div>
+
+    <!-- Rodapé -->
+    <footer class="bg-black border-t border-gray-800">
+        <div class="container mx-auto px-8 sm:px-16 lg:px-24 py-8">
+            <div class="flex justify-center items-center space-x-6">
+                <img src="https://i.postimg.cc/xjNWXf9p/image.png" alt="Logotipo Bob Lanches" class="h-12">
+                <i class="fas fa-handshake text-primary text-2xl"></i>
+                <img src="https://i.postimg.cc/05z5c2wH/Bigode-43.png" alt="Logotipo VS Barbearia" class="h-10">
+            </div>
+            <hr class="border-gray-700 my-6">
+            <div class="text-center text-gray-500 text-sm">
+                <p>&copy; <span id="current-year"></span> VS Barbearia. Todos os direitos reservados.</p>
+            </div>
+             <div class="flex justify-center items-center mt-6">
+                <span class="text-gray-500 text-sm mr-2">Página criada por</span>
+                <a href="https://velsites.com.br/" target="_blank">
+                    <img src="https://i.postimg.cc/D0pp6j3q/Subcabe-alho-39.png" alt="Desenvolvido por Vel SITES" class="h-10">
+                </a>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Botão Flutuante do WhatsApp -->
+    <a href="https://wa.me/5537996719604?text=Ol%C3%A1!%20Sou%20o%20Cliente%20Bob%20Lanches.%20Vim%20garantir%20meu%20desconto%20de%2050%25!%20Cupom%3A%205001." class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Garantir meu desconto pelo WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+        <span class="whatsapp-text">Garantir Desconto</span>
+    </a>
+
+    <!-- SCRIPTS -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- ANIMAÇÃO DE ROLAGEM ---
+            const revealElements = document.querySelectorAll('.reveal');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, {
+                threshold: 0.1
+            });
+            revealElements.forEach(elem => {
+                observer.observe(elem);
+            });
+
+            // --- LIGHTBOX DA GALERIA ---
+            const lightbox = document.getElementById('lightbox');
+            if (lightbox) {
+                const lightboxImg = document.getElementById('lightbox-img');
+                const galleryItems = document.querySelectorAll('.gallery-item');
+                let currentIndex = 0;
+                const images = Array.from(galleryItems).map(item => item.querySelector('img').src);
+                function showImage(index) {
+                    if (images.length > 0) {
+                        lightboxImg.src = images[index];
+                        currentIndex = index;
+                        lightbox.classList.add('active');
+                    }
+                }
+                galleryItems.forEach((item, index) => {
+                    item.addEventListener('click', () => showImage(index));
+                });
+                function closeLightbox() {
+                    lightbox.classList.remove('active');
+                }
+                document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+                document.getElementById('next-img').addEventListener('click', () => showImage((currentIndex + 1) % images.length));
+                document.getElementById('prev-img').addEventListener('click', () => showImage((currentIndex - 1 + images.length) % images.length));
+                lightbox.addEventListener('click', (e) => {
+                    if (e.target === lightbox) {
+                        closeLightbox();
+                    }
+                });
+            }
+
+            // --- ATUALIZA ANO NO RODAPÉ ---
+            const yearSpan = document.getElementById('current-year');
+            if (yearSpan) {
+                yearSpan.textContent = new Date().getFullYear();
+            }
+        });
+    </script>
+</body>
+</html>
