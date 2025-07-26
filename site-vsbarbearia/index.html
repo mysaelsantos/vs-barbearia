@@ -787,6 +787,21 @@
     <!-- SCRIPTS -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+
+            // --- GARANTIR REPRODUÇÃO DO VÍDEO NO MOBILE ---
+            const heroVideo = document.getElementById('hero-video');
+            if (heroVideo) {
+                // A promessa de play() pode ser rejeitada se o navegador bloquear o autoplay.
+                // O bloco catch evita um erro no console.
+                const playPromise = heroVideo.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log("Autoplay do vídeo foi impedido pelo navegador:", error);
+                        // O vídeo ainda deve ser reproduzido automaticamente em navegadores que permitem,
+                        // desde que os atributos 'autoplay muted playsinline' estejam presentes.
+                    });
+                }
+            }
             
             // --- ANIMAÇÃO DE ROLAGEM ---
             const revealElements = document.querySelectorAll('.reveal');
