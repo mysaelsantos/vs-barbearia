@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Meta Tags para PWA -->
+    <meta name="theme-color" content="#fbb62c"/>
+    <meta name="description" content="Agende seu horário na VS Barbearia com facilidade.">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    
+    <!-- Link para o arquivo manifest externo -->
+    <link rel="manifest" href="/site.webmanifest">
+
+    <title>VS Barbearia - Agendamento</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #000000;
+        }
+        .app-container {
+            background-color: #111111;
+        }
+        /* --- REMOVER BARRA DE SCROLL --- */
+        #main-content::-webkit-scrollbar {
+            display: none;
+        }
+        #main-content {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        .modal-content {
+            background-color: #1e1e1e; /* Fundo do modal mais sólido */
+            border-top: 1px solid #fbb62c;
+            color: #e0e0e0;
+        }
+        .modal-title {
+            color: #fbb62c; /* Cor primária para títulos do modal */
+        }
+        .selection-item {
+            background-color: #222222;
+            border: 1px solid #444;
+            transition: all 0.3s ease;
+        }
+        .selection-item:hover {
+            border-color: #fbb62c;
+        }
+        .selection-item-text {
+            color: #9ca3af; /* Cor cinza mais clara para placeholder */
+        }
+        .selection-item-text.selected {
+            color: #ffffff; /* Branco quando selecionado */
+        }
+        .btn-primary {
+            background-color: #4a4a4a;
+            color: #cccccc;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #5a5a5a;
+        }
+        .btn-primary.active {
+            background-color: #fbb62c;
+            color: #111111;
+            font-weight: 700;
+        }
+        /* --- ESTILOS DO CALENDÁRIO E CARDS --- */
+        .info-card { /* Classe genérica para cards */
+            background-color: #2a2a2a;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+        }
+        .calendar-day-header {
+            font-weight: 600;
+            color: #fbb62c; /* Dourado para dias da semana */
+            text-align: center;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+            place-items: center;
+        }
+        .calendar-day {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        .calendar-day.available {
+            color: #ffffff;
+            background-color: #374151;
+            cursor: pointer;
+        }
+        .calendar-day.available:hover {
+            background-color: #4b5563;
+        }
+        .calendar-day.today {
+            border: 2px solid #fbb62c;
+        }
+        .calendar-day.unavailable {
+            color: #6b7280;
+            cursor: not-allowed;
+        }
+        .calendar-day.selected {
+            background-color: #fbb62c;
+            color: #111111;
+            font-weight: 700;
+            border: none;
+        }
+        .calendar-day.selected:hover {
+            background-color: #fbb62c; /* Mantém a cor amarela no hover quando selecionado */
+        }
+        /* --- FIM DOS ESTILOS DO CALENDÁRIO --- */
+        .time-slot {
+            background-color: #374151;
+            border: 1px solid #444;
+            color: #ffffff;
+            font-weight: 500;
+        }
+        .time-slot.selected {
+            border-color: #fbb62c;
+            background-color: #fbb62c;
+            color: #111111;
+            font-weight: 700;
+        }
+        .time-slot.disabled {
+            background-color: #2a2a2a;
+            color: #6b7280;
+            cursor: not-allowed;
+            border-color: #374151;
+        }
+        .footer-nav a.active {
+            color: #fbb62c;
+        }
+        .text-secondary {
+            color: #d1d5db;
+        }
+        .text-primary {
+            color: #fbb62c;
+        }
+        .bg-primary {
+            background-color: #fbb62c;
+        }
+        /* --- ESTILOS DOS PLANOS (DO SITE) --- */
+        .plan-card {
+            background-color: #000;
+            border: 1px solid #444;
+            transition: border-color 0.3s ease;
+        }
+        .plan-card:hover {
+            border-color: #fbb62c;
+        }
+        .plan-card.popular {
+            border: 2px solid #fbb62c;
+        }
+        .btn-plan {
+            display: block;
+            width: 100%;
+            background-color: #fbb62c;
+            color: #111111;
+            font-weight: 700; 
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem; 
+            text-align: center;
+            transition: background-color 0.3s ease;
+        }
+        .btn-plan:hover {
+            background-color: #e0a828; 
+        }
+        .btn-plan:disabled {
+            background-color: #4a4a4a;
+            color: #888;
+            cursor: not-allowed;
+        }
+        .btn-bordered {
+            display: block;
+            width: 100%;
+            background-color: transparent;
+            color: #fbb62c;
+            font-weight: 700; 
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem; 
+            text-align: center;
+            border: 2px solid #fbb62c;
+            transition: all 0.3s ease;
+        }
+        .btn-bordered:hover {
+            background-color: #fbb62c;
+            color: #111111;
+        }
+        /* --- ESTILO DO VÍDEO DE FUNDO --- */
+        .video-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; }
+        .video-background video { min-width: 100%; min-height: 100%; width: auto; height: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); object-fit: cover; }
+        .video-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); }
+
+        /* Efeito de blur adicionado */
+        .content-blur {
+            filter: blur(4px);
+            transition: filter 0.3s ease-in-out;
+        }
+        /* Estilos para a tela de histórico */
+        .history-card {
+            background-color: #222;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            border: 1px solid #444;
+        }
+        /* Estilos para tela de Login/Cadastro */
+        .auth-form input, .auth-form textarea {
+            background-color: #333;
+            border: 1px solid #555;
+            color: white;
+        }
+        .auth-form input:focus, .auth-form textarea:focus {
+            border-color: #fbb62c;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(251, 182, 44, 0.5);
+        }
+        .btn-dark {
+            background-color: #1a1a1a;
+            color: #fff;
+            border-radius: 9999px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+        .btn-dark:hover {
+            background-color: #2a2a2a;
+        }
+        /* Estilos para avaliação */
+        .rating-stars i {
+            cursor: pointer;
+            transition: color 0.2s ease-in-out;
+            color: #6b7280; /* Cor padrão (cinza) */
+        }
+        .rating-stars i.selected {
+            color: #fbb62c; /* Cor quando selecionada (amarelo) */
+        }
+        /* Novos estilos para status do plano */
+        .service-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            height: 60px;
+        }
+        .service-icon.used {
+            background-color: #374151; /* gray-700 */
+            color: #9ca3af; /* gray-400 */
+        }
+        .service-icon.available {
+            background-color: #1e1e1e;
+            color: #fbb62c; /* primary color */
+            border: 1px solid #fbb62c;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-sm mx-auto app-container text-white shadow-lg rounded-2xl overflow-hidden flex flex-col h-[95vh]">
+        
+        <div id="main-content" class="flex-grow overflow-y-auto">
+            <!-- Conteúdo da View será injetado aqui -->
+        </div>
+
+        <!-- Footer de Navegação -->
+        <div id="footer-nav" class="flex justify-around items-center p-4 bg-[#000] border-t-4 border-[#fbb62c] mt-auto">
+            <a href="#" class="flex flex-col items-center footer-nav-item" data-view="agendar">
+                <i class="fas fa-calendar-check text-xl"></i>
+                <span class="text-xs mt-1">Agendar</span>
+            </a>
+            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-primary footer-nav-item" data-view="historico">
+                <i class="fas fa-history text-xl"></i>
+                <span class="text-xs mt-1">Histórico</span>
+            </a>
+            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-primary footer-nav-item" data-view="planos">
+                <i class="fas fa-star text-xl"></i>
+                <span class="text-xs mt-1">Planos</span>
+            </a>
+            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-primary footer-nav-item" data-view="perfil">
+                <i class="fas fa-user-circle text-xl"></i>
+                <span class="text-xs mt-1">Perfil</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-container" class="fixed inset-0 z-50 flex justify-center hidden modal-backdrop p-4">
+        <div id="modal-content" class="w-full max-w-sm p-4 transform transition-all duration-300 ease-in-out translate-y-full">
+            <!-- Conteúdo do Modal será injetado aqui -->
+        </div>
+    </div>
+
+<script>
+    // --- REGISTRO DO SERVICE WORKER EXTERNO ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(registration => {
+                    console.log('Service Worker registrado com sucesso:', registration);
+                })
+                .catch(error => {
+                    console.log('Falha ao registrar Service Worker:', error);
+                });
+        });
+    }
+
+    // --- DADOS MOCK (Simulação do Banco de Dados) ---
+    const unidades = [
+        { id: 1, nome: 'Unidade Matriz (Shopping Tropical)', endereco: 'Av. Cel. Pacífico Pinto da Fonseca, 170', img: 'https://i.postimg.cc/jjQygJ63/image-4.png', mapsUrl: 'https://maps.app.goo.gl/CuV8XPC29G7335E9A' },
+        { id: 2, nome: 'Unidade Romeu Duarte', endereco: 'Rua Francisco de Paula Batista Freitas, 538', img: 'https://i.postimg.cc/hPwbjhKV/image.png', mapsUrl: 'https://maps.app.goo.gl/irHEHy6ELasM1o887' }
+    ];
+    const barbeiros = [
+        { id: 0, nome: 'Sem preferência', funcao: 'Será atribuído um profissional disponível' },
+        { id: 1, nome: 'Vanilton Santos', funcao: 'Fundador & Visagista', img: 'https://i.postimg.cc/pT3ScnBb/482320646-1375134203841648-765763137701876086-n.jpg' },
+        { id: 2, nome: 'Profissional 2', funcao: 'Barbeiro', img: 'https://placehold.co/100x100/333333/FFFFFF?text=P2' },
+        { id: 3, nome: 'Profissional 3', funcao: 'Barbeiro', img: 'https://placehold.co/100x100/333333/FFFFFF?text=P3' },
+    ];
+    const servicos = [
+        { id: 1, nome: 'Corte de Cabelo', preco: 50.00, promocao: 40.00, duracao: '40 min' },
+        { id: 2, nome: 'Barba', preco: 50.00, promocao: 40.00, duracao: '40 min' },
+        { id: 3, nome: 'Combo Cabelo + Barba', preco: 100.00, promocao: 75.00, duracao: '1h 20min' },
+        { id: 4, nome: 'Sobrancelha', preco: 20.00, promocao: null, duracao: '15 min' },
+        { id: 5, nome: 'Pezinho', preco: 15.00, promocao: null, duracao: '10 min' },
+        { id: 6, nome: 'Hidratação', preco: 30.00, promocao: null, duracao: '20 min' },
+    ];
+    const planos = [
+        { title: 'Cabelo Limitado', price: '129,90', period: '/mês', features: ['Plano mensal limitado para cabelo', 'Válido nas duas unidades', 'Economia de até 35%'], popular: false },
+        { title: 'Barba Limitado', price: '129,90', period: '/mês', features: ['Plano mensal limitado para barba', 'Válido nas duas unidades', 'Economia de até 35%'], popular: false },
+        { title: 'Cabelo e Barba Limitado', price: '189,90', period: '/mês', features: ['Plano mensal limitado para cabelo e barba', 'Válido nas duas unidades', 'Economia de até 40%'], popular: true },
+        { title: 'Cabelo e Barba Ilimitado', price: '259,90', period: '/mês', features: ['Plano mensal ilimitado para cabelo e barba', 'Válido nas duas unidades', 'Sem limite de uso'], popular: false },
+    ];
+    
+    const agendamentos = {
+        abertos: [
+            { id: 101, data: '2025-08-15T14:00:00', unidade: unidades[0], barbeiro: barbeiros[1], servico: servicos[2] }
+        ],
+        historico: [
+            { id: 100, data: '2025-07-20T10:00:00', unidade: unidades[1], barbeiro: barbeiros[2], servico: servicos[0], avaliacao: 5 },
+            { id: 99, data: '2025-06-15T16:20:00', unidade: unidades[0], barbeiro: barbeiros[1], servico: servicos[1], avaliacao: null }
+        ]
+    };
+
+    const userSubscription = {
+        active: true,
+        plan: planos[2],
+        nextBillingDate: '10/09/2025',
+        lastServiceDate: '15/08/2025',
+        usedServices: 2,
+        totalServices: 4
+    };
+
+    const paymentHistory = [
+        { date: '10/08/2025', amount: '189,90', status: 'Pago' },
+        { date: '10/07/2025', amount: '189,90', status: 'Pago' },
+        { date: '10/06/2025', amount: '189,90', status: 'Pago' }
+    ];
+
+    const userInfo = {
+        name: 'Vanilton Santos',
+        phone: '(37) 99999-9999',
+        email: 'vanilton.santos@exemplo.com'
+    };
+    
+    // Simulação de um número de telefone cadastrado no "banco de dados"
+    const registeredPhone = '37999745723';
+
+
+    // --- ESTADO DA APLICAÇÃO ---
+    let selection = {};
+    let userLoggedIn = false;
+    let isAuthModalOpen = false;
+
+    // --- ELEMENTOS DO DOM ---
+    const modalContainer = document.getElementById('modal-container');
+    const modalContent = document.getElementById('modal-content');
+    const mainContent = document.getElementById('main-content');
+    const footerNav = document.getElementById('footer-nav'); 
+
+    // --- FUNÇÕES DE ESTADO (CACHE) ---
+    function saveState() {
+        localStorage.setItem('agendamentoState', JSON.stringify({ selection, userLoggedIn }));
+    }
+
+    function loadState() {
+        const savedState = localStorage.getItem('agendamentoState');
+        if (savedState) {
+            const state = JSON.parse(savedState);
+            selection = state.selection || {};
+            userLoggedIn = state.userLoggedIn || false;
+        } else {
+            resetSelections();
+        }
+    }
+
+    function clearSelectionState() {
+        resetSelections();
+        saveState();
+    }
+
+    // --- FUNÇÕES DO MODAL ---
+    function openModal(content, customClass = '', position = 'end') {
+        isAuthModalOpen = (position === 'center');
+
+        modalContainer.classList.remove('items-end', 'items-center');
+        modalContainer.classList.add(position === 'center' ? 'items-center' : 'items-end');
+
+        const baseClasses = 'w-full max-w-sm p-4 transform transition-all duration-300 ease-in-out';
+        const styleClasses = position === 'center' 
+            ? 'rounded-2xl translate-y-full' 
+            : 'rounded-t-2xl mb-6 translate-y-full';
+        
+        modalContent.className = `${baseClasses} ${styleClasses} ${customClass}`;
+        modalContent.innerHTML = content;
+
+        mainContent.classList.add('content-blur');
+        footerNav.classList.add('content-blur');
+        modalContainer.classList.remove('hidden');
+        modalContainer.classList.add('flex');
+        
+        setTimeout(() => {
+            modalContent.classList.remove('translate-y-full');
+        }, 10);
+    }
+
+    function closeModal() {
+        modalContent.classList.add('translate-y-full');
+        mainContent.classList.remove('content-blur');
+        footerNav.classList.remove('content-blur');
+        setTimeout(() => {
+            modalContainer.classList.add('hidden');
+            modalContent.innerHTML = '';
+            isAuthModalOpen = false;
+        }, 300);
+    }
+
+    modalContainer.addEventListener('click', (e) => {
+        if (e.target === modalContainer && !isAuthModalOpen) {
+            closeModal();
+        }
+    });
+
+    // --- LÓGICA DE RENDERIZAÇÃO DE VIEWS ---
+    function renderView(viewName) {
+        document.querySelectorAll('.footer-nav-item').forEach(item => {
+            item.classList.remove('active', 'text-primary');
+            item.classList.add('text-gray-400');
+            if (item.dataset.view === viewName) {
+                item.classList.add('active', 'text-primary');
+                item.classList.remove('text-gray-400');
+            }
+        });
+
+        switch (viewName) {
+            case 'agendar':
+                renderAgendarView();
+                break;
+            case 'planos':
+                renderPlanosView();
+                break;
+            case 'historico':
+                renderHistoricoView();
+                break;
+            case 'perfil':
+                renderPerfilView();
+                break;
+        }
+    }
+
+    function renderAgendarView() {
+        mainContent.innerHTML = `
+            <div class="relative h-full flex flex-col">
+                <div class="video-background">
+                    <video autoplay muted loop playsinline poster="https://i.postimg.cc/28q5gTbm/Design-sem-nome-76.png">
+                        <source src="https://files.catbox.moe/fzxnia.mp4" type="video/mp4">
+                    </video>
+                    <div class="video-overlay"></div>
+                </div>
+                
+                <div class="relative z-10 flex-grow flex flex-col justify-end p-6">
+                    <div class="text-center mb-8">
+                        <img src="https://i.postimg.cc/5yBSjg1F/Bigode-3.png" alt="Logo VS Barbearia" class="w-20 h-20 mb-4 mx-auto">
+                        <h1 class="text-3xl font-bold">Agende seu horário</h1>
+                        <div class="w-24 h-1 bg-[#fbb62c] mx-auto my-3 rounded"></div>
+                        <p class="text-gray-200">Escolha os serviços e agende com facilidade.</p>
+                    </div>
+                </div>
+
+                <div class="relative z-10 p-6 pt-0 space-y-4 bg-gradient-to-t from-[#111111] to-transparent">
+                    <div id="select-unidade" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item">
+                        <div class="flex items-center">
+                            <i class="fas fa-store text-primary w-6 text-center"></i>
+                            <span id="unidade-text" class="ml-4 selection-item-text">Selecionar unidade</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-500"></i>
+                    </div>
+                    <div id="select-barbeiro" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item">
+                        <div class="flex items-center">
+                            <i class="fas fa-user-tie text-primary w-6 text-center"></i>
+                            <span id="barbeiro-text" class="ml-4 selection-item-text">Selecionar barbeiro</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-500"></i>
+                    </div>
+                    <div id="select-servico" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item">
+                        <div class="flex items-center">
+                            <i class="fas fa-cut text-primary w-6 text-center"></i>
+                            <span id="servico-text" class="ml-4 selection-item-text">Selecionar serviço</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-500"></i>
+                    </div>
+                    <div id="select-data" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item">
+                        <div class="flex items-center">
+                            <i class="fas fa-calendar-alt text-primary w-6 text-center"></i>
+                            <span id="data-text" class="ml-4 selection-item-text">Selecionar data e hora</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-500"></i>
+                    </div>
+                    <button id="agendar-btn" class="w-full py-3 mt-6 rounded-lg btn-primary" disabled>Agendar</button>
+                </div>
+            </div>
+        `;
+        updateAgendarViewFromState();
+        attachAgendarEventListeners();
+    }
+
+    function renderPlanosView() {
+        let planStatusHtml = '';
+        if (userSubscription.active && userSubscription.plan.title.includes('Limitado')) {
+            const used = userSubscription.usedServices;
+            const total = userSubscription.totalServices;
+            const progressPercentage = (used / total) * 100;
+            
+            let serviceIconsHtml = '';
+            for (let i = 1; i <= total; i++) {
+                const isUsed = i <= used;
+                serviceIconsHtml += `
+                    <div class="service-icon ${isUsed ? 'used' : 'available'}">
+                        <i class="fas fa-cut text-lg"></i>
+                        <span class="text-xs mt-1">${isUsed ? 'Usado' : 'Livre'}</span>
+                    </div>
+                `;
+            }
+
+            // --- NOVO DESIGN DO CARD DO PLANO ATUAL ---
+            planStatusHtml = `
+                <div class="px-6 pt-10">
+                    <div class="text-center mb-8">
+                        <h2 class="text-3xl font-bold text-white">Plano <span class="text-primary">Atual</span></h2>
+                        <div class="w-20 h-1 bg-primary mx-auto mt-2 rounded-full transform scale-x-0 transition-transform duration-700 ease-out" id="plan-title-underline"></div>
+                    </div>
+
+                    <div class="bg-[#1e1e1e] p-5 rounded-2xl border border-gray-800 shadow-lg">
+                        <div class="flex justify-between items-center mb-5">
+                            <h3 class="font-bold text-white text-lg">${userSubscription.plan.title}</h3>
+                            <span class="bg-green-500/20 text-green-400 text-xs font-semibold px-2.5 py-1 rounded-full">Ativo</span>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-4 gap-3">
+                                ${serviceIconsHtml}
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1 text-xs font-medium text-secondary">
+                                    <span>Progresso</span>
+                                    <span>${used} de ${total}</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2.5">
+                                    <div id="plan-progress-bar" class="bg-primary h-2.5 rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-gray-700 my-5"></div>
+
+                        <div class="flex justify-between items-center text-sm text-secondary">
+                            <span>Próxima renovação:</span>
+                            <span class="font-bold text-white">${userSubscription.nextBillingDate}</span>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button class="w-full text-left p-4 rounded-xl bg-[#1e1e1e] border border-gray-800 flex items-center justify-between hover:border-gray-700 transition-colors">
+                            <span><i class="fas fa-receipt w-6 text-center mr-3 text-primary"></i>Histórico de Pagamentos</span>
+                            <i class="fas fa-chevron-right text-gray-500"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+
+        const plansHtml = planos.map(plan => `
+            <div class="plan-card ${plan.popular ? 'popular' : ''} rounded-xl overflow-hidden flex flex-col">
+                ${plan.popular ? '<div class="bg-[#fbb62c] text-black text-center py-1 font-bold text-sm">MAIS POPULAR</div>' : ''}
+                <div class="p-6 flex flex-col flex-grow">
+                    <h3 class="text-xl font-bold mb-2 text-white">${plan.title}</h3>
+                    <div class="flex items-baseline mb-6">
+                        <span class="text-4xl font-bold text-primary">R$${plan.price}</span>
+                        <span class="text-gray-400 ml-1">${plan.period}</span>
+                    </div>
+                    <ul class="space-y-3 mb-8 flex-grow text-secondary text-sm">
+                        ${plan.features.map(f => `<li class="flex items-start"><i class="fas fa-check text-primary mr-3 mt-1"></i><span>${f}</span></li>`).join('')}
+                    </ul>
+                    <a href="#" class="btn-plan mt-auto">Assinar Plano</a>
+                </div>
+            </div>
+        `).join('');
+
+        mainContent.innerHTML = `
+            <div class="pb-24 flex flex-col">
+                ${planStatusHtml}
+                
+                <div class="px-6 ${planStatusHtml ? 'mt-12 border-t border-gray-800 pt-12' : 'pt-10'}">
+                    <div class="text-center mb-8">
+                        <h2 class="text-3xl font-bold mb-2 text-white">Nossos <span class="text-primary">Planos</span></h2>
+                        <div class="w-20 h-1 bg-primary mx-auto"></div>
+                        <p class="text-gray-300 mt-4 text-sm max-w-md mx-auto">Economize com nossos planos e aproveite serviços de qualidade.</p>
+                    </div>
+                    <div class="space-y-6 flex-grow">
+                        ${plansHtml}
+                    </div>
+                    <div class="text-center mt-10 pt-6 border-t border-gray-700">
+                        <p class="text-secondary mb-6">Não tem certeza de qual plano escolher? Entre em contato conosco.</p>
+                        <div class="space-y-4">
+                            <a href="#" class="btn-plan" onclick="renderView('agendar')">Agendar Horário</a>
+                            <a href="#" class="btn-bordered">Fale Conosco</a>
+                        </div>
+                    </div>
+                    <div class="text-center mt-8">
+                        <button class="btn-dark border border-gray-600" onclick="showTermosModal()">Termos e Serviços</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // --- INÍCIO DA LÓGICA DE ANIMAÇÃO ---
+        if (userSubscription.active && userSubscription.plan.title.includes('Limitado')) {
+            const progressBar = document.getElementById('plan-progress-bar');
+            const titleUnderline = document.getElementById('plan-title-underline');
+
+            if (progressBar && titleUnderline) {
+                requestAnimationFrame(() => {
+                    const used = userSubscription.usedServices;
+                    const total = userSubscription.totalServices;
+                    const progressPercentage = (used / total) * 100;
+                    
+                    progressBar.style.width = `${progressPercentage}%`;
+                    titleUnderline.classList.remove('scale-x-0');
+                });
+            }
+        }
+        // --- FIM DA LÓGICA DE ANIMAÇÃO ---
+    }
+    
+    function renderHistoricoView() {
+        const agendamentosAbertosHtml = agendamentos.abertos.map(ag => {
+            const data = new Date(ag.data);
+            const dataFormatada = data.toLocaleDateString('pt-BR');
+            const horaFormatada = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            return `
+                <div class="history-card cursor-pointer" onclick="showDetalhesAgendamento(${ag.id})">
+                    <h3 class="font-bold text-lg text-white">${ag.unidade.nome}</h3>
+                    <div class="flex justify-between text-secondary text-sm mt-2 mb-4">
+                        <span><i class="far fa-calendar-alt mr-2 text-primary"></i>${dataFormatada}</span>
+                        <span><i class="far fa-clock mr-2 text-primary"></i>${horaFormatada}</span>
+                    </div>
+                    <div class="flex items-center border-t border-gray-700 pt-3">
+                        <img src="${ag.barbeiro.img}" class="w-12 h-12 rounded-full mr-4 object-cover">
+                        <div>
+                            <p class="text-sm text-gray-400">Barbeiro</p>
+                            <p class="font-semibold text-white">${ag.barbeiro.nome}</p>
+                        </div>
+                        <div class="ml-auto text-right">
+                            <p class="text-sm text-gray-400">Serviço</p>
+                            <p class="font-semibold text-white">${ag.servico.nome}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        const historicoHtml = agendamentos.historico.map(ag => {
+             const data = new Date(ag.data);
+             const dataFormatada = data.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+             const horaFormatada = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+             let footerHtml = '';
+             if (ag.avaliacao) {
+                 footerHtml = `<div class="flex justify-center items-center text-primary mt-3 pt-3 border-t border-gray-700">`;
+                 for (let i = 1; i <= 5; i++) {
+                     footerHtml += `<i class="fas fa-star ${i <= ag.avaliacao ? 'text-primary' : 'text-gray-600'}"></i>`;
+                 }
+                 footerHtml += `</div>`;
+             } else {
+                 footerHtml = `
+                     <div class="mt-3 pt-3 border-t border-gray-700">
+                         <button class="btn-bordered w-full text-sm py-2" onclick="showAvaliacaoModal(${ag.id})">Avaliar serviço</button>
+                     </div>
+                 `;
+             }
+
+             return `
+                 <div class="history-card">
+                     <p class="text-sm text-gray-400 mb-2"><i class="far fa-calendar-alt mr-2 text-primary"></i>${dataFormatada}</p>
+                     <p class="text-sm text-gray-400 mb-4"><i class="far fa-clock mr-2 text-primary"></i>${horaFormatada}</p>
+                     <div class="border-t border-gray-700 pt-3">
+                         <p class="font-semibold text-white mb-2">${ag.unidade.nome}</p>
+                         <div class="flex justify-between text-sm">
+                             <div>
+                                 <p class="text-gray-400">Barbeiro</p>
+                                 <p class="text-white">${ag.barbeiro.nome}</p>
+                             </div>
+                              <div>
+                                 <p class="text-gray-400">Serviço</p>
+                                 <p class="text-white">${ag.servico.nome}</p>
+                             </div>
+                         </div>
+                     </div>
+                     ${footerHtml}
+                 </div>
+             `;
+        }).join('');
+
+        mainContent.innerHTML = `
+            <div class="p-6">
+                <h2 class="text-2xl font-bold text-white mb-6">Histórico</h2>
+                
+                <section class="mb-8">
+                    <h3 class="text-xl font-semibold text-primary mb-4">Agendamento em aberto</h3>
+                    <div class="space-y-4">
+                        ${agendamentosAbertosHtml || '<p class="text-secondary">Nenhum agendamento em aberto.</p>'}
+                    </div>
+                </section>
+
+                <section>
+                    <h3 class="text-xl font-semibold text-primary mb-4">Histórico de serviços</h3>
+                    <div class="space-y-4">
+                        ${historicoHtml || '<p class="text-secondary">Nenhum serviço no histórico.</p>'}
+                    </div>
+                </section>
+            </div>
+        `;
+    }
+
+    function renderPerfilView() {
+        if (!userLoggedIn) {
+            mainContent.innerHTML = `
+                <div class="p-6 h-full flex flex-col items-center justify-center text-center">
+                    <i class="fas fa-user-circle text-6xl text-gray-600 mb-4"></i>
+                    <h1 class="text-2xl font-bold text-primary">Perfil</h1>
+                    <p class="text-secondary mt-2 mb-6">Crie uma conta para ver suas informações e gerenciar seus agendamentos.</p>
+                    <button class="btn-plan" onclick="showLogin()">Entrar ou Cadastrar</button>
+                </div>
+            `;
+            return;
+        }
+
+        mainContent.innerHTML = `
+            <div class="p-6 pt-12">
+                <div class="flex flex-col items-center text-center mb-8">
+                    <div class="relative mb-4">
+                        <img src="https://i.postimg.cc/pT3ScnBb/482320646-1375134203841648-765763137701876086-n.jpg" class="w-24 h-24 rounded-full object-cover border-4 border-primary">
+                        <button class="absolute bottom-0 right-0 bg-gray-700 rounded-full h-8 w-8 flex items-center justify-center">
+                            <i class="fas fa-camera text-white"></i>
+                        </button>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white">${userInfo.name}</h2>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-primary mb-4">Suas informações</h3>
+                    <div class="space-y-4 text-secondary">
+                        <div class="flex items-center">
+                            <i class="fas fa-phone-alt w-6 text-center mr-4 text-primary"></i>
+                            <div>
+                                <p class="text-xs">Celular</p>
+                                <p class="text-white">${userInfo.phone}</p>
+                            </div>
+                        </div>
+                         <div class="flex items-center">
+                            <i class="fas fa-envelope w-6 text-center mr-4 text-primary"></i>
+                            <div>
+                                <p class="text-xs">E-mail</p>
+                                <p class="text-white">${userInfo.email}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 space-y-3">
+                    <button class="w-full text-left p-4 rounded-lg bg-[#222] flex items-center" onclick="showEditarPerfilModal()"><i class="fas fa-edit w-6 text-center mr-3 text-primary"></i>Editar perfil</button>
+                    <button class="w-full text-left p-4 rounded-lg bg-[#222] flex items-center" onclick="showNotificacoesModal()"><i class="fas fa-bell w-6 text-center mr-3 text-primary"></i>Notificações</button>
+                    <button class="w-full text-left p-4 rounded-lg bg-[#222] flex items-center" onclick="showAlterarPinModal()"><i class="fas fa-key w-6 text-center mr-3 text-primary"></i>Alterar PIN</button>
+                </div>
+                <div class="mt-8">
+                    <button class="w-full py-3 font-bold rounded-lg btn-dark border border-red-500 text-red-500" onclick="handleLogout()">Sair</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function showDetalhesAgendamento(id) {
+        const agendamento = agendamentos.abertos.find(ag => ag.id === id);
+        if (!agendamento) return;
+
+        const data = new Date(agendamento.data);
+        const dataFormatada = data.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+        const horaFormatada = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        
+        const preco = agendamento.servico.promocao ? agendamento.servico.promocao.toFixed(2) : agendamento.servico.preco.toFixed(2);
+
+        const modalHtml = `
+            <div class="info-card p-6">
+                <h2 class="text-xl font-bold mb-6 text-center modal-title">Detalhes do Agendamento</h2>
+                <div class="space-y-4 text-secondary">
+                    <div>
+                        <p><strong class="text-white">Unidade:</strong><br>${agendamento.unidade.nome}</p>
+                        <a href="${agendamento.unidade.mapsUrl}" target="_blank" class="block w-full text-white font-semibold py-2 px-4 rounded-xl transition text-center mt-3 text-sm" style="background-color: #0b0b0a;">Ver localização</a>
+                    </div>
+                    <p><strong class="text-white">Data:</strong><br>${dataFormatada}</p>
+                    <p><strong class="text-white">Horário:</strong><br>${horaFormatada}</p>
+                    <p><strong class="text-white">Barbeiro:</strong><br>${agendamento.barbeiro.nome}</p>
+                    <div class="border-t border-b border-gray-700 py-3 my-3">
+                        <div class="flex justify-between items-center">
+                            <span>${agendamento.servico.nome}</span>
+                            <span class="text-white font-bold">R$ ${preco}</span>
+                        </div>
+                    </div>
+                     <div class="flex justify-between items-center font-bold text-lg">
+                        <span class="text-white">Total</span>
+                        <span class="text-primary">R$ ${preco}</span>
+                    </div>
+                </div>
+                <div class="mt-8 space-y-3">
+                    <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="remarcarAgendamento(${id})">Remarcar</button>
+                    <button class="w-full py-3 font-bold rounded-lg btn-bordered" onclick="showCancelarConfirmacaoModal(${id})">Cancelar agendamento</button>
+                </div>
+            </div>
+        `;
+        openModal(modalHtml);
+    }
+    
+    function remarcarAgendamento(id) {
+        closeModal();
+        renderView('agendar');
+    }
+
+    function showCancelarConfirmacaoModal(id) {
+        const modalHtml = `
+            <div class="info-card text-center p-6">
+                <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+                <h2 class="text-xl font-bold mb-4 modal-title">Confirmar Cancelamento</h2>
+                <p class="text-secondary mb-6">Você tem certeza que deseja cancelar este agendamento? Esta ação não pode ser desfeita.</p>
+                <div class="flex justify-center space-x-4">
+                    <button class="py-2 px-6 font-bold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
+                    <button class="py-2 px-6 font-bold rounded-lg bg-red-600 text-white" onclick="confirmarCancelamento(${id})">Cancelar</button>
+                </div>
+            </div>
+        `;
+        openModal(modalHtml, 'border-none', 'center');
+    }
+
+    function confirmarCancelamento(id) {
+        agendamentos.abertos = agendamentos.abertos.filter(ag => ag.id !== id);
+        closeModal();
+        setTimeout(() => {
+            renderView('historico');
+        }, 310);
+    }
+
+    function renderPlaceholderView(viewName) {
+        mainContent.innerHTML = `
+            <div class="p-6 h-full flex flex-col items-center justify-center text-center">
+                <i class="fas fa-tools text-5xl text-gray-600 mb-4"></i>
+                <h1 class="text-2xl font-bold text-primary capitalize">${viewName}</h1>
+                <p class="text-secondary mt-2">Esta funcionalidade está em desenvolvimento.</p>
+            </div>
+        `;
+    }
+
+    // --- LÓGICA DE AGENDAMENTO ---
+    function attachAgendarEventListeners() {
+        document.getElementById('select-unidade').addEventListener('click', showUnidades);
+        document.getElementById('select-barbeiro').addEventListener('click', showBarbeiros);
+        document.getElementById('select-servico').addEventListener('click', showServicos);
+        document.getElementById('select-data').addEventListener('click', showCalendario);
+        document.getElementById('agendar-btn').addEventListener('click', () => {
+             if (userLoggedIn) {
+                 confirmarAgendamento();
+            } else {
+                 showLogin();
+            }
+        });
+    }
+
+    function checkAgendarButton() {
+        const agendarBtn = document.getElementById('agendar-btn');
+        if (!agendarBtn) return;
+        if (selection.unidade && selection.barbeiro && selection.servico && selection.data && selection.hora) {
+            agendarBtn.classList.add('active');
+            agendarBtn.disabled = false;
+        } else {
+            agendarBtn.classList.remove('active');
+            agendarBtn.disabled = true;
+        }
+    }
+
+    function showUnidades() {
+        let content = `<h2 class="text-xl font-bold mb-6 text-center modal-title">Escolha uma unidade</h2>`;
+        content += unidades.map(u => `
+            <div class="flex items-center p-3 rounded-lg mb-3 cursor-pointer selection-item" onclick="selectUnidade(${u.id})">
+                <img src="${u.img}" alt="${u.nome}" class="w-20 h-20 rounded-lg mr-4 object-cover">
+                <div class="flex-1">
+                    <p class="font-semibold text-white">${u.nome}</p>
+                    <p class="text-sm text-secondary"><i class="fas fa-map-marker-alt mr-1 text-primary"></i>${u.endereco}</p>
+                </div>
+            </div>
+        `).join('');
+        openModal(content);
+    }
+
+    function selectUnidade(id) {
+        selection.unidade = unidades.find(u => u.id === id);
+        if (!selection.unidade) return;
+
+        const el = document.getElementById('unidade-text');
+        el.textContent = selection.unidade.nome;
+        el.classList.remove('selection-item-text');
+        el.classList.add('selected');
+        closeModal();
+        checkAgendarButton();
+        saveState();
+    }
+
+    function showBarbeiros() {
+        let content = `<h2 class="text-xl font-bold mb-6 text-center modal-title">Selecionar profissional</h2>`;
+        content += barbeiros.map(b => `
+            <div class="flex items-center p-3 rounded-lg mb-3 cursor-pointer selection-item" onclick="selectBarbeiro(${b.id}, '${b.nome}')">
+                <img src="${b.img || 'https://placehold.co/100x100/333333/FFFFFF?text=S/P'}" alt="${b.nome}" class="w-16 h-16 rounded-full mr-4 object-cover border-2 border-primary">
+                <div>
+                    <p class="font-semibold text-white">${b.nome}</p>
+                    <p class="text-sm text-secondary">${b.funcao}</p>
+                </div>
+            </div>
+        `).join('');
+        openModal(content);
+    }
+    function selectBarbeiro(id, nome) {
+        selection.barbeiro = { id, nome };
+        const el = document.getElementById('barbeiro-text');
+        el.textContent = nome;
+        el.classList.remove('selection-item-text');
+        el.classList.add('selected');
+        closeModal();
+        checkAgendarButton();
+        saveState();
+    }
+
+    function showServicos() {
+        let content = `<h2 class="text-xl font-bold mb-6 text-center modal-title">Escolha um serviço</h2>`;
+        content += servicos.map(s => `
+            <div class="flex justify-between items-center p-4 rounded-lg mb-3 cursor-pointer selection-item" onclick="selectServico(${s.id})">
+                <div>
+                    <p class="font-semibold text-white">${s.nome}</p>
+                    <p class="text-sm text-secondary">${s.promocao ? `<span class="line-through">R$ ${s.preco.toFixed(2)}</span> <span class="text-primary font-bold">R$ ${s.promocao.toFixed(2)}</span>` : `R$ ${s.preco.toFixed(2)}`} &middot; ${s.duracao}</p>
+                </div>
+                <div class="w-6 h-6 border-2 border-gray-500 rounded-full"></div>
+            </div>
+        `).join('');
+        openModal(content);
+    }
+    function selectServico(id) {
+        selection.servico = servicos.find(s => s.id === id);
+        if(!selection.servico) return;
+        
+        const el = document.getElementById('servico-text');
+        el.textContent = selection.servico.nome;
+        el.classList.remove('selection-item-text');
+        el.classList.add('selected');
+        closeModal();
+        checkAgendarButton();
+        saveState();
+    }
+
+    function showCalendario() {
+        let displayMonth = new Date().getMonth();
+        let displayYear = new Date().getFullYear();
+        
+        function renderCalendar(month, year) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const limitDate = new Date();
+            limitDate.setDate(limitDate.getDate() + 7);
+            limitDate.setHours(0, 0, 0, 0);
+
+            const firstDayOfMonth = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            
+            let calendarHeader = `<div class="flex justify-between items-center text-white mb-4 px-2">
+                <button id="prev-month" class="text-xl p-2"><i class="fas fa-chevron-left"></i></button>
+                <h3 class="font-bold text-lg">${monthNames[month]} ${year}</h3>
+                <button id="next-month" class="text-xl p-2"><i class="fas fa-chevron-right"></i></button>
+            </div>`;
+            
+            let dayHeaders = `<div class="grid grid-cols-7 text-center text-sm mb-2">
+                ${['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(d => `<div class="calendar-day-header">${d}</div>`).join('')}
+            </div>`;
+            
+            let daysGrid = `<div class="calendar-grid">`;
+            for (let i = 0; i < firstDayOfMonth; i++) { daysGrid += `<div></div>`; }
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const currentDate = new Date(year, month, day);
+                const dayOfWeek = currentDate.getDay();
+
+                const isSelectable = currentDate >= today && currentDate <= limitDate && dayOfWeek !== 0;
+                const isToday = currentDate.getTime() === today.getTime();
+                
+                let dayClass = 'calendar-day';
+                if (isSelectable) {
+                    dayClass += ' available';
+                    if(isToday) {
+                        dayClass += ' today';
+                    }
+                } else {
+                    dayClass += ' unavailable';
+                }
+
+                daysGrid += `<div class="${dayClass}" ${!isSelectable ? 'disabled' : ''} onclick="selectDate(this, ${year}, ${month}, ${day})">${day}</div>`;
+            }
+            daysGrid += `</div>`;
+            
+            return `<div style="width: 300px;">${calendarHeader}${dayHeaders}${daysGrid}</div>`;
+        }
+
+        let content = `
+            <div class="info-card">
+                <h2 class="text-xl font-bold mb-4 text-center modal-title">Data do agendamento</h2>
+                <div class="flex justify-center">
+                    <div id="calendar-container"></div>
+                </div>
+                <div class="mt-6">
+                    <h3 class="font-bold text-center mb-4 text-white">Escolha o melhor horário</h3>
+                    <div id="time-slots" class="grid grid-cols-3 gap-2 text-center">
+                        <p class="col-span-3 text-gray-400 text-sm">Selecione uma data para ver os horários</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        openModal(content);
+
+        function updateCalendar() {
+            document.getElementById('calendar-container').innerHTML = renderCalendar(displayMonth, displayYear);
+            document.getElementById('prev-month').addEventListener('click', () => {
+                displayMonth--;
+                if (displayMonth < 0) { displayMonth = 11; displayYear--; }
+                updateCalendar();
+            });
+            document.getElementById('next-month').addEventListener('click', () => {
+                displayMonth++;
+                if (displayMonth > 11) { displayMonth = 0; displayYear++; }
+                updateCalendar();
+            });
+        }
+        updateCalendar();
+    }
+
+    function selectDate(element, year, month, day) {
+        if (element.hasAttribute('disabled')) return;
+        document.querySelectorAll('.calendar-day.selected').forEach(el => el.classList.remove('selected'));
+        element.classList.add('selected');
+        selection.data = new Date(year, month, day).toISOString(); // Salvar em formato ISO
+
+        const timeSlotsContainer = document.getElementById('time-slots');
+        const allTimes = ['08:00', '08:40', '09:20', '10:00', '14:00', '14:40', '15:20', '16:00'];
+        const now = new Date();
+        const selectedDate = new Date(year, month, day);
+        
+        let availableTimes = allTimes;
+
+        if (selectedDate.toDateString() === now.toDateString()) {
+            availableTimes = allTimes.filter(time => {
+                const [hours, minutes] = time.split(':');
+                const slotTime = new Date(selectedDate);
+                slotTime.setHours(parseInt(hours), parseInt(minutes));
+                return slotTime > now;
+            });
+        }
+
+        if (availableTimes.length > 0) {
+            timeSlotsContainer.innerHTML = availableTimes.map(time => `<div class="p-3 rounded-lg cursor-pointer time-slot" onclick="selectTime(this, '${time}')">${time}</div>`).join('');
+        } else {
+            timeSlotsContainer.innerHTML = '<p class="col-span-3 text-gray-400 text-sm">Não há horários disponíveis para hoje.</p>';
+        }
+    }
+
+    function selectTime(element, time) {
+        document.querySelectorAll('.time-slot.selected').forEach(el => el.classList.remove('selected'));
+        element.classList.add('selected');
+        selection.hora = time;
+        const date = new Date(selection.data);
+        const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+        const dayName = weekDays[date.getDay()];
+        const dayOfMonth = date.getDate();
+        const monthName = date.toLocaleString('pt-BR', { month: 'long' });
+        const el = document.getElementById('data-text');
+        el.textContent = `${selection.hora} - ${dayName}, ${dayOfMonth} de ${monthName}`;
+        el.classList.remove('selection-item-text');
+        el.classList.add('selected');
+        checkAgendarButton();
+        setTimeout(closeModal, 300);
+        saveState();
+    }
+    
+    function confirmAndReset() {
+        closeModal();
+        setTimeout(() => {
+            clearSelectionState();
+            renderView('agendar');
+        }, 310); 
+    }
+
+    function resetSelections() {
+        selection = {
+            unidade: null,
+            barbeiro: null,
+            servico: null,
+            data: null,
+            hora: null
+        };
+    }
+
+    function confirmarAgendamento() {
+        const agendarBtn = document.getElementById('agendar-btn');
+        if(!agendarBtn) return;
+        if(agendarBtn.disabled) return;
+
+        const dataFormatada = new Date(selection.data).toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+
+        const successMessage = `
+            <div class="info-card text-center p-6 flex flex-col justify-center">
+                <div class="mb-4">
+                    <i class="far fa-check-circle text-6xl text-primary"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-6 modal-title">Agendamento Confirmado!</h2>
+                
+                <div class="text-left space-y-5 text-secondary mb-8 text-base">
+                    <div>
+                        <p><strong class="text-white">Unidade:</strong> ${selection.unidade.nome}</p>
+                        <a href="${selection.unidade.mapsUrl}" target="_blank" class="block w-full text-white font-semibold py-2 px-4 rounded-xl transition text-center mt-3 text-sm" style="background-color: #0b0b0a;">Ver localização</a>
+                    </div>
+                    <p><strong class="text-white">Barbeiro:</strong> ${selection.barbeiro.nome}</p>
+                    <p><strong class="text-white">Serviços:</strong> ${selection.servico.nome}</p>
+                    <p><strong class="text-white">Data:</strong> ${dataFormatada}</p>
+                    <p><strong class="text-white">Horário:</strong> Às ${selection.hora}</p>
+                </div>
+
+                <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="confirmAndReset()">Novo Agendamento</button>
+            </div>
+        `;
+        openModal(successMessage);
+    }
+
+    // --- LÓGICA DE LOGIN/CADASTRO E REDEFINIÇÃO DE SENHA ---
+    function showLogin() {
+        const loginHtml = `
+            <div class="p-6 text-center auth-form">
+                 <img src="https://i.postimg.cc/5yBSjg1F/Bigode-3.png" alt="Logo VS Barbearia" class="w-16 h-16 mb-4 mx-auto">
+                <h2 class="text-2xl font-bold text-white mb-2">Acesse sua conta</h2>
+                 <div class="w-24 h-0.5 bg-primary mx-auto mb-8"></div>
+                <div class="relative mb-4">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3"><i class="fas fa-user text-gray-400"></i></span>
+                    <input type="text" placeholder="E-mail ou telefone" class="w-full p-3 pl-10 rounded-lg">
+                </div>
+                <div class="relative mb-6">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3"><i class="fas fa-lock text-gray-400"></i></span>
+                    <input type="password" id="login-pin" oninput="this.value = this.value.replace(/\\D/g, '')" placeholder="PIN de 6 dígitos" class="w-full p-3 pl-10 rounded-lg" maxlength="6" inputmode="numeric">
+                    <span class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer" onclick="togglePinVisibility('login-pin')"><i class="fas fa-eye text-gray-400"></i></span>
+                </div>
+                <button class="w-full py-3 bg-white text-black font-bold rounded-lg mb-4" onclick="handleLogin()">Login</button>
+                <a href="#" class="text-sm text-gray-400" onclick="showEsqueciSenha()">Esqueceu a senha?</a>
+                <p class="text-sm text-gray-400 mt-2">Não possui conta? <a href="#" class="font-bold text-primary" onclick="showCadastro()">Faça seu cadastro</a></p>
+                <div class="mt-8">
+                    <button class="btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
+                </div>
+            </div>
+        `;
+        openModal(loginHtml, 'bg-transparent border-none', 'center');
+    }
+
+    function showCadastro() {
+        const cadastroHtml = `
+            <div class="p-6 text-center auth-form">
+                <h2 class="text-2xl font-bold text-white mb-2">Criar conta</h2>
+                <p class="text-secondary text-sm mb-6">Preencha o formulário abaixo com seus dados</p>
+                <input type="text" id="signup-name" oninput="validateCadastroForm()" placeholder="Nome e Sobrenome" class="w-full p-3 rounded-lg mb-4">
+                <input type="tel" id="signup-phone" oninput="formatPhone(event); validateCadastroForm();" placeholder="Telefone (celular)" class="w-full p-3 rounded-lg mb-4" inputmode="numeric">
+                <input type="email" id="signup-email" oninput="validateCadastroForm()" placeholder="E-mail" class="w-full p-3 rounded-lg mb-4">
+                <div class="relative mb-4">
+                    <input type="password" id="signup-pin" oninput="validateCadastroForm()" placeholder="PIN de 6 dígitos" class="w-full p-3 rounded-lg" maxlength="6" inputmode="numeric">
+                    <span class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer" onclick="togglePinVisibility('signup-pin')"><i class="fas fa-eye text-gray-400"></i></span>
+                </div>
+                <div class="relative mb-4">
+                    <input type="password" id="signup-confirm-pin" oninput="validateCadastroForm()" placeholder="Confirme o PIN" class="w-full p-3 rounded-lg" maxlength="6" inputmode="numeric">
+                    <span class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer" onclick="togglePinVisibility('signup-confirm-pin')"><i class="fas fa-eye text-gray-400"></i></span>
+                </div>
+                <div id="pin-error" class="text-red-500 text-sm h-4 mb-4"></div>
+                <button id="create-account-btn" class="w-full py-3 btn-plan font-bold rounded-lg opacity-50" disabled onclick="handleCadastro()">Criar conta</button>
+                <p class="text-xs text-gray-400 mt-4">Ao se cadastrar, você está de acordo com os <a href="#" class="underline">Termos de Uso</a> e <a href="#" class="underline">Política de Privacidade</a>.</p>
+                <div class="mt-8">
+                    <button class="btn-dark border border-gray-600" onclick="showLogin()">Voltar</button>
+                </div>
+            </div>
+        `;
+        openModal(cadastroHtml, 'bg-transparent border-none', 'center');
+    }
+
+    function showEsqueciSenha() {
+        const esqueciSenhaHtml = `
+            <div class="p-6 text-center auth-form">
+                <h2 class="text-2xl font-bold text-white mb-2">Redefinir senha</h2>
+                <p class="text-secondary text-sm mb-6">Tranquilo! Informe o celular utilizado no seu cadastro que lhe ajudaremos a definir uma nova senha.</p>
+                <input type="tel" id="reset-phone" oninput="validateResetPhone(event)" placeholder="Telefone (celular)" class="w-full p-3 rounded-lg mb-4" inputmode="numeric">
+                <div id="reset-error" class="text-red-500 text-sm h-4 mb-4"></div>
+                <button id="reset-continue-btn" class="w-full py-3 btn-plan font-bold rounded-lg" onclick="handleResetPhoneSubmit()" disabled>Continuar</button>
+                 <div class="mt-8">
+                     <button class="btn-dark border border-gray-600" onclick="showLogin()">Voltar para Login</button>
+                 </div>
+            </div>
+        `;
+        modalContent.innerHTML = esqueciSenhaHtml;
+    }
+    
+    function validateResetPhone(event) {
+        const input = event.target;
+        const button = document.getElementById('reset-continue-btn');
+        const errorDiv = document.getElementById('reset-error');
+        
+        // Limpa a mensagem de erro ao digitar
+        errorDiv.textContent = '';
+        
+        // Formata o telefone enquanto o usuário digita
+        formatPhone(event);
+        
+        const cleanNumber = input.value.replace(/\D/g, '');
+        
+        if (cleanNumber.length === 11) {
+            button.disabled = false;
+        } else {
+            button.disabled = true;
+        }
+    }
+
+    function handleResetPhoneSubmit() {
+        const phoneInput = document.getElementById('reset-phone');
+        const button = document.getElementById('reset-continue-btn');
+        const errorDiv = document.getElementById('reset-error');
+        const cleanNumber = phoneInput.value.replace(/\D/g, '');
+
+        // Mostra o loading
+        button.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+        button.disabled = true;
+        
+        // Simula a verificação no "banco de dados"
+        setTimeout(() => {
+            if (cleanNumber === registeredPhone) {
+                showVerificarCodigo();
+            } else {
+                errorDiv.textContent = 'Celular não encontrado em nosso cadastro.';
+                button.innerHTML = 'Continuar';
+                // O botão continua desabilitado até o usuário alterar o número
+                validateResetPhone({ target: phoneInput }); 
+            }
+        }, 1500); // 1.5 segundos de simulação
+    }
+
+
+    function showVerificarCodigo() {
+        const verificarCodigoHtml = `
+            <div class="p-6 text-center auth-form">
+                <h2 class="text-2xl font-bold text-white mb-2">Código de Verificação</h2>
+                <p class="text-secondary text-sm mb-6">Enviamos um código de 4 dígitos para o seu WhatsApp. Por favor, insira-o abaixo.</p>
+                <div id="pin-inputs" class="flex justify-center gap-3 mb-6">
+                    <input type="tel" maxlength="1" class="w-14 h-14 text-center text-2xl font-bold rounded-lg bg-[#333] border border-[#555] text-white focus:border-primary focus:ring-primary" />
+                    <input type="tel" maxlength="1" class="w-14 h-14 text-center text-2xl font-bold rounded-lg bg-[#333] border border-[#555] text-white focus:border-primary focus:ring-primary" />
+                    <input type="tel" maxlength="1" class="w-14 h-14 text-center text-2xl font-bold rounded-lg bg-[#333] border border-[#555] text-white focus:border-primary focus:ring-primary" />
+                    <input type="tel" maxlength="1" class="w-14 h-14 text-center text-2xl font-bold rounded-lg bg-[#333] border border-[#555] text-white focus:border-primary focus:ring-primary" />
+                </div>
+                <button class="w-full py-3 btn-plan font-bold rounded-lg" onclick="showRedefinirSenha()">Verificar Código</button>
+                <p class="text-sm text-gray-400 mt-4">Não recebeu o código? <a href="#" class="font-bold text-primary">Reenviar</a></p>
+                 <div class="mt-8">
+                     <button class="btn-dark border border-gray-600" onclick="showEsqueciSenha()">Voltar</button>
+                 </div>
+            </div>
+        `;
+        modalContent.innerHTML = verificarCodigoHtml;
+        setupPinInputs();
+    }
+
+    function setupPinInputs() {
+        const inputs = document.querySelectorAll('#pin-inputs input');
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', () => {
+                input.value = input.value.replace(/\\D/g, '');
+                if (input.value && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !input.value && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+        });
+    }
+    
+    function showRedefinirSenha() {
+        const redefinirSenhaHtml = `
+            <div class="p-6 text-center auth-form">
+                <h2 class="text-2xl font-bold text-white mb-2">Crie uma nova senha</h2>
+                <p class="text-secondary text-sm mb-6">Sua nova senha deve ser um PIN de 6 dígitos.</p>
+                <div class="relative mb-4">
+                    <input type="password" id="new-pin" oninput="this.value = this.value.replace(/\\D/g, '')" placeholder="Novo PIN de 6 dígitos" class="w-full p-3 rounded-lg" maxlength="6" inputmode="numeric">
+                    <span class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer" onclick="togglePinVisibility('new-pin')"><i class="fas fa-eye text-gray-400"></i></span>
+                </div>
+                <div class="relative mb-6">
+                    <input type="password" id="confirm-new-pin" oninput="this.value = this.value.replace(/\\D/g, '')" placeholder="Confirme o novo PIN" class="w-full p-3 rounded-lg" maxlength="6" inputmode="numeric">
+                    <span class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer" onclick="togglePinVisibility('confirm-new-pin')"><i class="fas fa-eye text-gray-400"></i></span>
+                </div>
+                <button class="w-full py-3 btn-plan font-bold rounded-lg" onclick="handleSenhaRedefinida()">Salvar Nova Senha</button>
+            </div>
+        `;
+        modalContent.innerHTML = redefinirSenhaHtml;
+    }
+
+    function handleSenhaRedefinida() {
+        const successHtml = `
+            <div class="info-card text-center p-6">
+                <i class="far fa-check-circle text-6xl text-primary mb-4"></i>
+                <h2 class="text-2xl font-bold mb-4 modal-title">Senha Redefinida!</h2>
+                <p class="text-secondary mb-6">Sua senha foi alterada com sucesso. Você já pode fazer o login com seu novo PIN.</p>
+                <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="showLogin()">Ir para Login</button>
+            </div>
+        `;
+        modalContent.innerHTML = successHtml;
+    }
+    
+    function formatPhone(event) {
+        let input = event.target;
+        let value = input.value.replace(/\D/g, '');
+        value = value.substring(0, 11);
+        let formatted = '';
+        if (value.length > 0) {
+            formatted = '(' + value.substring(0, 2);
+        }
+        if (value.length > 2) {
+            formatted += ') ' + value.substring(2, 3);
+        }
+        if (value.length > 3) {
+            formatted += ' ' + value.substring(3, 7);
+        }
+        if (value.length > 7) {
+            formatted += '-' + value.substring(7, 11);
+        }
+        input.value = formatted;
+    }
+
+    function validateCadastroForm() {
+        const name = document.getElementById('signup-name');
+        const phone = document.getElementById('signup-phone');
+        const email = document.getElementById('signup-email');
+        const pin = document.getElementById('signup-pin');
+        const confirmPin = document.getElementById('signup-confirm-pin');
+        const errorDiv = document.getElementById('pin-error');
+        const createBtn = document.getElementById('create-account-btn');
+
+        pin.value = pin.value.replace(/\D/g, '');
+        confirmPin.value = confirmPin.value.replace(/\D/g, '');
+
+        let allValid = true;
+
+        if (pin.value.length > 0 && confirmPin.value.length > 0 && pin.value !== confirmPin.value) {
+            errorDiv.textContent = 'Os PINs não conferem.';
+            allValid = false;
+        } else {
+            errorDiv.textContent = '';
+        }
+
+        if (name.value.trim().split(' ').length < 2) allValid = false;
+        if (phone.value.replace(/\D/g, '').length !== 11) allValid = false;
+        if (!email.value.includes('@')) allValid = false;
+        if (pin.value.length !== 6) allValid = false;
+        if (confirmPin.value.length !== 6) allValid = false;
+
+        if (allValid) {
+            createBtn.disabled = false;
+            createBtn.classList.remove('opacity-50');
+        } else {
+            createBtn.disabled = true;
+            createBtn.classList.add('opacity-50');
+        }
+    }
+
+    function togglePinVisibility(inputId) {
+        const input = document.getElementById(inputId);
+        const icon = input.parentElement.querySelector('i');
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = "password";
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+
+    function showWelcomeModal(firstName) {
+        const welcomeHtml = `
+            <div class="info-card text-center p-6 flex flex-col justify-center">
+                <div class="mb-4">
+                    <i class="fas fa-check-circle text-6xl text-primary"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-4 modal-title">Bem-vindo, ${firstName}!</h2>
+                <p class="text-secondary mb-8">Sua conta foi criada com sucesso. Agora ficou ainda mais fácil agendar seu horário!</p>
+                <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="handleWelcomeContinue()">Continuar Agendamento</button>
+            </div>
+        `;
+        openModal(welcomeHtml, '', 'center');
+    }
+
+    function handleWelcomeContinue() {
+        userLoggedIn = true;
+        saveState();
+        closeModal();
+        setTimeout(confirmarAgendamento, 310);
+    }
+
+    function handleLogin() {
+        userLoggedIn = true;
+        saveState();
+        closeModal();
+        setTimeout(confirmarAgendamento, 310);
+    }
+
+    function handleCadastro() {
+        const nameInput = document.getElementById('signup-name');
+        const firstName = nameInput ? nameInput.value.trim().split(' ')[0] : '';
+        userLoggedIn = true;
+        saveState();
+        closeModal();
+        setTimeout(() => showWelcomeModal(firstName), 310);
+    }
+    
+    function handleLogout() {
+        userLoggedIn = false;
+        clearSelectionState();
+        renderView('perfil');
+    }
+
+    // --- MODAIS DO PERFIL E AVALIAÇÃO ---
+    function showEditarPerfilModal() {
+        const modalHtml = `
+            <div class="p-6 text-white relative" style="background-color: #1e1e1e; border-radius: 1rem;">
+                <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="closeModal()">&times;</button>
+                <h2 class="text-2xl font-bold text-center mb-6 modal-title">Editar Perfil</h2>
+
+                <div class="flex flex-col items-center mb-8">
+                    <div class="w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center mb-2 border-2 border-gray-600">
+                        <i class="fas fa-user text-4xl text-gray-500"></i>
+                    </div>
+                    <button class="text-primary text-sm font-semibold">Trocar foto</button>
+                </div>
+
+                <form class="space-y-4 auth-form">
+                    <input type="text" id="edit-name" value="${userInfo.name}" placeholder="Nome" class="w-full p-3 rounded-lg">
+                    <input type="tel" id="edit-phone" value="${userInfo.phone}" oninput="formatPhone(event)" placeholder="Telefone (celular)" class="w-full p-3 rounded-lg">
+                    <input type="email" id="edit-email" value="${userInfo.email}" placeholder="E-mail" class="w-full p-3 rounded-lg">
+                    <input type="text" id="edit-birthdate" placeholder="Data de aniversário (DD/MM/AAAA)" class="w-full p-3 rounded-lg">
+                </form>
+
+                <button class="w-full py-3 btn-plan font-bold rounded-lg mt-8" onclick="handleProfileUpdate()">Salvar</button>
+            </div>
+        `;
+        openModal(modalHtml, 'bg-transparent border-none', 'center');
+    }
+
+    function handleProfileUpdate() {
+        const newName = document.getElementById('edit-name').value;
+        const newPhone = document.getElementById('edit-phone').value;
+        const newEmail = document.getElementById('edit-email').value;
+
+        userInfo.name = newName;
+        userInfo.phone = newPhone;
+        userInfo.email = newEmail;
+
+        closeModal();
+        setTimeout(() => {
+            renderView('perfil');
+        }, 310);
+    }
+
+    /*
+ * NOTA IMPORTANTE:
+ * Para este código funcionar, adicione a seguinte classe CSS
+ * dentro da sua tag <style> no início do seu arquivo HTML.
+ * O problema anterior ocorria porque esta classe estava faltando.
+ *
+ * .bg-primary {
+ * background-color: #fbb62c;
+ * }
+ *
+ * Você pode adicioná-la perto das outras classes ".text-primary"
+ * para manter o código organizado.
+ */
+function showNotificacoesModal() {
+    // Simula o estado das preferências de notificação.
+    // Em uma aplicação real, isso viria do seu banco de dados ou localStorage.
+    let notificationsState = {
+        email: true,
+        push: true
+    };
+
+    /**
+     * Função auxiliar para atualizar a interface do usuário (UI) de um botão de alternância.
+     * @param {string} toggleId - O ID do elemento principal do toggle (ex: 'email-notif-toggle').
+     * @param {boolean} isActive - Se o estado do toggle deve ser ativo (true) ou inativo (false).
+     */
+    const updateToggleUI = (toggleId, isActive) => {
+        const toggleElement = document.getElementById(toggleId);
+        if (!toggleElement) return;
+
+        // Seleciona o fundo e a "bolinha" do toggle usando as classes específicas
+        const bgDiv = toggleElement.querySelector('.toggle-bg');
+        const ballDiv = toggleElement.querySelector('.toggle-ball');
+
+        if (isActive) {
+            // Estado ATIVO: remove a cor cinza, adiciona a cor primária e move a bolinha.
+            bgDiv.classList.remove('bg-gray-600');
+            bgDiv.classList.add('bg-primary');
+            ballDiv.classList.add('translate-x-5');
+        } else {
+            // Estado INATIVO: remove a cor primária, adiciona a cor cinza e move a bolinha de volta.
+            bgDiv.classList.remove('bg-primary');
+            bgDiv.classList.add('bg-gray-600');
+            ballDiv.classList.remove('translate-x-5');
+        }
+    };
+
+    // HTML do modal com classes específicas para o fundo e a bolinha do toggle.
+    const modalHtml = `
+        <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl border border-gray-700">
+            <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="closeModal()">&times;</button>
+            <h2 class="text-2xl font-bold text-center mb-2 modal-title">Notificações</h2>
+            <p class="text-center text-secondary text-sm mb-8">Defina suas preferências de notificação.</p>
+
+            <div class="space-y-4">
+                <!-- Toggle para Notificações por E-mail -->
+                <div id="email-notif-toggle" class="flex justify-between items-center p-4 rounded-lg cursor-pointer bg-[#2a2a2a]">
+                    <span class="text-white font-medium">Notificações por e-mail</span>
+                    <div class="relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out toggle-bg">
+                        <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 ease-in-out transform toggle-ball"></div>
+                    </div>
+                </div>
+                <!-- Toggle para Notificações por Push -->
+                <div id="push-notif-toggle" class="flex justify-between items-center p-4 rounded-lg cursor-pointer bg-[#2a2a2a]">
+                    <span class="text-white font-medium">Notificações por push</span>
+                    <div class="relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out toggle-bg">
+                        <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 ease-in-out transform toggle-ball"></div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="w-full py-3 btn-plan font-bold rounded-lg mt-8" onclick="closeModal()">Salvar</button>
+        </div>
+    `;
+
+    // Abre o modal com o HTML definido acima
+    openModal(modalHtml, 'bg-transparent border-none', 'center');
+
+    // Define o estado visual inicial dos toggles assim que o modal é renderizado
+    updateToggleUI('email-notif-toggle', notificationsState.email);
+    updateToggleUI('push-notif-toggle', notificationsState.push);
+
+    // Adiciona os eventos de clique para cada toggle
+    document.getElementById('email-notif-toggle').addEventListener('click', () => {
+        // 1. Inverte o estado no objeto
+        notificationsState.email = !notificationsState.email;
+        // 2. Atualiza a interface para refletir a mudança
+        updateToggleUI('email-notif-toggle', notificationsState.email);
+    });
+
+    document.getElementById('push-notif-toggle').addEventListener('click', () => {
+        // 1. Inverte o estado no objeto
+        notificationsState.push = !notificationsState.push;
+        // 2. Atualiza a interface para refletir a mudança
+        updateToggleUI('push-notif-toggle', notificationsState.push);
+    });
+}
+
+    function showAlterarPinModal() {
+        openModal('<h2 class="text-xl font-bold mb-6 text-center modal-title">Alterar PIN</h2><p class="text-center text-secondary">Funcionalidade em desenvolvimento.</p>');
+    }
+
+    let currentRating = 0;
+    function setRating(rating) {
+        currentRating = rating;
+        const stars = document.querySelectorAll('.rating-stars i');
+        stars.forEach((star, index) => {
+            if (index < rating) {
+                star.classList.add('selected');
+            } else {
+                star.classList.remove('selected');
+            }
+        });
+    }
+
+    function showAvaliacaoModal(id) {
+        const agendamento = agendamentos.historico.find(ag => ag.id === id);
+        if (!agendamento) return;
+        currentRating = 0; // Reset rating for new modal
+
+        const modalHtml = `
+            <div class="p-6 text-white relative auth-form" style="background-color: #1e1e1e; border-radius: 1rem;">
+                <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="closeModal()">&times;</button>
+                <h2 class="text-2xl font-bold text-center mb-6 modal-title">Avaliar atendimento</h2>
+                
+                <div class="text-left space-y-4 text-sm mb-6">
+                    <p><strong class="text-gray-400">Profissional:</strong><br><span class="text-white">${agendamento.barbeiro.nome}</span></p>
+                    <p><strong class="text-gray-400">Serviço:</strong><br><span class="text-white">${agendamento.servico.nome}</span></p>
+                </div>
+
+                <div class="border-t border-b border-gray-700 py-6">
+                    <p class="text-center font-semibold mb-4">Como foi seu atendimento?</p>
+                    <div class="flex justify-center items-center text-4xl rating-stars space-x-2">
+                        <i class="fas fa-star" onclick="setRating(1)"></i>
+                        <i class="fas fa-star" onclick="setRating(2)"></i>
+                        <i class="fas fa-star" onclick="setRating(3)"></i>
+                        <i class="fas fa-star" onclick="setRating(4)"></i>
+                        <i class="fas fa-star" onclick="setRating(5)"></i>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <p class="font-semibold mb-2">Deixar um comentário (opcional)</p>
+                    <textarea id="comment" rows="3" placeholder="Deixe seu comentário aqui..." class="w-full p-3 rounded-lg"></textarea>
+                </div>
+
+                <button class="w-full py-3 btn-plan font-bold rounded-lg mt-6" onclick="handleAvaliacaoSubmit(${id})">Avaliar</button>
+            </div>
+        `;
+        openModal(modalHtml, 'bg-transparent border-none', 'center');
+    }
+
+    function handleAvaliacaoSubmit(id) {
+        if (currentRating === 0) {
+            alert("Por favor, selecione uma nota.");
+            return;
+        }
+        const agendamento = agendamentos.historico.find(ag => ag.id === id);
+        if (agendamento) {
+            agendamento.avaliacao = currentRating;
+        }
+        
+        const successHtml = `
+            <div class="info-card text-center p-6">
+                <i class="far fa-check-circle text-6xl text-primary mb-4"></i>
+                <h2 class="text-2xl font-bold mb-4 modal-title">Avaliação Enviada!</h2>
+                <p class="text-secondary mb-6">Obrigado pelo seu feedback!</p>
+                <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="closeModal()">Fechar</button>
+            </div>
+        `;
+        modalContent.innerHTML = successHtml;
+
+        setTimeout(() => {
+            closeModal();
+            renderView('historico');
+        }, 2000);
+    }
+
+    function updateAgendarViewFromState() {
+        if (selection.unidade) {
+            const el = document.getElementById('unidade-text');
+            el.textContent = selection.unidade.nome;
+            el.classList.remove('selection-item-text');
+            el.classList.add('selected');
+        }
+        if (selection.barbeiro) {
+            const el = document.getElementById('barbeiro-text');
+            el.textContent = selection.barbeiro.nome;
+            el.classList.remove('selection-item-text');
+            el.classList.add('selected');
+        }
+        if (selection.servico) {
+            const el = document.getElementById('servico-text');
+            el.textContent = selection.servico.nome;
+            el.classList.remove('selection-item-text');
+            el.classList.add('selected');
+        }
+        if (selection.data && selection.hora) {
+            const date = new Date(selection.data);
+            const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+            const dayName = weekDays[date.getDay()];
+            const dayOfMonth = date.getDate();
+            const monthName = date.toLocaleString('pt-BR', { month: 'long' });
+            const el = document.getElementById('data-text');
+            el.textContent = `${selection.hora} - ${dayName}, ${dayOfMonth} de ${monthName}`;
+            el.classList.remove('selection-item-text');
+            el.classList.add('selected');
+        }
+        checkAgendarButton();
+    }
+    
+    // --- MODAIS DE PLANOS ---
+    function showPagamentosModal() {
+        const paymentsHtml = paymentHistory.map(p => `
+            <div class="flex justify-between items-center py-2 border-b border-gray-700">
+                <div>
+                    <p class="text-white">Pagamento ${p.date}</p>
+                    <p class="text-xs text-green-400">${p.status}</p>
+                </div>
+                <p class="text-white font-bold">R$ ${p.amount}</p>
+            </div>
+        `).join('');
+
+        const content = `
+            <div class="info-card p-6">
+                <h2 class="text-xl font-bold mb-4 text-center modal-title">Histórico de Pagamentos</h2>
+                <div class="space-y-2">
+                    ${paymentsHtml}
+                </div>
+                <button class="w-full mt-6 py-2 btn-dark border border-gray-600" onclick="closeModal()">Fechar</button>
+            </div>
+        `;
+        openModal(content, 'border-none', 'center');
+    }
+
+    function showTermosModal() {
+        const termosHtml = `
+            <div class="bg-white text-black rounded-lg p-6 max-h-[70vh] overflow-y-auto">
+                <h2 class="text-2xl font-bold mb-4 text-center text-black">Termos e Serviços</h2>
+                <div class="space-y-4 text-sm text-left">
+                    <div>
+                        <h3 class="font-bold">1. OBJETIVO</h3>
+                        <p>Estabelecer as regras para o fornecimento de serviços de barbearia, promoções e conteúdo da VS Barbearia (vsbarbearia.com.br) através de assinatura.</p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold">2. DEFINIÇÕES PRINCIPAIS</h3>
+                        <p><strong>Assinatura:</strong> Pagamento mensal do assinante pelos serviços contratados.</p>
+                        <p><strong>Produtos:</strong> Cosméticos (pomadas, cremes, óleos) fornecidos em kits, quando disponíveis.</p>
+                        <p><strong>Cupons de Desconto:</strong> Oferecidos por parceiros para compra de produtos/serviços com desconto.</p>
+                        <p><strong>Serviços:</strong> Conteúdo, consultoria e promoções oferecidas periodicamente ao assinante.</p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold">3. ADESÃO E ACEITAÇÃO</h3>
+                        <p>Ao pagar pela assinatura, o assinante aceita os termos de uso e a Política de Privacidade.</p>
+                        <p>Pagamento realizado via cartão de crédito, boleto ou Pix, com renovação mensal automática.</p>
+                        <p>A VS Barbearia pode alterar os termos, sendo responsabilidade do assinante revisar periodicamente as mudanças.</p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold">4. PREÇO E CONDIÇÕES DE PAGAMENTO</h3>
+                        <p><strong>Pagamento Mensal:</strong> Assinatura paga com cartão de crédito (sem comprometer o limite), boleto ou Pix.</p>
+                        <p><strong>Reajustes Trimestrais:</strong> Aviso prévio de 30 dias será enviado em caso de alteração no valor.</p>
+                        <p><strong>Compras Únicas:</strong> Produtos ou serviços adicionais podem ser cobrados com autorização prévia via e-mail.</p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold">5. CANCELAMENTO E PAUSA DA ASSINATURA</h3>
+                        <p><strong>Cancelamento Gratuito em até 7 Dias:</strong> Possibilidade de cancelamento com reembolso, caso nenhum serviço tenha sido utilizado.</p>
+                        <p><strong>Pausa de 30 Dias:</strong> O assinante pode pausar a assinatura por motivos de viagem ou férias, sem custos.</p>
+                        <p><strong>Cancelamento Definitivo:</strong> Não haverá reembolso após o uso dos serviços ou se cancelado fora do prazo de arrependimento.</p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold">6. OBRIGAÇÕES</h3>
+                        <p class="font-semibold">VS BARBEARIA:</p>
+                        <ul class="list-disc list-inside pl-4">
+                            <li>Prestar serviços com qualidade e em conformidade com a lei.</li>
+                            <li>Garantir a proteção dos dados pessoais do assinante, conforme a Política de Privacidade.</li>
+                        </ul>
+                        <p class="font-semibold mt-2">ASSINANTE:</p>
+                         <ul class="list-disc list-inside pl-4">
+                            <li>Caso a mensalidade esteja em inadimplência, o assinante não poderá utilizar nenhum serviço como membro do clube.</li>
+                            <li>O assinante inadimplente poderá pagar o serviço de forma avulsa, com o desconto aplicável, ou regularizar a assinatura no momento do atendimento para usufruir dos benefícios.</li>
+                            <li>Manter os dados de cadastro atualizados e realizar os pagamentos em dia.</li>
+                            <li>O não pagamento resultará na suspensão imediata dos serviços.</li>
+                         </ul>
+                    </div>
+                    <div>
+                        <h3 class="font-bold">7. ATENDIMENTO AO ASSINANTE</h3>
+                        <p>Disponível de terça a sábado, das 9h às 19h, via celular/WhatsApp:  (37) 9 9671-9604.</p>
+                        <p>Além disso, o aplicativo de agendamento, Frizzar, também oferece suporte ao cliente para facilitar o agendamento de serviços.</p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold">8. LIMITAÇÕES DOS SERVIÇOS</h3>
+                        <p>É proibida a transferência de serviços para terceiros.</p>
+                        <p>Não é permitido realizar um novo agendamento sem antes de utilizar o que já está agendado.</p>
+                        <p>Plano de assinatura 1 ou Plano de entrada é o único que não é ilimitado. Para os demais planos, você pode cortar o cabelo e fazer a barba quando quiser, seja diariamente, semanalmente ou quinzenalmente. O uso depende do plano escolhido.</p>
+                        <p class="font-semibold mt-2">Limitações em caso de ausência:</p>
+                        <ul class="list-disc list-inside pl-4">
+                            <li>Se o assinante agendar o serviço e não comparecer, perderá o direito ao corte da semana correspondente, sendo necessário pagar o valor do corte avulso caso deseje realizar o serviço na mesma semana.</li>
+                            <li>Para clientes avulsos, a ausência sem aviso prévio implicará na cobrança integral do serviço agendado no próximo atendimento.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="font-bold">9. DISPOSIÇÕES FINAIS</h3>
+                        <p><strong>Foro Jurídico:</strong> As questões legais serão tratadas no foro da cidade de Nova Serrana - MG.</p>
+                        <p><strong>Política de Dados:</strong> A VS Barbearia pode compartilhar informações do assinante com autoridades competentes.</p>
+                    </div>
+                </div>
+                <button class="w-full mt-6 py-2 bg-black text-white font-bold rounded-lg" onclick="closeModal()">Fechar</button>
+            </div>
+        `;
+        openModal(termosHtml, 'bg-transparent border-none p-0', 'center');
+    }
+
+
+    // --- INICIALIZAÇÃO ---
+    document.addEventListener('DOMContentLoaded', () => {
+        loadState();
+        document.querySelectorAll('.footer-nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                renderView(item.dataset.view);
+            });
+        });
+        renderView('agendar');
+    });
+
+</script>
+</body>
+</html>
