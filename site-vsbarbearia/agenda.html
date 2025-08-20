@@ -3,15 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Meta Tags para PWA -->
-    <meta name="theme-color" content="#000000"/>
-    <meta name="description" content="Agende seu horário na VS Barbearia com facilidade.">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    
-    <!-- Link para o arquivo manifest externo -->
-    <link rel="manifest" href="/site.webmanifest">
-
     <title>VS Barbearia - Agendamento</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -153,8 +144,8 @@
             color: #fbb62c;
         }
         .bg-primary {
-            background-color: #fbb62c;
-        }
+    background-color: #fbb62c;
+}
         /* --- ESTILOS DOS PLANOS (DO SITE) --- */
         .plan-card {
             background-color: #000;
@@ -307,19 +298,6 @@
     </div>
 
 <script>
-    // --- REGISTRO DO SERVICE WORKER EXTERNO ---
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/service-worker.js')
-                .then(registration => {
-                    console.log('Service Worker registrado com sucesso:', registration);
-                })
-                .catch(error => {
-                    console.log('Falha ao registrar Service Worker:', error);
-                });
-        });
-    }
-
     // --- DADOS MOCK (Simulação do Banco de Dados) ---
     const unidades = [
         { id: 1, nome: 'Unidade Matriz (Shopping Tropical)', endereco: 'Av. Cel. Pacífico Pinto da Fonseca, 170', img: 'https://i.postimg.cc/jjQygJ63/image-4.png', mapsUrl: 'https://maps.app.goo.gl/CuV8XPC29G7335E9A' },
@@ -1474,12 +1452,48 @@
     }
     
     function handleLogout() {
+        showLogoutConfirmationModal();
+    }
+
+    function confirmLogout() {
         userLoggedIn = false;
         clearSelectionState();
-        renderView('perfil');
+        closeModal();
+        setTimeout(() => {
+            renderView('perfil');
+        }, 310); // Aguarda a animação do modal fechar
+    }
+
+    function showLogoutConfirmationModal() {
+        const modalHtml = `
+            <div class="info-card text-center p-6">
+                <i class="fas fa-door-open text-4xl text-primary mb-4"></i>
+                <h2 class="text-xl font-bold mb-4 modal-title">Confirmar Saída</h2>
+                <p class="text-secondary mb-6">Você tem certeza que deseja sair da sua conta?</p>
+                <div class="flex justify-center space-x-4">
+                    <button class="py-2 px-6 font-bold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Ficar</button>
+                    <button class="py-2 px-6 font-bold rounded-lg bg-red-600 text-white" onclick="confirmLogout()">Sair</button>
+                </div>
+            </div>
+        `;
+        openModal(modalHtml, 'border-none', 'center');
     }
 
     // --- MODAIS DO PERFIL E AVALIAÇÃO ---
+    function formatBirthdate(event) {
+        const input = event.target;
+        let value = input.value.replace(/\D/g, ''); // Remove tudo que não for dígito
+        
+        if (value.length > 2) {
+            value = `${value.substring(0, 2)}/${value.substring(2)}`;
+        }
+        if (value.length > 5) {
+            value = `${value.substring(0, 5)}/${value.substring(5, 9)}`;
+        }
+        
+        input.value = value;
+    }
+
     function showEditarPerfilModal() {
         const modalHtml = `
             <div class="p-6 text-white relative" style="background-color: #1e1e1e; border-radius: 1rem;">
@@ -1497,13 +1511,31 @@
                     <input type="text" id="edit-name" value="${userInfo.name}" placeholder="Nome" class="w-full p-3 rounded-lg">
                     <input type="tel" id="edit-phone" value="${userInfo.phone}" oninput="formatPhone(event)" placeholder="Telefone (celular)" class="w-full p-3 rounded-lg">
                     <input type="email" id="edit-email" value="${userInfo.email}" placeholder="E-mail" class="w-full p-3 rounded-lg">
-                    <input type="text" id="edit-birthdate" placeholder="Data de aniversário (DD/MM/AAAA)" class="w-full p-3 rounded-lg">
+                    <div>
+                        <input type="text" id="edit-birthdate" oninput="formatBirthdate(event)" placeholder="Data de aniversário (DD/MM/AAAA)" class="w-full p-3 rounded-lg" maxlength="10" inputmode="numeric">
+                        <p class="text-xs text-gray-400 mt-3 text-center"><i class="fas fa-gift mr-1 text-primary"></i>Informe seu aniversário para ganhar mimos e descontos especiais!</p>
+                    </div>
                 </form>
 
-                <button class="w-full py-3 btn-plan font-bold rounded-lg mt-8" onclick="handleProfileUpdate()">Salvar</button>
+                <button class="w-full py-3 btn-plan font-bold rounded-lg mt-8" onclick="showSaveProfileConfirmation()">Salvar</button>
             </div>
         `;
         openModal(modalHtml, 'bg-transparent border-none', 'center');
+    }
+
+    function showSaveProfileConfirmation() {
+        const modalHtml = `
+            <div class="info-card text-center p-6">
+                <i class="fas fa-save text-4xl text-primary mb-4"></i>
+                <h2 class="text-xl font-bold mb-4 modal-title">Confirmar Alterações</h2>
+                <p class="text-secondary mb-6">Deseja salvar as alterações feitas no seu perfil?</p>
+                <div class="flex justify-center space-x-4">
+                    <button class="py-2 px-6 font-bold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Cancelar</button>
+                    <button class="py-2 px-6 font-bold rounded-lg btn-plan" onclick="handleProfileUpdate()">Salvar</button>
+                </div>
+            </div>
+        `;
+        openModal(modalHtml, 'border-none', 'center');
     }
 
     function handleProfileUpdate() {
@@ -1514,11 +1546,23 @@
         userInfo.name = newName;
         userInfo.phone = newPhone;
         userInfo.email = newEmail;
+        
+        // Simula o salvamento e mostra uma mensagem de sucesso
+        const successHtml = `
+            <div class="info-card text-center p-6">
+                <i class="far fa-check-circle text-6xl text-primary mb-4"></i>
+                <h2 class="text-2xl font-bold mb-4 modal-title">Perfil Atualizado!</h2>
+                <p class="text-secondary mb-6">Suas informações foram salvas com sucesso.</p>
+                <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="closeModal()">Fechar</button>
+            </div>
+        `;
+        modalContent.innerHTML = successHtml;
 
-        closeModal();
+        // Fecha o modal de sucesso e atualiza a view de perfil
         setTimeout(() => {
+            closeModal();
             renderView('perfil');
-        }, 310);
+        }, 2500);
     }
 
     /*
@@ -1849,4 +1893,3 @@ function showNotificacoesModal() {
 </script>
 </body>
 </html>
-
