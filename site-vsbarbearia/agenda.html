@@ -443,7 +443,7 @@
         modalContainer.classList.remove('items-end', 'items-center');
         modalContainer.classList.add(position === 'center' ? 'items-center' : 'items-end');
 
-        const baseClasses = 'w-full max-w-sm p-4 transform transition-all duration-300 ease-in-out';
+        const baseClasses = 'w-full max-w-sm p-4 transform-gpu transition-transform duration-300 ease-in-out'; // Otimizado para animação mais suave
         const styleClasses = position === 'center' 
             ? 'rounded-2xl translate-y-full' 
             : 'rounded-t-2xl mb-6 translate-y-full';
