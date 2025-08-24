@@ -399,9 +399,9 @@
     };
 
     const paymentHistory = [
-        { date: '10/08/2025', amount: '189,90', status: 'Pago' },
-        { date: '10/07/2025', amount: '189,90', status: 'Pago' },
-        { date: '10/06/2025', amount: '189,90', status: 'Pago' }
+        { id: 'pay_1', date: '10/08/2025', amount: '189,90', status: 'Pago', method: 'Cartão de Crédito final 1234' },
+        { id: 'pay_2', date: '10/07/2025', amount: '189,90', status: 'Pago', method: 'Cartão de Crédito final 1234' },
+        { id: 'pay_3', date: '10/06/2025', amount: '189,90', status: 'Pago', method: 'Pix' }
     ];
 
     const userInfo = {
@@ -416,7 +416,7 @@
 
     // --- ESTADO DA APLICAÇÃO ---
     let selection = {};
-    let userLoggedIn = false;
+    let userLoggedIn = true; // Mantendo logado para testes
     let isAuthModalOpen = false;
 
     // --- ELEMENTOS DO DOM ---
@@ -573,10 +573,9 @@
 
     function renderPlanosView() {
         let planStatusHtml = '';
-        if (userSubscription.active && userSubscription.plan.title.includes('Limitado')) {
+        if (userSubscription.active) {
             const used = userSubscription.usedServices;
             const total = userSubscription.totalServices;
-            const progressPercentage = (used / total) * 100;
             
             let serviceIconsHtml = '';
             for (let i = 1; i <= total; i++) {
@@ -589,7 +588,6 @@
                 `;
             }
 
-            // --- NOVO DESIGN DO CARD DO PLANO ATUAL ---
             planStatusHtml = `
                 <div class="px-6 pt-10">
                     <div class="text-center mb-8">
@@ -625,9 +623,13 @@
                             <span class="font-bold text-white">${userSubscription.nextBillingDate}</span>
                         </div>
                     </div>
-                    <div class="mt-4">
-                        <button class="w-full text-left p-4 rounded-xl bg-[#1e1e1e] border border-gray-800 flex items-center justify-between hover:border-gray-700 transition-colors">
+                    <div class="mt-4 space-y-3">
+                        <button class="w-full text-left p-4 rounded-xl bg-[#1e1e1e] border border-gray-800 flex items-center justify-between hover:border-gray-700 transition-colors" onclick="showPagamentosModal()">
                             <span><i class="fas fa-receipt w-6 text-center mr-3 text-primary"></i>Histórico de Pagamentos</span>
+                            <i class="fas fa-chevron-right text-gray-500"></i>
+                        </button>
+                         <button class="w-full text-left p-4 rounded-xl bg-[#1e1e1e] border border-gray-800 flex items-center justify-between hover:border-gray-700 transition-colors" onclick="showGerenciarAssinaturaModal()">
+                            <span><i class="fas fa-cog w-6 text-center mr-3 text-primary"></i>Gerenciar Assinatura</span>
                             <i class="fas fa-chevron-right text-gray-500"></i>
                         </button>
                     </div>
@@ -670,7 +672,7 @@
                         <p class="text-secondary mb-6">Não tem certeza de qual plano escolher? Entre em contato conosco.</p>
                         <div class="space-y-4">
                             <a href="#" class="btn-plan" onclick="renderView('agendar')">Agendar Horário</a>
-                            <a href="#" class="btn-bordered">Fale Conosco</a>
+                            <button class="btn-bordered w-full" onclick="showFaleConoscoModal()">Fale Conosco</button>
                         </div>
                     </div>
                     <div class="text-center mt-8">
@@ -681,7 +683,7 @@
         `;
 
         // --- INÍCIO DA LÓGICA DE ANIMAÇÃO ---
-        if (userSubscription.active && userSubscription.plan.title.includes('Limitado')) {
+        if (userSubscription.active) {
             const progressBar = document.getElementById('plan-progress-bar');
             const titleUnderline = document.getElementById('plan-title-underline');
 
@@ -696,7 +698,6 @@
                 });
             }
         }
-        // --- FIM DA LÓGICA DE ANIMAÇÃO ---
     }
     
     function renderHistoricoView() {
@@ -1620,103 +1621,59 @@
         }, 2500);
     }
 
-    /*
-* NOTA IMPORTANTE:
-* Para este código funcionar, adicione a seguinte classe CSS
-* dentro da sua tag <style> no início do seu arquivo HTML.
-* O problema anterior ocorria porque esta classe estava faltando.
-*
-* .bg-primary {
-* background-color: #fbb62c;
-* }
-*
-* Você pode adicioná-la perto das outras classes ".text-primary"
-* para manter o código organizado.
-*/
-function showNotificacoesModal() {
-    // Simula o estado das preferências de notificação.
-    // Em uma aplicação real, isso viria do seu banco de dados ou localStorage.
-    let notificationsState = {
-        email: true,
-        push: true
-    };
+    function showNotificacoesModal() {
+        let notificationsState = { email: true, push: true };
 
-    /**
-     * Função auxiliar para atualizar a interface do usuário (UI) de um botão de alternância.
-     * @param {string} toggleId - O ID do elemento principal do toggle (ex: 'email-notif-toggle').
-     * @param {boolean} isActive - Se o estado do toggle deve ser ativo (true) ou inativo (false).
-     */
-    const updateToggleUI = (toggleId, isActive) => {
-        const toggleElement = document.getElementById(toggleId);
-        if (!toggleElement) return;
+        const updateToggleUI = (toggleId, isActive) => {
+            const toggleElement = document.getElementById(toggleId);
+            if (!toggleElement) return;
+            const bgDiv = toggleElement.querySelector('.toggle-bg');
+            const ballDiv = toggleElement.querySelector('.toggle-ball');
+            if (isActive) {
+                bgDiv.classList.remove('bg-gray-600');
+                bgDiv.classList.add('bg-primary');
+                ballDiv.classList.add('translate-x-5');
+            } else {
+                bgDiv.classList.remove('bg-primary');
+                bgDiv.classList.add('bg-gray-600');
+                ballDiv.classList.remove('translate-x-5');
+            }
+        };
 
-        // Seleciona o fundo e a "bolinha" do toggle usando as classes específicas
-        const bgDiv = toggleElement.querySelector('.toggle-bg');
-        const ballDiv = toggleElement.querySelector('.toggle-ball');
-
-        if (isActive) {
-            // Estado ATIVO: remove a cor cinza, adiciona a cor primária e move a bolinha.
-            bgDiv.classList.remove('bg-gray-600');
-            bgDiv.classList.add('bg-primary');
-            ballDiv.classList.add('translate-x-5');
-        } else {
-            // Estado INATIVO: remove a cor primária, adiciona a cor cinza e move a bolinha de volta.
-            bgDiv.classList.remove('bg-primary');
-            bgDiv.classList.add('bg-gray-600');
-            ballDiv.classList.remove('translate-x-5');
-        }
-    };
-
-    // HTML do modal com classes específicas para o fundo e a bolinha do toggle.
-    const modalHtml = `
-        <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl border border-gray-700">
-            <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="closeModal()">&times;</button>
-            <h2 class="text-2xl font-bold text-center mb-2 modal-title">Notificações</h2>
-            <p class="text-center text-secondary text-sm mb-8">Defina suas preferências de notificação.</p>
-
-            <div class="space-y-4">
-                <!-- Toggle para Notificações por E-mail -->
-                <div id="email-notif-toggle" class="flex justify-between items-center p-4 rounded-lg cursor-pointer bg-[#2a2a2a]">
-                    <span class="text-white font-medium">Notificações por e-mail</span>
-                    <div class="relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out toggle-bg">
-                        <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 ease-in-out transform toggle-ball"></div>
+        const modalHtml = `
+            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl border border-gray-700">
+                <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="closeModal()">&times;</button>
+                <h2 class="text-2xl font-bold text-center mb-2 modal-title">Notificações</h2>
+                <p class="text-center text-secondary text-sm mb-8">Defina suas preferências de notificação.</p>
+                <div class="space-y-4">
+                    <div id="email-notif-toggle" class="flex justify-between items-center p-4 rounded-lg cursor-pointer bg-[#2a2a2a]">
+                        <span class="text-white font-medium">Notificações por e-mail</span>
+                        <div class="relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out toggle-bg">
+                            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 ease-in-out transform toggle-ball"></div>
+                        </div>
+                    </div>
+                    <div id="push-notif-toggle" class="flex justify-between items-center p-4 rounded-lg cursor-pointer bg-[#2a2a2a]">
+                        <span class="text-white font-medium">Notificações por push</span>
+                        <div class="relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out toggle-bg">
+                            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 ease-in-out transform toggle-ball"></div>
+                        </div>
                     </div>
                 </div>
-                <!-- Toggle para Notificações por Push -->
-                <div id="push-notif-toggle" class="flex justify-between items-center p-4 rounded-lg cursor-pointer bg-[#2a2a2a]">
-                    <span class="text-white font-medium">Notificações por push</span>
-                    <div class="relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out toggle-bg">
-                        <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 ease-in-out transform toggle-ball"></div>
-                    </div>
-                </div>
+                <button class="w-full py-3 btn-plan font-bold rounded-lg mt-8" onclick="closeModal()">Salvar</button>
             </div>
-
-            <button class="w-full py-3 btn-plan font-bold rounded-lg mt-8" onclick="closeModal()">Salvar</button>
-        </div>
-    `;
-
-    // Abre o modal com o HTML definido acima
-    openModal(modalHtml, 'bg-transparent border-none', 'center');
-
-    // Define o estado visual inicial dos toggles assim que o modal é renderizado
-    updateToggleUI('email-notif-toggle', notificationsState.email);
-    updateToggleUI('push-notif-toggle', notificationsState.push);
-
-    // Adiciona os eventos de clique para cada toggle
-    document.getElementById('email-notif-toggle').addEventListener('click', () => {
-        // 1. Inverte o estado no objeto
-        notificationsState.email = !notificationsState.email;
-        // 2. Atualiza a interface para refletir a mudança
+        `;
+        openModal(modalHtml, 'bg-transparent border-none', 'center');
         updateToggleUI('email-notif-toggle', notificationsState.email);
-    });
-
-    document.getElementById('push-notif-toggle').addEventListener('click', () => {
-        // 1. Inverte o estado no objeto
-        notificationsState.push = !notificationsState.push;
-        // 2. Atualiza a interface para refletir a mudança
         updateToggleUI('push-notif-toggle', notificationsState.push);
-    });
-}
+        document.getElementById('email-notif-toggle').addEventListener('click', () => {
+            notificationsState.email = !notificationsState.email;
+            updateToggleUI('email-notif-toggle', notificationsState.email);
+        });
+        document.getElementById('push-notif-toggle').addEventListener('click', () => {
+            notificationsState.push = !notificationsState.push;
+            updateToggleUI('push-notif-toggle', notificationsState.push);
+        });
+    }
 
     function showAlterarPinModal() {
         openModal('<h2 class="text-xl font-bold mb-6 text-center modal-title">Alterar PIN</h2><p class="text-center text-secondary">Funcionalidade em desenvolvimento.</p>');
@@ -1834,19 +1791,23 @@ function showNotificacoesModal() {
     // --- MODAIS DE PLANOS ---
     function showPagamentosModal() {
         const paymentsHtml = paymentHistory.map(p => `
-            <div class="flex justify-between items-center py-2 border-b border-gray-700">
+            <div class="flex justify-between items-center py-3 border-b border-gray-700 last:border-b-0">
                 <div>
-                    <p class="text-white">Pagamento ${p.date}</p>
-                    <p class="text-xs text-green-400">${p.status}</p>
+                    <p class="font-semibold text-white">Pagamento de ${new Date(p.date.split('/').reverse().join('-')).toLocaleString('pt-BR', { month: 'long' })}</p>
+                    <p class="text-xs text-secondary">${p.method}</p>
                 </div>
-                <p class="text-white font-bold">R$ ${p.amount}</p>
+                <div class="text-right">
+                     <p class="font-bold text-white">R$ ${p.amount}</p>
+                     <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-500/20 text-green-400">${p.status}</span>
+                </div>
+                 <button class="text-gray-400 hover:text-white ml-4"><i class="fas fa-download"></i></button>
             </div>
         `).join('');
 
         const content = `
-            <div class="info-card p-6">
+            <div class="info-card p-5">
                 <h2 class="text-xl font-bold mb-4 text-center modal-title">Histórico de Pagamentos</h2>
-                <div class="space-y-2">
+                <div class="space-y-2 max-h-[50vh] overflow-y-auto pr-2">
                     ${paymentsHtml}
                 </div>
                 <button class="w-full mt-6 py-2 btn-dark border border-gray-600" onclick="closeModal()">Fechar</button>
@@ -1854,6 +1815,144 @@ function showNotificacoesModal() {
         `;
         openModal(content, 'border-none', 'center');
     }
+
+    function showGerenciarAssinaturaModal() {
+        const modalHtml = `
+            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl">
+                 <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="closeModal()">&times;</button>
+                 <h2 class="text-2xl font-bold text-center mb-8 modal-title">Gerenciar Assinatura</h2>
+
+                <!-- Seção Meu Plano -->
+                <div class="bg-[#2a2a2a] p-5 rounded-lg mb-6">
+                    <h3 class="font-bold text-lg mb-3 text-white">Meu Plano</h3>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-secondary">${userSubscription.plan.title}</span>
+                        <span class="font-bold text-white">R$ ${userSubscription.plan.price}/mês</span>
+                    </div>
+                    <div class="border-t border-gray-700 my-4"></div>
+                    <p class="text-xs text-secondary">Próxima cobrança em: ${userSubscription.nextBillingDate}</p>
+                </div>
+
+                <!-- Seção Pagamento -->
+                <div class="bg-[#2a2a2a] p-5 rounded-lg mb-6">
+                    <h3 class="font-bold text-lg mb-3 text-white">Pagamento</h3>
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center">
+                             <i class="fab fa-cc-visa text-3xl mr-4 text-blue-400"></i>
+                             <div>
+                                <p class="text-sm text-white">Cartão de Crédito</p>
+                                <p class="text-xs text-secondary">Final **** 1234</p>
+                             </div>
+                        </div>
+                        <button class="text-sm text-primary font-semibold" onclick="showAlterarPagamentoModal()">Alterar</button>
+                    </div>
+                </div>
+                
+                <!-- Seção Ações -->
+                 <div class="space-y-4">
+                    <button class="w-full text-left p-5 rounded-lg bg-[#2a2a2a] flex items-center justify-between hover:bg-[#3a3a3a] transition-colors" onclick="showMudarPlanoModal()">
+                        <span class="font-semibold"><i class="fas fa-exchange-alt w-6 text-center mr-3 text-primary"></i>Mudar de plano</span>
+                        <i class="fas fa-chevron-right text-gray-500"></i>
+                    </button>
+                     <button class="w-full text-left p-5 rounded-lg bg-[#2a2a2a] flex items-center justify-between hover:bg-[#3a3a3a] transition-colors" onclick="showPausarAssinaturaModal()">
+                        <span class="font-semibold"><i class="fas fa-pause-circle w-6 text-center mr-3 text-primary"></i>Pausar assinatura</span>
+                         <i class="fas fa-chevron-right text-gray-500"></i>
+                    </button>
+                    <button class="w-full text-left p-5 rounded-lg bg-[#2a2a2a] flex items-center justify-between hover:bg-[#3a3a3a] transition-colors" onclick="showCancelarAssinaturaModal()">
+                        <span class="text-red-500 font-semibold"><i class="fas fa-times-circle w-6 text-center mr-3"></i>Cancelar assinatura</span>
+                         <i class="fas fa-chevron-right text-gray-500"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        openModal(modalHtml, 'bg-transparent border-none', 'center');
+    }
+    
+    function showCancelarAssinaturaModal() {
+         const modalHtml = `
+            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl">
+                 <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="showGerenciarAssinaturaModal()">&times;</button>
+                 <h2 class="text-2xl font-bold text-center mb-4 text-red-500">Cancelar Assinatura</h2>
+                 <p class="text-center text-secondary text-sm mb-8">Lamentamos ver você partir. Por favor, conte-nos o motivo.</p>
+
+                <div id="cancel-reasons-container" class="space-y-3 text-left">
+                    <div class="reason-item flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg cursor-pointer border-2 border-transparent" onclick="selectReason(this)">
+                        <span>O valor está muito alto</span>
+                        <i class="fas fa-check-circle text-primary hidden check-icon"></i>
+                    </div>
+                    <div class="reason-item flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg cursor-pointer border-2 border-transparent" onclick="selectReason(this)">
+                        <span>Não estou usando com frequência</span>
+                        <i class="fas fa-check-circle text-primary hidden check-icon"></i>
+                    </div>
+                     <div class="reason-item flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg cursor-pointer border-2 border-transparent" onclick="selectReason(this)">
+                        <span>Encontrei uma opção melhor/mais barata</span>
+                        <i class="fas fa-check-circle text-primary hidden check-icon"></i>
+                    </div>
+                    <div class="reason-item flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg cursor-pointer border-2 border-transparent" onclick="selectReason(this)">
+                        <span>Qualidade do serviço/atendimento</span>
+                        <i class="fas fa-check-circle text-primary hidden check-icon"></i>
+                    </div>
+                    <div class="reason-item flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg cursor-pointer border-2 border-transparent" onclick="selectReason(this)">
+                        <span>Outro</span>
+                        <i class="fas fa-check-circle text-primary hidden check-icon"></i>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex space-x-4">
+                    <button class="flex-1 py-2 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showGerenciarAssinaturaModal()">Voltar</button>
+                    <button class="flex-1 py-2 font-semibold rounded-lg bg-red-600 text-white" onclick="showConfirmarCancelamentoFinalModal()">Confirmar</button>
+                </div>
+            </div>
+        `;
+        openModal(modalHtml, 'bg-transparent border-none', 'center');
+    }
+    
+    function selectReason(element) {
+        // Remove selection from all items
+        document.querySelectorAll('#cancel-reasons-container .reason-item').forEach(item => {
+            item.classList.remove('border-primary');
+            item.querySelector('.check-icon').classList.add('hidden');
+        });
+
+        // Add selection to the clicked item
+        element.classList.add('border-primary');
+        element.querySelector('.check-icon').classList.remove('hidden');
+    }
+
+    function showConfirmarCancelamentoFinalModal() {
+        const modalHtml = `
+            <div class="info-card text-center p-6">
+                <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+                <h2 class="text-xl font-bold mb-4 modal-title">Confirmar Cancelamento</h2>
+                <p class="text-secondary mb-6">Você tem certeza que deseja cancelar sua assinatura? Esta ação não pode ser desfeita.</p>
+                <div class="flex justify-center space-x-4">
+                    <button class="flex-1 py-2 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showGerenciarAssinaturaModal()">Manter</button>
+                    <button class="flex-1 py-2 font-semibold rounded-lg bg-red-600 text-white" onclick="handleSubscriptionCancellation()">Cancelar</button>
+                </div>
+            </div>
+        `;
+        openModal(modalHtml, 'border-none', 'center');
+    }
+
+    function handleSubscriptionCancellation() {
+        // Lógica para cancelar a assinatura (ex: API call)
+        userSubscription.active = false;
+        saveState(); // Salva o novo estado
+        showCancelamentoConfirmadoModal();
+    }
+
+    function showCancelamentoConfirmadoModal() {
+        const modalHtml = `
+             <div class="info-card text-center p-6">
+                <i class="far fa-check-circle text-5xl text-primary mb-4"></i>
+                <h2 class="text-xl font-bold mb-4 modal-title">Assinatura Cancelada</h2>
+                <p class="text-secondary mb-6">Sua assinatura foi cancelada com sucesso. Esperamos ver você novamente em breve!</p>
+                <button class="w-full py-2 font-semibold rounded-lg btn-primary" onclick="closeModal(); renderView('planos');">Fechar</button>
+            </div>
+        `;
+        openModal(modalHtml, 'border-none', 'center');
+    }
+
 
     function showTermosModal() {
         const termosHtml = `
@@ -1930,6 +2029,21 @@ function showNotificacoesModal() {
             </div>
         `;
         openModal(termosHtml, 'bg-transparent border-none p-0', 'center');
+    }
+
+    function showFaleConoscoModal() {
+        const modalHtml = `
+            <div class="info-card text-center p-6">
+                <i class="fab fa-whatsapp text-5xl text-green-500 mb-4"></i>
+                <h2 class="text-xl font-bold mb-4 modal-title">Fale Conosco</h2>
+                <p class="text-secondary mb-6">Deseja abrir uma conversa no WhatsApp para tirar suas dúvidas?</p>
+                <div class="flex justify-center space-x-4">
+                    <button class="py-2 px-8 font-bold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
+                    <a href="https://wa.me/5537996719604" target="_blank" class="py-2 px-8 font-bold rounded-lg bg-green-600 hover:bg-green-700 text-white flex items-center"><i class="fab fa-whatsapp mr-2"></i>WhatsApp</a>
+                </div>
+            </div>
+        `;
+        openModal(modalHtml, 'border-none', 'center');
     }
 
 
