@@ -295,16 +295,26 @@
 </head>
 <body>
     <!-- Tela de Carregamento -->
-    <div id="loading-screen" class="fixed inset-0 bg-black flex flex-col items-center justify-between p-8 z-50">
-        <div class="flex-grow flex items-center justify-center">
-             <img src="https://i.postimg.cc/5yBSjg1F/Bigode-3.png" alt="Logo VS Barbearia" class="w-24 h-24 fade-in">
-        </div>
-        <div class="text-center pb-4">
+    <div id="loading-screen" class="fixed inset-0 bg-black flex flex-col items-center justify-center p-8 z-50">
+        <!-- Bloco de conteúdo principal centralizado -->
+        <div class="flex flex-col items-center text-center">
+            <!-- Logo -->
+            <img src="https://i.postimg.cc/5yBSjg1F/Bigode-3.png" alt="Logo VS Barbearia" class="w-20 h-20 fade-in mb-16">
+    
+            <!-- Loader -->
+            <div class="loader mx-auto mb-16"></div>
+    
+            <!-- Texto -->
             <div class="fade-in-delay">
-                <h1 class="text-2xl font-bold text-white">Elevando a sua experiência</h1>
-                <p class="text-gray-400 mt-2 text-sm max-w-xs">Mais que uma barbearia, uma experiência premium para quem valoriza estilo e qualidade.</p>
+                <h1 class="text-lg font-bold text-white">Elevando a sua experiência</h1>
+                <p class="text-gray-400 mt-2 text-xs max-w-[220px] mx-auto">Estilo e precisão em cada corte.</p>
             </div>
-            <div class="loader mt-8 mx-auto"></div>
+        </div>
+    
+        <!-- Seção "Criado por" posicionada na parte inferior -->
+        <div class="absolute bottom-28 flex items-center justify-center space-x-3">
+            <span class="text-lg text-gray-400">Criado por</span>
+            <img src="https://i.postimg.cc/D0pp6j3q/Subcabe-alho-39.png" alt="Vel Sites Logo" class="h-10" onerror="this.style.display='none'">
         </div>
     </div>
 
@@ -747,7 +757,7 @@
                                  <p class="text-gray-400">Barbeiro</p>
                                  <p class="text-white">${ag.barbeiro.nome}</p>
                              </div>
-                              <div>
+                             <div>
                                  <p class="text-gray-400">Serviço</p>
                                  <p class="text-white">${ag.servico.nome}</p>
                              </div>
@@ -1611,18 +1621,18 @@
     }
 
     /*
- * NOTA IMPORTANTE:
- * Para este código funcionar, adicione a seguinte classe CSS
- * dentro da sua tag <style> no início do seu arquivo HTML.
- * O problema anterior ocorria porque esta classe estava faltando.
- *
- * .bg-primary {
- * background-color: #fbb62c;
- * }
- *
- * Você pode adicioná-la perto das outras classes ".text-primary"
- * para manter o código organizado.
- */
+* NOTA IMPORTANTE:
+* Para este código funcionar, adicione a seguinte classe CSS
+* dentro da sua tag <style> no início do seu arquivo HTML.
+* O problema anterior ocorria porque esta classe estava faltando.
+*
+* .bg-primary {
+* background-color: #fbb62c;
+* }
+*
+* Você pode adicioná-la perto das outras classes ".text-primary"
+* para manter o código organizado.
+*/
 function showNotificacoesModal() {
     // Simula o estado das preferências de notificação.
     // Em uma aplicação real, isso viria do seu banco de dados ou localStorage.
