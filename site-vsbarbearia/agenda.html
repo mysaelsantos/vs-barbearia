@@ -423,6 +423,7 @@
     let selection = {};
     let userLoggedIn = true; // Mantendo logado para testes
     let isAuthModalOpen = false;
+    let remarcarSelection = {}; // Estado para remarcação
 
     // --- ELEMENTOS DO DOM ---
     const modalContainer = document.getElementById('modal-container');
@@ -856,11 +857,24 @@
         const agendamento = agendamentos.abertos.find(ag => ag.id === id);
         if (!agendamento) return;
 
-        const data = new Date(agendamento.data);
-        const dataFormatada = data.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
-        const horaFormatada = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const dataAgendamento = new Date(agendamento.data);
+        const agora = new Date();
+        const diffHoras = (dataAgendamento - agora) / (1000 * 60 * 60);
+        const podeRemarcar = diffHoras > 7;
+
+        const dataFormatada = dataAgendamento.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+        const horaFormatada = dataAgendamento.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         
         const preco = agendamento.servico.promocao ? agendamento.servico.promocao.toFixed(2) : agendamento.servico.preco.toFixed(2);
+
+        const remarcarButtonHtml = podeRemarcar
+            ? `<button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="showRemarcarModal(${id})">Remarcar</button>`
+            : `<div class="relative group">
+                   <button class="w-full py-3 font-bold rounded-lg btn-primary cursor-not-allowed" disabled>Remarcar</button>
+                   <span class="absolute hidden group-hover:block -top-12 left-1/2 -translate-x-1/2 w-max max-w-xs bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-90">
+                       Não é possível remarcar com menos de 7h de antecedência.
+                   </span>
+               </div>`;
 
         const modalHtml = `
             <div class="info-card p-6">
@@ -885,7 +899,7 @@
                     </div>
                 </div>
                 <div class="mt-8 space-y-3">
-                    <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="remarcarAgendamento(${id})">Remarcar</button>
+                    ${remarcarButtonHtml}
                     <button class="w-full py-3 font-bold rounded-lg btn-bordered" onclick="showCancelarConfirmacaoModal(${id})">Cancelar agendamento</button>
                 </div>
             </div>
@@ -893,9 +907,197 @@
         openModal(modalHtml);
     }
     
-    function remarcarAgendamento(id) {
-        closeModal();
-        renderView('agendar');
+    function showRemarcarModal(id) {
+        const agendamento = agendamentos.abertos.find(ag => ag.id === id);
+        if (!agendamento) return;
+        remarcarSelection = { id }; // Reset selection
+
+        let displayMonth = new Date().getMonth();
+        let displayYear = new Date().getFullYear();
+        
+        function renderCalendarRemarcar(month, year) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const limitDate = new Date();
+            limitDate.setDate(limitDate.getDate() + 7);
+            limitDate.setHours(0, 0, 0, 0);
+
+            const firstDayOfMonth = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            
+            let calendarHeader = `<div class="flex justify-between items-center text-white mb-4 px-2">
+                <button id="prev-month-remarcar" class="text-xl p-2"><i class="fas fa-chevron-left"></i></button>
+                <h3 class="font-bold text-lg">${monthNames[month]} ${year}</h3>
+                <button id="next-month-remarcar" class="text-xl p-2"><i class="fas fa-chevron-right"></i></button>
+            </div>`;
+            
+            let dayHeaders = `<div class="grid grid-cols-7 text-center text-sm mb-2">
+                ${['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(d => `<div class="calendar-day-header">${d}</div>`).join('')}
+            </div>`;
+            
+            let daysGrid = `<div class="calendar-grid">`;
+            for (let i = 0; i < firstDayOfMonth; i++) { daysGrid += `<div></div>`; }
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const currentDate = new Date(year, month, day);
+                const dayOfWeek = currentDate.getDay();
+
+                const isSelectable = currentDate >= today && currentDate <= limitDate && dayOfWeek !== 0;
+                const isToday = currentDate.getTime() === today.getTime();
+                
+                let dayClass = 'calendar-day';
+                if (isSelectable) {
+                    dayClass += ' available';
+                    if(isToday) {
+                        dayClass += ' today';
+                    }
+                } else {
+                    dayClass += ' unavailable';
+                }
+
+                daysGrid += `<div class="${dayClass}" ${!isSelectable ? 'disabled' : ''} onclick="selectRemarcarDate(this, ${year}, ${month}, ${day})">${day}</div>`;
+            }
+            daysGrid += `</div>`;
+            
+            return `<div style="width: 300px;">${calendarHeader}${dayHeaders}${daysGrid}</div>`;
+        }
+
+        const modalHtml = `
+            <div class="info-card p-6 flex flex-col" style="min-height: 550px; max-height: 90vh;">
+                <h2 class="text-xl font-bold mb-4 text-center modal-title">Remarcar Horário</h2>
+                <div class="flex-grow overflow-y-auto pr-2 modal-scroll-hidden">
+                    <div class="flex justify-center">
+                        <div id="calendar-container-remarcar"></div>
+                    </div>
+                    <div class="mt-6">
+                        <h3 class="font-bold text-center mb-4 text-white">Escolha o novo horário</h3>
+                        <div id="time-slots-remarcar" class="grid grid-cols-3 gap-2 text-center">
+                            <p class="col-span-3 text-gray-400 text-sm">Selecione uma data para ver os horários</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-auto pt-6 grid grid-cols-2 gap-4">
+                    <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showDetalhesAgendamento(${id})">Voltar</button>
+                    <button id="confirm-remarcar-btn" class="w-full py-3 font-semibold rounded-lg btn-plan opacity-50" disabled>Confirmar Novo Horário</button>
+                </div>
+            </div>
+        `;
+        openModal(modalHtml, 'bg-transparent border-none p-0', 'center');
+
+        function updateCalendar() {
+            document.getElementById('calendar-container-remarcar').innerHTML = renderCalendarRemarcar(displayMonth, displayYear);
+            document.getElementById('prev-month-remarcar').addEventListener('click', () => {
+                displayMonth--;
+                if (displayMonth < 0) { displayMonth = 11; displayYear--; }
+                updateCalendar();
+            });
+            document.getElementById('next-month-remarcar').addEventListener('click', () => {
+                displayMonth++;
+                if (displayMonth > 11) { displayMonth = 0; displayYear++; }
+                updateCalendar();
+            });
+        }
+        updateCalendar();
+    }
+
+    function selectRemarcarDate(element, year, month, day) {
+        if (element.hasAttribute('disabled')) return;
+        document.querySelectorAll('#calendar-container-remarcar .calendar-day.selected').forEach(el => el.classList.remove('selected'));
+        element.classList.add('selected');
+        remarcarSelection.data = new Date(year, month, day).toISOString();
+
+        const timeSlotsContainer = document.getElementById('time-slots-remarcar');
+        const allTimes = ['08:00', '08:40', '09:20', '10:00', '14:00', '14:40', '15:20', '16:00'];
+        const now = new Date();
+        const selectedDate = new Date(year, month, day);
+        
+        let availableTimes = allTimes;
+
+        if (selectedDate.toDateString() === now.toDateString()) {
+            availableTimes = allTimes.filter(time => {
+                const [hours, minutes] = time.split(':');
+                const slotTime = new Date(selectedDate);
+                slotTime.setHours(parseInt(hours), parseInt(minutes));
+                return slotTime > now;
+            });
+        }
+
+        if (availableTimes.length > 0) {
+            timeSlotsContainer.innerHTML = availableTimes.map(time => `<div class="p-3 rounded-lg cursor-pointer time-slot" onclick="selectRemarcarTime(this, '${time}')">${time}</div>`).join('');
+        } else {
+            timeSlotsContainer.innerHTML = '<p class="col-span-3 text-gray-400 text-sm">Não há horários disponíveis para hoje.</p>';
+        }
+    }
+
+    function selectRemarcarTime(element, time) {
+        document.querySelectorAll('#time-slots-remarcar .time-slot.selected').forEach(el => el.classList.remove('selected'));
+        element.classList.add('selected');
+        remarcarSelection.hora = time;
+        
+        const confirmBtn = document.getElementById('confirm-remarcar-btn');
+        confirmBtn.disabled = false;
+        confirmBtn.classList.remove('opacity-50');
+        confirmBtn.onclick = () => showConfirmarRemarcacaoModal(remarcarSelection.id, remarcarSelection.data, remarcarSelection.hora);
+    }
+
+    function showConfirmarRemarcacaoModal(id, newDateISO, newTime) {
+        const agendamento = agendamentos.abertos.find(ag => ag.id === id);
+        const dataAntiga = new Date(agendamento.data);
+        const dataNova = new Date(newDateISO);
+
+        const dataAntigaFormatada = dataAntiga.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' });
+        const horaAntigaFormatada = dataAntiga.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        
+        const dataNovaFormatada = dataNova.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' });
+
+        const modalHtml = `
+            <div class="info-card text-center p-6">
+                <i class="fas fa-calendar-check text-4xl text-primary mb-4"></i>
+                <h2 class="text-xl font-bold mb-4 modal-title">Confirmar Remarcação</h2>
+                <div class="text-left space-y-4 text-secondary mb-6">
+                    <div>
+                        <p class="font-semibold text-gray-400">De:</p>
+                        <p class="text-white">${dataAntigaFormatada} às ${horaAntigaFormatada}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-400">Para:</p>
+                        <p class="text-white">${dataNovaFormatada} às ${newTime}</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <button class="w-full py-2 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showRemarcarModal(${id})">Voltar</button>
+                    <button class="w-full py-2 font-semibold rounded-lg btn-plan" onclick="handleRemarcacao(${id}, '${newDateISO}', '${newTime}')">Confirmar</button>
+                </div>
+            </div>
+        `;
+        openModal(modalHtml, 'border-none', 'center');
+    }
+
+    function handleRemarcacao(id, newDateISO, newTime) {
+        const agendamentoIndex = agendamentos.abertos.findIndex(ag => ag.id === id);
+        if (agendamentoIndex === -1) return;
+
+        const [hours, minutes] = newTime.split(':');
+        const newDate = new Date(newDateISO);
+        newDate.setHours(parseInt(hours), parseInt(minutes));
+
+        agendamentos.abertos[agendamentoIndex].data = newDate.toISOString();
+        
+        showRemarcacaoSuccessModal();
+    }
+
+    function showRemarcacaoSuccessModal() {
+        const modalHtml = `
+            <div class="info-card text-center p-6">
+                <i class="far fa-check-circle text-5xl text-primary mb-4"></i>
+                <h2 class="text-xl font-bold mb-4 modal-title">Agendamento Remarcado!</h2>
+                <p class="text-secondary mb-6">Seu horário foi atualizado com sucesso.</p>
+                <button class="w-full py-2 font-semibold rounded-lg btn-primary" onclick="closeModal(); renderView('historico');">Fechar</button>
+            </div>
+        `;
+        openModal(modalHtml, 'border-none', 'center');
     }
 
     function showCancelarConfirmacaoModal(id) {
