@@ -380,9 +380,7 @@
     ];
     
     const agendamentos = {
-        abertos: [
-            { id: 101, data: '2025-08-15T14:00:00', unidade: unidades[0], barbeiro: barbeiros[1], servico: servicos[2] }
-        ],
+        abertos: [],
         historico: [
             { id: 100, data: '2025-07-20T10:00:00', unidade: unidades[1], barbeiro: barbeiros[2], servico: servicos[0], avaliacao: 5 },
             { id: 99, data: '2025-06-15T16:20:00', unidade: unidades[0], barbeiro: barbeiros[1], servico: servicos[1], avaliacao: null }
@@ -1369,12 +1367,16 @@
         saveState();
     }
     
-    function confirmAndReset() {
-        closeModal();
-        setTimeout(() => {
-            clearSelectionState();
-            renderView('agendar');
-        }, 310); 
+    function showLimiteAgendamentosModal() {
+        const modalHtml = `
+            <div class="info-card text-center p-6">
+                <i class="fas fa-exclamation-circle text-4xl text-yellow-500 mb-4"></i>
+                <h2 class="text-xl font-bold mb-4 modal-title">Limite Atingido</h2>
+                <p class="text-secondary mb-6">Você já atingiu o limite de 2 agendamentos para este dia.</p>
+                <button class="w-full py-2 font-semibold rounded-lg btn-primary" onclick="closeModal()">Entendido</button>
+            </div>
+        `;
+        openModal(modalHtml, 'border-none', 'center');
     }
 
     function resetSelections() {
@@ -1389,9 +1391,36 @@
 
     function confirmarAgendamento() {
         const agendarBtn = document.getElementById('agendar-btn');
-        if(!agendarBtn) return;
-        if(agendarBtn.disabled) return;
+        if(!agendarBtn || agendarBtn.disabled) return;
 
+        const selectedDate = new Date(selection.data);
+        const selectedDateString = selectedDate.toISOString().split('T')[0];
+
+        const agendamentosNoDia = agendamentos.abertos.filter(ag => {
+            const agDateString = new Date(ag.data).toISOString().split('T')[0];
+            return agDateString === selectedDateString;
+        });
+
+        if (agendamentosNoDia.length >= 2) {
+            showLimiteAgendamentosModal();
+            return;
+        }
+
+        const newId = Date.now();
+        const [hours, minutes] = selection.hora.split(':');
+        const finalDate = new Date(selection.data);
+        finalDate.setHours(parseInt(hours), parseInt(minutes));
+
+        const novoAgendamento = {
+            id: newId,
+            data: finalDate.toISOString(),
+            unidade: selection.unidade,
+            barbeiro: selection.barbeiro,
+            servico: selection.servico
+        };
+
+        agendamentos.abertos.push(novoAgendamento);
+        
         const dataFormatada = new Date(selection.data).toLocaleDateString('pt-BR', {
             day: '2-digit',
             month: '2-digit',
@@ -1416,10 +1445,11 @@
                     <p><strong class="text-white">Horário:</strong> Às ${selection.hora}</p>
                 </div>
 
-                <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="confirmAndReset()">Novo Agendamento</button>
+                <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="closeModal(); renderView('historico');">Ver Meus Agendamentos</button>
             </div>
         `;
         openModal(successMessage);
+        clearSelectionState();
     }
 
     // --- LÓGICA DE LOGIN/CADASTRO E REDEFINIÇÃO DE SENHA ---
