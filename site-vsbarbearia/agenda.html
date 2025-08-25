@@ -49,10 +49,10 @@
             transition: opacity 0.5s ease-out;
         }
         /* --- REMOVER BARRA DE SCROLL --- */
-        #main-content::-webkit-scrollbar {
+        #main-content::-webkit-scrollbar, .modal-scroll-hidden::-webkit-scrollbar {
             display: none;
         }
-        #main-content {
+        #main-content, .modal-scroll-hidden {
             -ms-overflow-style: none;  /* IE and Edge */
             scrollbar-width: none;  /* Firefox */
         }
@@ -389,7 +389,7 @@
         ]
     };
 
-    const userSubscription = {
+    let userSubscription = {
         active: true,
         plan: planos[2],
         nextBillingDate: '10/09/2025',
@@ -1229,15 +1229,15 @@
                  <div class="w-24 h-0.5 bg-primary mx-auto mb-8"></div>
                 <div class="relative mb-4">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3"><i class="fas fa-user text-gray-400"></i></span>
-                    <input type="text" placeholder="E-mail ou telefone" class="w-full p-3 pl-10 rounded-lg">
+                    <input type="text" id="login-user" oninput="validateLoginForm()" placeholder="E-mail ou telefone" class="w-full p-3 pl-10 rounded-lg">
                 </div>
                 <div class="relative mb-6">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3"><i class="fas fa-lock text-gray-400"></i></span>
-                    <input type="password" id="login-pin" oninput="this.value = this.value.replace(/\\D/g, '')" placeholder="PIN de 6 dígitos" class="w-full p-3 pl-10 rounded-lg" maxlength="6" inputmode="numeric">
+                    <input type="password" id="login-pin" oninput="this.value = this.value.replace(/\\D/g, ''); validateLoginForm()" placeholder="PIN de 6 dígitos" class="w-full p-3 pl-10 rounded-lg" maxlength="6" inputmode="numeric">
                     <span class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer" onclick="togglePinVisibility('login-pin')"><i class="fas fa-eye text-gray-400"></i></span>
                 </div>
-                <button class="w-full py-3 bg-white text-black font-bold rounded-lg mb-4" onclick="handleLogin()">Login</button>
-                <a href="#" class="text-sm text-gray-400" onclick="showEsqueciSenha()">Esqueceu a senha?</a>
+                <button id="login-btn" class="w-full py-3 btn-plan font-bold rounded-lg opacity-50" onclick="handleLogin()" disabled>Login</button>
+                <a href="#" class="text-sm text-gray-400 mt-4 block" onclick="showEsqueciSenha()">Esqueceu a senha?</a>
                 <p class="text-sm text-gray-400 mt-2">Não possui conta? <a href="#" class="font-bold text-primary" onclick="showCadastro()">Faça seu cadastro</a></p>
                 <div class="mt-8">
                     <button class="btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
@@ -1245,6 +1245,33 @@
             </div>
         `;
         openModal(loginHtml, 'bg-transparent border-none', 'center');
+    }
+    
+    function validateLoginForm() {
+        const userInput = document.getElementById('login-user');
+        const pinInput = document.getElementById('login-pin');
+        const loginBtn = document.getElementById('login-btn');
+
+        if (userInput.value.trim().length > 0 && pinInput.value.length === 6) {
+            loginBtn.disabled = false;
+            loginBtn.classList.remove('opacity-50');
+        } else {
+            loginBtn.disabled = true;
+            loginBtn.classList.add('opacity-50');
+        }
+    }
+
+    function handleLogin() {
+        const loginBtn = document.getElementById('login-btn');
+        loginBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+        loginBtn.disabled = true;
+
+        setTimeout(() => {
+            userLoggedIn = true;
+            saveState();
+            closeModal();
+            setTimeout(confirmarAgendamento, 310);
+        }, 3000);
     }
 
     function showCadastro() {
@@ -1496,13 +1523,6 @@
         setTimeout(confirmarAgendamento, 310);
     }
 
-    function handleLogin() {
-        userLoggedIn = true;
-        saveState();
-        closeModal();
-        setTimeout(confirmarAgendamento, 310);
-    }
-
     function handleCadastro() {
         const nameInput = document.getElementById('signup-name');
         const firstName = nameInput ? nameInput.value.trim().split(' ')[0] : '';
@@ -1681,8 +1701,92 @@
     }
 
     function showAlterarPinModal() {
-        openModal('<h2 class="text-xl font-bold mb-6 text-center modal-title">Alterar PIN</h2><p class="text-center text-secondary">Funcionalidade em desenvolvimento.</p>');
+        const modalHtml = `
+            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col auth-form" style="min-height: 550px;">
+                <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="closeModal()">&times;</button>
+                <h2 class="text-2xl font-bold text-center mb-6 modal-title">Alterar PIN</h2>
+                
+                <div class="space-y-4 flex-grow">
+                    <div class="relative">
+                        <label class="text-sm font-semibold text-gray-400 mb-1 block">PIN Atual</label>
+                        <input type="password" id="current-pin" oninput="validatePinChangeForm()" placeholder="••••••" class="w-full p-3 rounded-lg" maxlength="6" inputmode="numeric">
+                        <span class="absolute top-9 right-0 flex items-center pr-3 cursor-pointer" onclick="togglePinVisibility('current-pin')"><i class="fas fa-eye text-gray-400"></i></span>
+                    </div>
+                     <div class="relative">
+                        <label class="text-sm font-semibold text-gray-400 mb-1 block">Novo PIN</label>
+                        <input type="password" id="new-pin" oninput="validatePinChangeForm()" placeholder="••••••" class="w-full p-3 rounded-lg" maxlength="6" inputmode="numeric">
+                        <span class="absolute top-9 right-0 flex items-center pr-3 cursor-pointer" onclick="togglePinVisibility('new-pin')"><i class="fas fa-eye text-gray-400"></i></span>
+                    </div>
+                    <div class="relative">
+                        <label class="text-sm font-semibold text-gray-400 mb-1 block">Confirmar Novo PIN</label>
+                        <input type="password" id="confirm-new-pin" oninput="validatePinChangeForm()" placeholder="••••••" class="w-full p-3 rounded-lg" maxlength="6" inputmode="numeric">
+                         <span class="absolute top-9 right-0 flex items-center pr-3 cursor-pointer" onclick="togglePinVisibility('confirm-new-pin')"><i class="fas fa-eye text-gray-400"></i></span>
+                    </div>
+                    <div id="pin-change-error" class="text-red-500 text-sm h-4"></div>
+                </div>
+
+                <div class="mt-auto grid grid-cols-2 gap-4 pt-6">
+                    <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
+                    <button id="save-pin-btn" class="w-full py-3 font-semibold rounded-lg btn-plan opacity-50" onclick="handlePinChange()" disabled>Salvar</button>
+                </div>
+            </div>
+        `;
+        openModal(modalHtml, 'bg-transparent border-none', 'center');
     }
+
+    function validatePinChangeForm() {
+        const currentPin = document.getElementById('current-pin');
+        const newPin = document.getElementById('new-pin');
+        const confirmNewPin = document.getElementById('confirm-new-pin');
+        const errorDiv = document.getElementById('pin-change-error');
+        const saveBtn = document.getElementById('save-pin-btn');
+
+        currentPin.value = currentPin.value.replace(/\D/g, '');
+        newPin.value = newPin.value.replace(/\D/g, '');
+        confirmNewPin.value = confirmNewPin.value.replace(/\D/g, '');
+
+        let allValid = true;
+        errorDiv.textContent = ''; // Limpa o erro
+
+        if (newPin.value.length === 6 && newPin.value === currentPin.value) {
+            errorDiv.textContent = 'O novo PIN não pode ser igual ao atual.';
+            allValid = false;
+        }
+        else if (newPin.value.length > 0 && confirmNewPin.value.length > 0 && newPin.value !== confirmNewPin.value) {
+            errorDiv.textContent = 'Os novos PINs não conferem.';
+            allValid = false;
+        }
+
+        if (currentPin.value.length !== 6) allValid = false;
+        if (newPin.value.length !== 6) allValid = false;
+        if (confirmNewPin.value.length !== 6) allValid = false;
+
+        if (allValid) {
+            saveBtn.disabled = false;
+            saveBtn.classList.remove('opacity-50');
+        } else {
+            saveBtn.disabled = true;
+            saveBtn.classList.add('opacity-50');
+        }
+    }
+
+    function handlePinChange() {
+        // Aqui iria a lógica para verificar o PIN atual e salvar o novo
+        showPinChangeSuccessModal();
+    }
+
+    function showPinChangeSuccessModal() {
+        const modalHtml = `
+            <div class="info-card text-center p-6">
+                <i class="fas fa-key text-5xl text-primary mb-4"></i>
+                <h2 class="text-xl font-bold mb-4 modal-title">PIN Alterado!</h2>
+                <p class="text-secondary mb-6">Seu PIN foi atualizado com sucesso. Use-o no seu próximo login.</p>
+                <button class="w-full py-2 font-semibold rounded-lg btn-primary" onclick="closeModal()">Fechar</button>
+            </div>
+        `;
+        modalContent.innerHTML = modalHtml;
+    }
+
 
     let currentRating = 0;
     function setRating(rating) {
@@ -1965,6 +2069,122 @@
         openModal(modalHtml, 'border-none', 'center');
     }
 
+    function showMudarPlanoModal() {
+        const currentPlan = userSubscription.plan;
+        const otherPlans = planos.filter(p => p.title !== currentPlan.title);
+
+        const currentPlanHtml = `
+            <div class="plan-card popular mb-6">
+                 <div class="bg-[#fbb62c] text-black text-center py-1 font-bold text-sm">SEU PLANO ATUAL</div>
+                 <div class="p-6">
+                     <h3 class="text-xl font-bold mb-2 text-white">${currentPlan.title}</h3>
+                     <div class="flex items-baseline mb-6">
+                         <span class="text-4xl font-bold text-primary">R$${currentPlan.price}</span>
+                         <span class="text-gray-400 ml-1">${currentPlan.period}</span>
+                     </div>
+                     <ul class="space-y-3 text-secondary text-sm">
+                         ${currentPlan.features.map(f => `<li class="flex items-start"><i class="fas fa-check text-primary mr-3 mt-1"></i><span>${f}</span></li>`).join('')}
+                     </ul>
+                 </div>
+            </div>
+        `;
+
+        const otherPlansHtml = otherPlans.map(plan => `
+            <div class="plan-card rounded-xl overflow-hidden flex flex-col">
+                 <div class="p-6 flex flex-col flex-grow">
+                     <h3 class="text-xl font-bold mb-2 text-white">${plan.title}</h3>
+                     <div class="flex items-baseline mb-6">
+                         <span class="text-4xl font-bold text-primary">R$${plan.price}</span>
+                         <span class="text-gray-400 ml-1">${plan.period}</span>
+                     </div>
+                     <ul class="space-y-3 mb-8 flex-grow text-secondary text-sm">
+                         ${plan.features.map(f => `<li class="flex items-start"><i class="fas fa-check text-primary mr-3 mt-1"></i><span>${f}</span></li>`).join('')}
+                     </ul>
+                     <button class="btn-plan mt-auto" onclick="confirmarMudancaPlano('${plan.title}')">Mudar para este plano</button>
+                 </div>
+            </div>
+        `).join('');
+
+        const modalHtml = `
+            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col" style="min-height: 550px; max-height: 90vh;">
+                 <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="showGerenciarAssinaturaModal()">&times;</button>
+                 <h2 class="text-2xl font-bold text-center mb-4 modal-title">Mudar de Plano</h2>
+                
+                 <div class="flex-grow overflow-y-auto pr-2 modal-scroll-hidden">
+                    ${currentPlanHtml}
+                    <h3 class="text-lg font-semibold text-center my-4">Outros Planos</h3>
+                    <div class="space-y-4">
+                        ${otherPlansHtml}
+                    </div>
+                 </div>
+
+                 <div class="mt-auto pt-6">
+                    <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showGerenciarAssinaturaModal()">Continuar com o plano atual</button>
+                 </div>
+            </div>
+        `;
+        openModal(modalHtml, 'bg-transparent border-none p-0', 'center');
+    }
+
+    function confirmarMudancaPlano(newPlanTitle) {
+        const currentPlan = userSubscription.plan;
+        const newPlan = planos.find(p => p.title === newPlanTitle);
+        const currentPrice = parseFloat(currentPlan.price.replace(',', '.'));
+        const newPrice = parseFloat(newPlan.price.replace(',', '.'));
+
+        let confirmationMessage = '';
+        if (newPrice > currentPrice) {
+            // Upgrade
+            confirmationMessage = `Você gostaria de iniciar seu novo plano agora? A diferença de valor será cobrada hoje.`;
+        } else {
+            // Downgrade
+            confirmationMessage = `Sua mudança para o novo plano será efetivada na próxima renovação, em ${userSubscription.nextBillingDate}.`;
+        }
+
+        const modalHtml = `
+            <div class="info-card text-center p-6">
+                <i class="fas fa-exchange-alt text-4xl text-primary mb-4"></i>
+                <h2 class="text-xl font-bold mb-4 modal-title">Confirmar Mudança</h2>
+                <p class="text-secondary mb-2">Você está mudando do plano <strong>${currentPlan.title}</strong> para <strong>${newPlan.title}</strong>.</p>
+                <p class="text-secondary mb-6">${confirmationMessage}</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <button class="w-full py-2 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showMudarPlanoModal()">Voltar</button>
+                    <button class="w-full py-2 font-semibold rounded-lg btn-plan" onclick="handlePlanChange('${newPlanTitle}')">Confirmar</button>
+                </div>
+            </div>
+        `;
+        openModal(modalHtml, 'border-none', 'center');
+    }
+    
+    function handlePlanChange(newPlanTitle) {
+        const newPlan = planos.find(p => p.title === newPlanTitle);
+        userSubscription.plan = newPlan;
+        saveState();
+
+        const successHtml = `
+             <div class="info-card text-center p-6">
+                <i class="far fa-check-circle text-5xl text-primary mb-4"></i>
+                <h2 class="text-xl font-bold mb-4 modal-title">Plano Alterado!</h2>
+                <p class="text-secondary mb-6">Seu plano foi alterado para <strong>${newPlan.title}</strong> com sucesso.</p>
+                <button class="w-full py-2 font-semibold rounded-lg btn-primary" onclick="closeModal(); renderView('planos');">Fechar</button>
+            </div>
+        `;
+        modalContent.innerHTML = successHtml;
+    }
+
+
+    function showPausarAssinaturaModal() {
+        const modalHtml = `
+            <div class="info-card text-center p-6">
+                <i class="fas fa-pause-circle text-4xl text-primary mb-4"></i>
+                <h2 class="text-xl font-bold mb-4 modal-title">Pausar Assinatura</h2>
+                <p class="text-secondary mb-6">Funcionalidade em desenvolvimento.</p>
+                 <button class="w-full py-2 font-semibold rounded-lg btn-primary" onclick="showGerenciarAssinaturaModal()">Voltar</button>
+            </div>
+        `;
+         openModal(modalHtml, 'border-none', 'center');
+    }
+
     // --- MODAIS DE PAGAMENTO ---
     function showAlterarPagamentoModal() {
         const primaryMethod = paymentMethods.find(p => p.primary);
@@ -2007,7 +2227,6 @@
 
         const modalHtml = `
             <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col" style="min-height: 550px;">
-                <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="showGerenciarAssinaturaModal()">&times;</button>
                 <h2 class="text-2xl font-bold text-center mb-6 modal-title">Formas de Pagamento</h2>
                 
                 <div class="space-y-4 flex-grow">
@@ -2016,13 +2235,17 @@
                     ${otherMethodsHtml}
                 </div>
 
-                <div class="mt-auto space-y-3 pt-6">
-                     <button class="w-full py-3 font-semibold rounded-lg bg-[#2a2a2a] flex items-center justify-center" onclick="showAdicionarCartaoForm()">
-                        <i class="fas fa-credit-card mr-3"></i> Adicionar Novo Cartão
-                    </button>
-                    <button class="w-full py-3 font-semibold rounded-lg bg-[#2a2a2a] flex items-center justify-center" onclick="showAdicionarPixForm()">
-                        <i class="fab fa-pix mr-3"></i> Adicionar Chave Pix
-                    </button>
+                <div class="mt-auto pt-6">
+                     <div class="space-y-3">
+                        <button class="w-full py-3 font-semibold rounded-lg bg-[#2a2a2a] flex items-center justify-center" onclick="showAdicionarCartaoForm()">
+                            <i class="fas fa-credit-card mr-3"></i> Adicionar Novo Cartão
+                        </button>
+                        <button class="w-full py-3 font-semibold rounded-lg bg-[#2a2a2a] flex items-center justify-center" onclick="showAdicionarPixForm()">
+                            <i class="fab fa-pix mr-3"></i> Adicionar Chave Pix
+                        </button>
+                     </div>
+                     <div class="border-t border-gray-700 my-4"></div>
+                     <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showGerenciarAssinaturaModal()">Voltar</button>
                 </div>
             </div>
         `;
