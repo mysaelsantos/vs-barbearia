@@ -1577,8 +1577,7 @@
 
     function showEditarPerfilModal() {
         const modalHtml = `
-            <div class="p-6 text-white relative" style="background-color: #1e1e1e; border-radius: 1rem;">
-                <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="closeModal()">&times;</button>
+            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col" style="min-height: 550px;">
                 <h2 class="text-2xl font-bold text-center mb-6 modal-title">Editar Perfil</h2>
 
                 <div class="flex flex-col items-center mb-8">
@@ -1588,7 +1587,7 @@
                     <button class="text-primary text-sm font-semibold">Trocar foto</button>
                 </div>
 
-                <form class="space-y-4 auth-form">
+                <form class="space-y-4 auth-form flex-grow">
                     <input type="text" id="edit-name" value="${userInfo.name}" placeholder="Nome" class="w-full p-3 rounded-lg">
                     <input type="tel" id="edit-phone" value="${userInfo.phone}" oninput="formatPhone(event)" placeholder="Telefone (celular)" class="w-full p-3 rounded-lg">
                     <input type="email" id="edit-email" value="${userInfo.email}" placeholder="E-mail" class="w-full p-3 rounded-lg">
@@ -1598,7 +1597,11 @@
                     </div>
                 </form>
 
-                <button class="w-full py-3 btn-plan font-bold rounded-lg mt-8" onclick="showSaveProfileConfirmation()">Salvar</button>
+                <div class="mt-auto pt-6">
+                    <button class="w-full py-3 btn-plan font-bold rounded-lg" onclick="showSaveProfileConfirmation()">Salvar</button>
+                    <div class="border-t border-gray-700 my-4"></div>
+                    <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
+                </div>
             </div>
         `;
         openModal(modalHtml, 'bg-transparent border-none', 'center');
@@ -1666,11 +1669,10 @@
         };
 
         const modalHtml = `
-            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl border border-gray-700">
-                <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="closeModal()">&times;</button>
+            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col" style="min-height: 550px;">
                 <h2 class="text-2xl font-bold text-center mb-2 modal-title">Notificações</h2>
                 <p class="text-center text-secondary text-sm mb-8">Defina suas preferências de notificação.</p>
-                <div class="space-y-4">
+                <div class="space-y-4 flex-grow">
                     <div id="email-notif-toggle" class="flex justify-between items-center p-4 rounded-lg cursor-pointer bg-[#2a2a2a]">
                         <span class="text-white font-medium">Notificações por e-mail</span>
                         <div class="relative w-11 h-6 rounded-full transition-colors duration-300 ease-in-out toggle-bg">
@@ -1684,7 +1686,11 @@
                         </div>
                     </div>
                 </div>
-                <button class="w-full py-3 btn-plan font-bold rounded-lg mt-8" onclick="closeModal()">Salvar</button>
+                <div class="mt-auto pt-6">
+                    <button class="w-full py-3 btn-plan font-bold rounded-lg" onclick="closeModal()">Salvar</button>
+                    <div class="border-t border-gray-700 my-4"></div>
+                    <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
+                </div>
             </div>
         `;
         openModal(modalHtml, 'bg-transparent border-none', 'center');
@@ -1703,7 +1709,6 @@
     function showAlterarPinModal() {
         const modalHtml = `
             <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col auth-form" style="min-height: 550px;">
-                <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="closeModal()">&times;</button>
                 <h2 class="text-2xl font-bold text-center mb-6 modal-title">Alterar PIN</h2>
                 
                 <div class="space-y-4 flex-grow">
@@ -1927,8 +1932,7 @@
 
     function showGerenciarAssinaturaModal() {
         const modalHtml = `
-            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl" style="min-height: 550px;">
-                 <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="closeModal()">&times;</button>
+            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col" style="min-height: 550px;">
                  <h2 class="text-2xl font-bold text-center mb-8 modal-title">Gerenciar Assinatura</h2>
 
                 <!-- Seção Meu Plano -->
@@ -1958,7 +1962,7 @@
                 </div>
                 
                 <!-- Seção Ações -->
-                 <div class="space-y-4">
+                 <div class="space-y-4 flex-grow">
                     <button class="w-full text-left p-5 rounded-lg bg-[#2a2a2a] flex items-center justify-between hover:bg-[#3a3a3a] transition-colors" onclick="showMudarPlanoModal()">
                         <span class="font-semibold"><i class="fas fa-exchange-alt w-6 text-center mr-3 text-primary"></i>Mudar de plano</span>
                         <i class="fas fa-chevron-right text-gray-500"></i>
@@ -1972,6 +1976,10 @@
                          <i class="fas fa-chevron-right text-gray-500"></i>
                     </button>
                 </div>
+                <div class="mt-auto pt-6">
+                    <div class="border-t border-gray-700 my-4"></div>
+                    <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
+                </div>
             </div>
         `;
         openModal(modalHtml, 'bg-transparent border-none', 'center');
@@ -1980,7 +1988,6 @@
     function showCancelarAssinaturaModal() {
          const modalHtml = `
             <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col" style="min-height: 550px;">
-                 <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="showGerenciarAssinaturaModal()">&times;</button>
                  <h2 class="text-2xl font-bold text-center mb-4 text-red-500">Cancelar Assinatura</h2>
                  <p class="text-center text-secondary text-sm mb-8">Lamentamos ver você partir. Por favor, conte-nos o motivo.</p>
 
@@ -2107,7 +2114,6 @@
 
         const modalHtml = `
             <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col" style="min-height: 550px; max-height: 90vh;">
-                 <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="showGerenciarAssinaturaModal()">&times;</button>
                  <h2 class="text-2xl font-bold text-center mb-4 modal-title">Mudar de Plano</h2>
                 
                  <div class="flex-grow overflow-y-auto pr-2 modal-scroll-hidden">
