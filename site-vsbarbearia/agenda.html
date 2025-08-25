@@ -404,6 +404,11 @@
         { id: 'pay_3', date: '10/06/2025', amount: '189,90', status: 'Pago', method: 'Pix' }
     ];
 
+    let paymentMethods = [
+        { id: 1, type: 'card', last4: '1234', brand: 'visa', primary: true },
+        { id: 2, type: 'card', last4: '5678', brand: 'mastercard', primary: false }
+    ];
+
     const userInfo = {
         name: 'Vanilton Santos',
         phone: '(37) 99999-9999',
@@ -1818,7 +1823,7 @@
 
     function showGerenciarAssinaturaModal() {
         const modalHtml = `
-            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl">
+            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl" style="min-height: 550px;">
                  <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="closeModal()">&times;</button>
                  <h2 class="text-2xl font-bold text-center mb-8 modal-title">Gerenciar Assinatura</h2>
 
@@ -1870,26 +1875,26 @@
     
     function showCancelarAssinaturaModal() {
          const modalHtml = `
-            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl">
+            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col" style="min-height: 550px;">
                  <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="showGerenciarAssinaturaModal()">&times;</button>
                  <h2 class="text-2xl font-bold text-center mb-4 text-red-500">Cancelar Assinatura</h2>
                  <p class="text-center text-secondary text-sm mb-8">Lamentamos ver você partir. Por favor, conte-nos o motivo.</p>
 
-                <div id="cancel-reasons-container" class="space-y-3 text-left">
+                <div id="cancel-reasons-container" class="space-y-3 text-left flex-grow mb-6">
                     <div class="reason-item flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg cursor-pointer border-2 border-transparent" onclick="selectReason(this)">
                         <span>O valor está muito alto</span>
                         <i class="fas fa-check-circle text-primary hidden check-icon"></i>
                     </div>
                     <div class="reason-item flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg cursor-pointer border-2 border-transparent" onclick="selectReason(this)">
-                        <span>Não estou usando com frequência</span>
+                        <span>Não estou usando com<br>frequência</span>
                         <i class="fas fa-check-circle text-primary hidden check-icon"></i>
                     </div>
                      <div class="reason-item flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg cursor-pointer border-2 border-transparent" onclick="selectReason(this)">
-                        <span>Encontrei uma opção melhor/mais barata</span>
+                        <span>Encontrei uma opção<br>melhor/mais barata</span>
                         <i class="fas fa-check-circle text-primary hidden check-icon"></i>
                     </div>
                     <div class="reason-item flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg cursor-pointer border-2 border-transparent" onclick="selectReason(this)">
-                        <span>Qualidade do serviço/atendimento</span>
+                        <span>Qualidade do<br>serviço/atendimento</span>
                         <i class="fas fa-check-circle text-primary hidden check-icon"></i>
                     </div>
                     <div class="reason-item flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg cursor-pointer border-2 border-transparent" onclick="selectReason(this)">
@@ -1898,9 +1903,9 @@
                     </div>
                 </div>
 
-                <div class="mt-8 flex space-x-4">
-                    <button class="flex-1 py-2 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showGerenciarAssinaturaModal()">Voltar</button>
-                    <button class="flex-1 py-2 font-semibold rounded-lg bg-red-600 text-white" onclick="showConfirmarCancelamentoFinalModal()">Confirmar</button>
+                <div class="mt-auto grid grid-cols-2 gap-4">
+                    <button class="w-full py-2 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showGerenciarAssinaturaModal()">Voltar</button>
+                    <button id="confirm-cancel-btn" class="w-full py-2 font-semibold rounded-lg bg-red-600 text-white opacity-50" onclick="showConfirmarCancelamentoFinalModal()" disabled>Confirmar</button>
                 </div>
             </div>
         `;
@@ -1917,6 +1922,13 @@
         // Add selection to the clicked item
         element.classList.add('border-primary');
         element.querySelector('.check-icon').classList.remove('hidden');
+
+        // Enable confirm button
+        const confirmBtn = document.getElementById('confirm-cancel-btn');
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.classList.remove('opacity-50');
+        }
     }
 
     function showConfirmarCancelamentoFinalModal() {
@@ -1925,9 +1937,9 @@
                 <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
                 <h2 class="text-xl font-bold mb-4 modal-title">Confirmar Cancelamento</h2>
                 <p class="text-secondary mb-6">Você tem certeza que deseja cancelar sua assinatura? Esta ação não pode ser desfeita.</p>
-                <div class="flex justify-center space-x-4">
-                    <button class="flex-1 py-2 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showGerenciarAssinaturaModal()">Manter</button>
-                    <button class="flex-1 py-2 font-semibold rounded-lg bg-red-600 text-white" onclick="handleSubscriptionCancellation()">Cancelar</button>
+                <div class="grid grid-cols-2 gap-4">
+                    <button class="w-full py-2 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showGerenciarAssinaturaModal()">Manter</button>
+                    <button class="w-full py-2 font-semibold rounded-lg bg-red-600 text-white" onclick="handleSubscriptionCancellation()">Cancelar</button>
                 </div>
             </div>
         `;
@@ -1951,6 +1963,190 @@
             </div>
         `;
         openModal(modalHtml, 'border-none', 'center');
+    }
+
+    // --- MODAIS DE PAGAMENTO ---
+    function showAlterarPagamentoModal() {
+        const primaryMethod = paymentMethods.find(p => p.primary);
+        const otherMethods = paymentMethods.filter(p => !p.primary);
+
+        const getBrandIcon = (brand) => {
+            if (brand === 'visa') return '<i class="fab fa-cc-visa text-3xl text-blue-400"></i>';
+            if (brand === 'mastercard') return '<i class="fab fa-cc-mastercard text-3xl text-red-500"></i>';
+            return '<i class="fas fa-credit-card text-3xl text-gray-400"></i>';
+        }
+
+        let primaryMethodHtml = `
+            <div class="bg-[#2a2a2a] p-4 rounded-lg">
+                <h3 class="font-semibold text-sm text-gray-300 mb-3">Pagamento Principal</h3>
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center">
+                        ${getBrandIcon(primaryMethod.brand)}
+                        <div class="ml-4">
+                            <p class="text-sm font-bold text-white">Cartão final ${primaryMethod.last4}</p>
+                            <p class="text-xs text-secondary">Crédito</p>
+                        </div>
+                    </div>
+                    <span class="bg-green-500/20 text-green-400 text-xs font-semibold px-2 py-0.5 rounded-full">Principal</span>
+                </div>
+            </div>
+        `;
+
+        let otherMethodsHtml = otherMethods.map(p => `
+            <div class="flex justify-between items-center p-3 bg-[#2a2a2a] rounded-lg">
+                <div class="flex items-center">
+                    ${getBrandIcon(p.brand)}
+                    <div class="ml-4">
+                        <p class="text-sm font-bold text-white">Cartão final ${p.last4}</p>
+                        <p class="text-xs text-secondary">Crédito</p>
+                    </div>
+                </div>
+                <button class="text-xs text-primary font-semibold">Tornar Principal</button>
+            </div>
+        `).join('');
+
+        const modalHtml = `
+            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col" style="min-height: 550px;">
+                <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="showGerenciarAssinaturaModal()">&times;</button>
+                <h2 class="text-2xl font-bold text-center mb-6 modal-title">Formas de Pagamento</h2>
+                
+                <div class="space-y-4 flex-grow">
+                    ${primaryMethodHtml}
+                    ${otherMethods.length > 0 ? `<h3 class="font-semibold text-sm text-gray-300 pt-4">Outros métodos</h3>` : ''}
+                    ${otherMethodsHtml}
+                </div>
+
+                <div class="mt-auto space-y-3 pt-6">
+                     <button class="w-full py-3 font-semibold rounded-lg bg-[#2a2a2a] flex items-center justify-center" onclick="showAdicionarCartaoForm()">
+                        <i class="fas fa-credit-card mr-3"></i> Adicionar Novo Cartão
+                    </button>
+                    <button class="w-full py-3 font-semibold rounded-lg bg-[#2a2a2a] flex items-center justify-center" onclick="showAdicionarPixForm()">
+                        <i class="fab fa-pix mr-3"></i> Adicionar Chave Pix
+                    </button>
+                </div>
+            </div>
+        `;
+        openModal(modalHtml, 'bg-transparent border-none', 'center');
+    }
+
+    function showAdicionarCartaoForm() {
+        const modalHtml = `
+            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col auth-form" style="min-height: 550px;">
+                <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="showAlterarPagamentoModal()">&times;</button>
+                <h2 class="text-2xl font-bold text-center mb-6 modal-title">Adicionar Cartão</h2>
+                
+                <div class="space-y-4 flex-grow">
+                    <div>
+                        <label class="text-sm font-semibold text-gray-400 mb-1 block">Número do Cartão</label>
+                        <input id="card-number" type="tel" placeholder="0000 0000 0000 0000" class="w-full p-3 rounded-lg" oninput="validateCardForm()">
+                    </div>
+                     <div>
+                        <label class="text-sm font-semibold text-gray-400 mb-1 block">Nome do Titular</label>
+                        <input id="card-holder" type="text" placeholder="Nome como no cartão" class="w-full p-3 rounded-lg" oninput="this.value = this.value.toUpperCase(); validateCardForm();">
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-400 mb-1 block">CPF do Titular</label>
+                        <input id="card-cpf" type="tel" placeholder="000.000.000-00" class="w-full p-3 rounded-lg" oninput="validateCardForm()">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-semibold text-gray-400 mb-1 block">Validade</label>
+                            <input id="card-expiry" type="tel" placeholder="MM/AA" class="w-full p-3 rounded-lg" oninput="validateCardForm()">
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-gray-400 mb-1 block">CVV</label>
+                            <input id="card-cvv" type="tel" placeholder="123" class="w-full p-3 rounded-lg" oninput="this.value = this.value.replace(/\\D/g, ''); validateCardForm();" maxlength="4">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-auto grid grid-cols-2 gap-4 pt-6">
+                    <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showAlterarPagamentoModal()">Voltar</button>
+                    <button id="save-card-btn" class="w-full py-3 font-semibold rounded-lg btn-plan opacity-50" onclick="showCartaoSalvoModal()" disabled>Salvar Cartão</button>
+                </div>
+            </div>
+        `;
+        modalContent.innerHTML = modalHtml;
+        setupCardInputMasks();
+        validateCardForm();
+    }
+
+    function setupCardInputMasks() {
+        document.getElementById('card-number').addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '').substring(0, 16);
+            e.target.value = value.replace(/(\d{4})/g, '$1 ').trim();
+        });
+
+        document.getElementById('card-expiry').addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '').substring(0, 4);
+            if (value.length > 2) {
+                e.target.value = `${value.substring(0, 2)}/${value.substring(2)}`;
+            } else {
+                e.target.value = value;
+            }
+        });
+        
+        document.getElementById('card-cpf').addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '').substring(0, 11);
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            e.target.value = value;
+        });
+    }
+
+    function validateCardForm() {
+        const cardNumber = document.getElementById('card-number').value.replace(/\D/g, '');
+        const cardHolder = document.getElementById('card-holder').value.trim();
+        const cardCpf = document.getElementById('card-cpf').value.replace(/\D/g, '');
+        const cardExpiry = document.getElementById('card-expiry').value.replace(/\D/g, '');
+        const cardCvv = document.getElementById('card-cvv').value.replace(/\D/g, '');
+        const saveBtn = document.getElementById('save-card-btn');
+
+        const isCardNumberValid = cardNumber.length === 16;
+        const isCardHolderValid = cardHolder.length > 2 && cardHolder.includes(' ');
+        const isCpfValid = cardCpf.length === 11;
+        const isExpiryValid = cardExpiry.length === 4;
+        const isCvvValid = cardCvv.length >= 3 && cardCvv.length <= 4;
+
+        if (isCardNumberValid && isCardHolderValid && isCpfValid && isExpiryValid && isCvvValid) {
+            saveBtn.disabled = false;
+            saveBtn.classList.remove('opacity-50');
+        } else {
+            saveBtn.disabled = true;
+            saveBtn.classList.add('opacity-50');
+        }
+    }
+
+
+    function showCartaoSalvoModal() {
+        const modalHtml = `
+            <div class="info-card text-center p-6">
+                <i class="fas fa-credit-card text-5xl text-primary mb-4"></i>
+                <h2 class="text-xl font-bold mb-4 modal-title">Cartão Salvo!</h2>
+                <p class="text-secondary mb-6">Seu novo cartão foi adicionado com sucesso e já pode ser usado.</p>
+                <button class="w-full py-2 font-semibold rounded-lg btn-primary" onclick="showAlterarPagamentoModal()">Fechar</button>
+            </div>
+        `;
+        modalContent.innerHTML = modalHtml;
+    }
+
+    function showAdicionarPixForm() {
+        const modalHtml = `
+            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col text-center" style="min-height: 550px;">
+                <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="showAlterarPagamentoModal()">&times;</button>
+                <div class="flex-grow flex flex-col justify-center items-center">
+                    <i class="fab fa-pix text-6xl text-primary mb-6"></i>
+                    <h2 class="text-2xl font-bold mb-4 modal-title">Adicionar Pix</h2>
+                    <p class="text-secondary mb-8">Sua cobrança será gerada via Pix na data de vencimento e você será notificado para realizar o pagamento.</p>
+                </div>
+                <div class="mt-auto grid grid-cols-2 gap-4 pt-6">
+                    <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showAlterarPagamentoModal()">Voltar</button>
+                    <button class="w-full py-3 font-semibold rounded-lg btn-plan" onclick="showAlterarPagamentoModal()">Confirmar</button>
+                </div>
+            </div>
+        `;
+        modalContent.innerHTML = modalHtml;
     }
 
 
