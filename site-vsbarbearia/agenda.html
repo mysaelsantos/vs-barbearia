@@ -431,7 +431,7 @@
 
     // --- FUNÇÕES DE ESTADO (CACHE) ---
     function saveState() {
-        localStorage.setItem('agendamentoState', JSON.stringify({ selection, userLoggedIn }));
+        localStorage.setItem('agendamentoState', JSON.stringify({ selection, userLoggedIn, agendamentos }));
     }
 
     function loadState() {
@@ -440,6 +440,9 @@
             const state = JSON.parse(savedState);
             selection = state.selection || {};
             userLoggedIn = state.userLoggedIn || false;
+            if (state.agendamentos && state.agendamentos.abertos) {
+                agendamentos.abertos = state.agendamentos.abertos;
+            }
         } else {
             resetSelections();
         }
@@ -1082,6 +1085,7 @@
         newDate.setHours(parseInt(hours), parseInt(minutes));
 
         agendamentos.abertos[agendamentoIndex].data = newDate.toISOString();
+        saveState();
         
         showRemarcacaoSuccessModal();
     }
@@ -1115,6 +1119,7 @@
 
     function confirmarCancelamento(id) {
         agendamentos.abertos = agendamentos.abertos.filter(ag => ag.id !== id);
+        saveState();
         closeModal();
         setTimeout(() => {
             renderView('historico');
@@ -1149,6 +1154,32 @@
     function checkAgendarButton() {
         const agendarBtn = document.getElementById('agendar-btn');
         if (!agendarBtn) return;
+
+        // --- LÓGICA DE VERIFICAÇÃO DE LIMITE DE AGENDAMENTOS ---
+        if (selection.data) {
+            const selectedDateString = new Date(selection.data).toISOString().split('T')[0];
+            const agendamentosNoDia = agendamentos.abertos.filter(ag => {
+                const agDateString = new Date(ag.data).toISOString().split('T')[0];
+                return agDateString === selectedDateString;
+            });
+
+            if (agendamentosNoDia.length >= 2) {
+                agendarBtn.textContent = 'Limite de 2 agendamentos por dia';
+                agendarBtn.disabled = true;
+                agendarBtn.classList.remove('active');
+                agendarBtn.style.backgroundColor = '#374151'; // Cor cinza para indicar bloqueio
+                agendarBtn.style.cursor = 'not-allowed';
+                return; // Interrompe a execução para não prosseguir para a próxima verificação
+            }
+        }
+        // --- FIM DA LÓGICA DE VERIFICAÇÃO ---
+
+        // Reseta o estilo e o texto do botão caso o limite não seja atingido
+        agendarBtn.style.backgroundColor = '';
+        agendarBtn.style.cursor = '';
+        agendarBtn.textContent = 'Agendar';
+
+        // Lógica original para verificar se todos os campos estão preenchidos
         if (selection.unidade && selection.barbeiro && selection.servico && selection.data && selection.hora) {
             agendarBtn.classList.add('active');
             agendarBtn.disabled = false;
@@ -1326,6 +1357,19 @@
         element.classList.add('selected');
         selection.data = new Date(year, month, day).toISOString(); // Salvar em formato ISO
 
+        // --- LÓGICA ADICIONADA ---
+        // Limpa a hora para forçar uma nova seleção e atualiza a UI
+        selection.hora = null;
+        const dataTextEl = document.getElementById('data-text');
+        if (dataTextEl) {
+            dataTextEl.textContent = 'Selecionar data e hora';
+            dataTextEl.classList.add('selection-item-text');
+            dataTextEl.classList.remove('selected');
+        }
+        // Chama a função de verificação imediatamente após selecionar a data
+        checkAgendarButton();
+        // --- FIM DA LÓGICA ADICIONADA ---
+
         const timeSlotsContainer = document.getElementById('time-slots');
         const allTimes = ['08:00', '08:40', '09:20', '10:00', '14:00', '14:40', '15:20', '16:00'];
         const now = new Date();
@@ -1420,6 +1464,7 @@
         };
 
         agendamentos.abertos.push(novoAgendamento);
+        saveState();
         
         const dataFormatada = new Date(selection.data).toLocaleDateString('pt-BR', {
             day: '2-digit',
