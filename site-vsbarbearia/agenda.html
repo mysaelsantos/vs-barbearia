@@ -381,6 +381,7 @@
     
     const agendamentos = {
         abertos: [],
+        criadosPorDia: {},
         historico: [
             { id: 100, data: '2025-07-20T10:00:00', unidade: unidades[1], barbeiro: barbeiros[2], servico: servicos[0], avaliacao: 5 },
             { id: 99, data: '2025-06-15T16:20:00', unidade: unidades[0], barbeiro: barbeiros[1], servico: servicos[1], avaliacao: null }
@@ -440,8 +441,24 @@
             const state = JSON.parse(savedState);
             selection = state.selection || {};
             userLoggedIn = state.userLoggedIn || false;
-            if (state.agendamentos && state.agendamentos.abertos) {
-                agendamentos.abertos = state.agendamentos.abertos;
+            if (state.agendamentos) {
+                agendamentos.abertos = state.agendamentos.abertos || [];
+                agendamentos.historico = state.agendamentos.historico || [
+                    { id: 100, data: '2025-07-20T10:00:00', unidade: unidades[1], barbeiro: barbeiros[2], servico: servicos[0], avaliacao: 5 },
+                    { id: 99, data: '2025-06-15T16:20:00', unidade: unidades[0], barbeiro: barbeiros[1], servico: servicos[1], avaliacao: null }
+                ];
+                agendamentos.criadosPorDia = state.agendamentos.criadosPorDia || {};
+
+                // Lógica de migração: Se criadosPorDia estiver vazio, mas houver agendamentos abertos, popule o contador.
+                if (Object.keys(agendamentos.criadosPorDia).length === 0 && agendamentos.abertos.length > 0) {
+                    console.log("Iniciando contagem de agendamentos diários para dados existentes...");
+                    agendamentos.abertos.forEach(ag => {
+                        const agDateString = new Date(ag.data).toISOString().split('T')[0];
+                        const count = agendamentos.criadosPorDia[agDateString] || 0;
+                        agendamentos.criadosPorDia[agDateString] = count + 1;
+                    });
+                    saveState(); // Salva o estado migrado imediatamente
+                }
             }
         } else {
             resetSelections();
@@ -1080,9 +1097,23 @@
         const agendamentoIndex = agendamentos.abertos.findIndex(ag => ag.id === id);
         if (agendamentoIndex === -1) return;
 
+        const oldDateString = new Date(agendamentos.abertos[agendamentoIndex].data).toISOString().split('T')[0];
+
         const [hours, minutes] = newTime.split(':');
         const newDate = new Date(newDateISO);
         newDate.setHours(parseInt(hours), parseInt(minutes));
+        const newDateString = newDate.toISOString().split('T')[0];
+
+        if (oldDateString !== newDateString) {
+            const agendamentosCriadosNoNovoDia = agendamentos.criadosPorDia[newDateString] || 0;
+            if (agendamentosCriadosNoNovoDia >= 2) {
+                showLimiteRemarcacaoModal();
+                return;
+            }
+            // Ajusta as contagens dos dias
+            agendamentos.criadosPorDia[oldDateString] = (agendamentos.criadosPorDia[oldDateString] || 1) - 1;
+            agendamentos.criadosPorDia[newDateString] = agendamentosCriadosNoNovoDia + 1;
+        }
 
         agendamentos.abertos[agendamentoIndex].data = newDate.toISOString();
         saveState();
@@ -1158,12 +1189,9 @@
         // --- LÓGICA DE VERIFICAÇÃO DE LIMITE DE AGENDAMENTOS ---
         if (selection.data) {
             const selectedDateString = new Date(selection.data).toISOString().split('T')[0];
-            const agendamentosNoDia = agendamentos.abertos.filter(ag => {
-                const agDateString = new Date(ag.data).toISOString().split('T')[0];
-                return agDateString === selectedDateString;
-            });
+            const agendamentosCriadosNoDia = agendamentos.criadosPorDia[selectedDateString] || 0;
 
-            if (agendamentosNoDia.length >= 2) {
+            if (agendamentosCriadosNoDia >= 2) {
                 agendarBtn.textContent = 'Limite de 2 agendamentos por dia';
                 agendarBtn.disabled = true;
                 agendarBtn.classList.remove('active');
@@ -1423,6 +1451,18 @@
         openModal(modalHtml, 'border-none', 'center');
     }
 
+    function showLimiteRemarcacaoModal() {
+        const modalHtml = `
+            <div class="info-card text-center p-6">
+                <i class="fas fa-exclamation-circle text-4xl text-yellow-500 mb-4"></i>
+                <h2 class="text-xl font-bold mb-4 modal-title">Não é possível Remarcar</h2>
+                <p class="text-secondary mb-6">O limite de 2 agendamentos já foi atingido para o dia selecionado.</p>
+                <button class="w-full py-2 font-semibold rounded-lg btn-primary" onclick="closeModal()">Entendido</button>
+            </div>
+        `;
+        openModal(modalHtml, 'border-none', 'center');
+    }
+
     function resetSelections() {
         selection = {
             unidade: null,
@@ -1440,15 +1480,14 @@
         const selectedDate = new Date(selection.data);
         const selectedDateString = selectedDate.toISOString().split('T')[0];
 
-        const agendamentosNoDia = agendamentos.abertos.filter(ag => {
-            const agDateString = new Date(ag.data).toISOString().split('T')[0];
-            return agDateString === selectedDateString;
-        });
-
-        if (agendamentosNoDia.length >= 2) {
+        const agendamentosCriadosNoDia = agendamentos.criadosPorDia[selectedDateString] || 0;
+        if (agendamentosCriadosNoDia >= 2) {
             showLimiteAgendamentosModal();
             return;
         }
+
+        // Incrementa o contador de agendamentos criados para o dia
+        agendamentos.criadosPorDia[selectedDateString] = agendamentosCriadosNoDia + 1;
 
         const newId = Date.now();
         const [hours, minutes] = selection.hora.split(':');
