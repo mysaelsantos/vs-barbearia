@@ -381,7 +381,7 @@
     
     const agendamentos = {
         abertos: [],
-        criadosPorDia: {},
+        criadosPorSemana: {},
         historico: [
             { id: 100, data: '2025-07-20T10:00:00', unidade: unidades[1], barbeiro: barbeiros[2], servico: servicos[0], avaliacao: 5 },
             { id: 99, data: '2025-06-15T16:20:00', unidade: unidades[0], barbeiro: barbeiros[1], servico: servicos[1], avaliacao: null }
@@ -430,6 +430,27 @@
     const mainContent = document.getElementById('main-content');
     const footerNav = document.getElementById('footer-nav'); 
 
+    // --- FUNÇÕES AUXILIARES ---
+    /**
+     * Retorna um identificador único para a semana de uma determinada data.
+     * A semana começa no Domingo.
+     * @param {Date} date - O objeto de data.
+     * @returns {string} Uma string no formato 'YYYY-WW'.
+     */
+    function getWeekId(date) {
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        // O Domingo é o dia 0, então subtraímos o dia da semana para encontrar o Domingo.
+        d.setDate(d.getDate() - d.getDay());
+        const year = d.getFullYear();
+        // Calcula o número da semana.
+        const firstDayOfYear = new Date(year, 0, 1);
+        const pastDaysOfYear = (d - firstDayOfYear) / 86400000;
+        const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+        return `${year}-W${String(weekNumber).padStart(2, '0')}`;
+    }
+
+
     // --- FUNÇÕES DE ESTADO (CACHE) ---
     function saveState() {
         localStorage.setItem('agendamentoState', JSON.stringify({ selection, userLoggedIn, agendamentos }));
@@ -447,15 +468,15 @@
                     { id: 100, data: '2025-07-20T10:00:00', unidade: unidades[1], barbeiro: barbeiros[2], servico: servicos[0], avaliacao: 5 },
                     { id: 99, data: '2025-06-15T16:20:00', unidade: unidades[0], barbeiro: barbeiros[1], servico: servicos[1], avaliacao: null }
                 ];
-                agendamentos.criadosPorDia = state.agendamentos.criadosPorDia || {};
+                agendamentos.criadosPorSemana = state.agendamentos.criadosPorSemana || {};
 
-                // Lógica de migração: Se criadosPorDia estiver vazio, mas houver agendamentos abertos, popule o contador.
-                if (Object.keys(agendamentos.criadosPorDia).length === 0 && agendamentos.abertos.length > 0) {
-                    console.log("Iniciando contagem de agendamentos diários para dados existentes...");
+                // Lógica de migração: Se criadosPorSemana estiver vazio, mas houver agendamentos abertos, popule o contador.
+                if (Object.keys(agendamentos.criadosPorSemana).length === 0 && agendamentos.abertos.length > 0) {
+                    console.log("Iniciando contagem de agendamentos semanais para dados existentes...");
                     agendamentos.abertos.forEach(ag => {
-                        const agDateString = new Date(ag.data).toISOString().split('T')[0];
-                        const count = agendamentos.criadosPorDia[agDateString] || 0;
-                        agendamentos.criadosPorDia[agDateString] = count + 1;
+                        const weekId = getWeekId(new Date(ag.data));
+                        const count = agendamentos.criadosPorSemana[weekId] || 0;
+                        agendamentos.criadosPorSemana[weekId] = count + 1;
                     });
                     saveState(); // Salva o estado migrado imediatamente
                 }
@@ -1097,22 +1118,22 @@
         const agendamentoIndex = agendamentos.abertos.findIndex(ag => ag.id === id);
         if (agendamentoIndex === -1) return;
 
-        const oldDateString = new Date(agendamentos.abertos[agendamentoIndex].data).toISOString().split('T')[0];
+        const oldWeekId = getWeekId(new Date(agendamentos.abertos[agendamentoIndex].data));
 
         const [hours, minutes] = newTime.split(':');
         const newDate = new Date(newDateISO);
         newDate.setHours(parseInt(hours), parseInt(minutes));
-        const newDateString = newDate.toISOString().split('T')[0];
+        const newWeekId = getWeekId(newDate);
 
-        if (oldDateString !== newDateString) {
-            const agendamentosCriadosNoNovoDia = agendamentos.criadosPorDia[newDateString] || 0;
-            if (agendamentosCriadosNoNovoDia >= 2) {
+        if (oldWeekId !== newWeekId) {
+            const agendamentosCriadosNaNovaSemana = agendamentos.criadosPorSemana[newWeekId] || 0;
+            if (agendamentosCriadosNaNovaSemana >= 2) {
                 showLimiteRemarcacaoModal();
                 return;
             }
-            // Ajusta as contagens dos dias
-            agendamentos.criadosPorDia[oldDateString] = (agendamentos.criadosPorDia[oldDateString] || 1) - 1;
-            agendamentos.criadosPorDia[newDateString] = agendamentosCriadosNoNovoDia + 1;
+            // Ajusta as contagens das semanas
+            agendamentos.criadosPorSemana[oldWeekId] = (agendamentos.criadosPorSemana[oldWeekId] || 1) - 1;
+            agendamentos.criadosPorSemana[newWeekId] = agendamentosCriadosNaNovaSemana + 1;
         }
 
         agendamentos.abertos[agendamentoIndex].data = newDate.toISOString();
@@ -1188,11 +1209,11 @@
 
         // --- LÓGICA DE VERIFICAÇÃO DE LIMITE DE AGENDAMENTOS ---
         if (selection.data) {
-            const selectedDateString = new Date(selection.data).toISOString().split('T')[0];
-            const agendamentosCriadosNoDia = agendamentos.criadosPorDia[selectedDateString] || 0;
+            const weekId = getWeekId(new Date(selection.data));
+            const agendamentosCriadosNaSemana = agendamentos.criadosPorSemana[weekId] || 0;
 
-            if (agendamentosCriadosNoDia >= 2) {
-                agendarBtn.textContent = 'Limite de 2 agendamentos por dia';
+            if (agendamentosCriadosNaSemana >= 2) {
+                agendarBtn.textContent = 'Máximo de 2 agendamentos em aberto';
                 agendarBtn.disabled = true;
                 agendarBtn.classList.remove('active');
                 agendarBtn.style.backgroundColor = '#374151'; // Cor cinza para indicar bloqueio
@@ -1444,7 +1465,7 @@
             <div class="info-card text-center p-6">
                 <i class="fas fa-exclamation-circle text-4xl text-yellow-500 mb-4"></i>
                 <h2 class="text-xl font-bold mb-4 modal-title">Limite Atingido</h2>
-                <p class="text-secondary mb-6">Você já atingiu o limite de 2 agendamentos para este dia.</p>
+                <p class="text-secondary mb-6">Você já atingiu o limite de 2 agendamentos para esta semana.</p>
                 <button class="w-full py-2 font-semibold rounded-lg btn-primary" onclick="closeModal()">Entendido</button>
             </div>
         `;
@@ -1456,7 +1477,7 @@
             <div class="info-card text-center p-6">
                 <i class="fas fa-exclamation-circle text-4xl text-yellow-500 mb-4"></i>
                 <h2 class="text-xl font-bold mb-4 modal-title">Não é possível Remarcar</h2>
-                <p class="text-secondary mb-6">O limite de 2 agendamentos já foi atingido para o dia selecionado.</p>
+                <p class="text-secondary mb-6">O limite de 2 agendamentos já foi atingido para a semana selecionada.</p>
                 <button class="w-full py-2 font-semibold rounded-lg btn-primary" onclick="closeModal()">Entendido</button>
             </div>
         `;
@@ -1477,17 +1498,15 @@
         const agendarBtn = document.getElementById('agendar-btn');
         if(!agendarBtn || agendarBtn.disabled) return;
 
-        const selectedDate = new Date(selection.data);
-        const selectedDateString = selectedDate.toISOString().split('T')[0];
-
-        const agendamentosCriadosNoDia = agendamentos.criadosPorDia[selectedDateString] || 0;
-        if (agendamentosCriadosNoDia >= 2) {
+        const weekId = getWeekId(new Date(selection.data));
+        const agendamentosCriadosNaSemana = agendamentos.criadosPorSemana[weekId] || 0;
+        if (agendamentosCriadosNaSemana >= 2) {
             showLimiteAgendamentosModal();
             return;
         }
 
-        // Incrementa o contador de agendamentos criados para o dia
-        agendamentos.criadosPorDia[selectedDateString] = agendamentosCriadosNoDia + 1;
+        // Incrementa o contador de agendamentos criados para a semana
+        agendamentos.criadosPorSemana[weekId] = agendamentosCriadosNaSemana + 1;
 
         const newId = Date.now();
         const [hours, minutes] = selection.hora.split(':');
