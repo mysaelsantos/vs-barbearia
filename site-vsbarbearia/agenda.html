@@ -362,7 +362,7 @@
         { id: 2, nome: 'Unidade Romeu Duarte', endereco: 'Rua Francisco de Paula Batista Freitas, 538', img: 'https://i.postimg.cc/hPwbjhKV/image.png', mapsUrl: 'https://maps.app.goo.gl/irHEHy6ELasM1o887' }
     ];
     const barbeiros = [
-        { id: 0, nome: 'Sem preferência', funcao: 'Será atribuído um profissional disponível' },
+        { id: 0, nome: 'Sem preferência', funcao: 'Será atribuído um profissional disponível', img: null },
         { id: 1, nome: 'Vanilton Santos', funcao: 'Fundador & Visagista', img: 'https://i.postimg.cc/pT3ScnBb/482320646-1375134203841648-765763137701876086-n.jpg' },
         { id: 2, nome: 'Profissional 2', funcao: 'Barbeiro', img: 'https://placehold.co/100x100/333333/FFFFFF?text=P2' },
         { id: 3, nome: 'Profissional 3', funcao: 'Barbeiro', img: 'https://placehold.co/100x100/333333/FFFFFF?text=P3' },
@@ -643,6 +643,10 @@
                             <span><i class="fas fa-receipt w-6 text-center mr-3 text-primary"></i>Histórico de Pagamentos</span>
                             <i class="fas fa-chevron-right text-gray-500"></i>
                         </button>
+                        <button class="w-full text-left p-4 rounded-xl bg-[#1e1e1e] border border-gray-800 flex items-center justify-between hover:border-gray-700 transition-colors" onclick="showBeneficiosModal()">
+                            <span><i class="fas fa-gem w-6 text-center mr-3 text-primary"></i>Benefícios do Clube</span>
+                            <i class="fas fa-chevron-right text-gray-500"></i>
+                        </button>
                          <button class="w-full text-left p-4 rounded-xl bg-[#1e1e1e] border border-gray-800 flex items-center justify-between hover:border-gray-700 transition-colors" onclick="showGerenciarAssinaturaModal()">
                             <span><i class="fas fa-cog w-6 text-center mr-3 text-primary"></i>Gerenciar Assinatura</span>
                             <i class="fas fa-chevron-right text-gray-500"></i>
@@ -729,7 +733,7 @@
                             <span><i class="far fa-clock mr-2 text-primary"></i>${horaFormatada}</span>
                         </div>
                         <div class="flex items-center">
-                            <img src="${ag.barbeiro.img}" class="w-12 h-12 rounded-full mr-4 object-cover">
+                            <img src="${ag.barbeiro.img || 'https://placehold.co/100x100/333333/FFFFFF?text=S/F'}" class="w-12 h-12 rounded-full mr-4 object-cover">
                             <div>
                                 <p class="text-sm text-gray-400">Barbeiro</p>
                                 <p class="font-semibold text-white">${ag.barbeiro.nome}</p>
@@ -1227,7 +1231,7 @@
     function showBarbeiros() {
         let content = `<h2 class="text-xl font-bold mb-6 text-center modal-title">Selecionar profissional</h2>`;
         content += barbeiros.map(b => `
-            <div class="flex items-center p-3 rounded-lg mb-3 cursor-pointer selection-item" onclick="selectBarbeiro(${b.id}, '${b.nome}')">
+            <div class="flex items-center p-3 rounded-lg mb-3 cursor-pointer selection-item" onclick="selectBarbeiro(${b.id})">
                 <img src="${b.img || 'https://placehold.co/100x100/333333/FFFFFF?text=S/P'}" alt="${b.nome}" class="w-16 h-16 rounded-full mr-4 object-cover border-2 border-primary">
                 <div>
                     <p class="font-semibold text-white">${b.nome}</p>
@@ -1237,10 +1241,13 @@
         `).join('');
         openModal(content);
     }
-    function selectBarbeiro(id, nome) {
-        selection.barbeiro = { id, nome };
+
+    function selectBarbeiro(id) {
+        selection.barbeiro = barbeiros.find(b => b.id === id);
+        if (!selection.barbeiro) return;
+
         const el = document.getElementById('barbeiro-text');
-        el.textContent = nome;
+        el.textContent = selection.barbeiro.nome;
         el.classList.remove('selection-item-text');
         el.classList.add('selected');
         closeModal();
@@ -2307,6 +2314,50 @@
     }
     
     // --- MODAIS DE PLANOS ---
+    function showBeneficiosModal() {
+        const modalHtml = `
+            <div class="info-card text-center p-6">
+                <i class="fas fa-gem text-5xl text-primary mb-4"></i>
+                <h2 class="text-2xl font-bold mb-2 modal-title">Benefícios do Clube VS</h2>
+                <p class="text-secondary mb-8">Veja as vantagens exclusivas de ser um assinante.</p>
+
+                <div class="text-left space-y-5">
+                    <div class="flex items-start">
+                        <i class="fas fa-bolt text-primary text-lg w-6 text-center mr-4 mt-1"></i>
+                        <div>
+                            <h3 class="font-bold text-white">Agilidade e Conveniência</h3>
+                            <p class="text-sm text-secondary">Agende seus horários de forma rápida e fácil, sem precisar esperar.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-tags text-primary text-lg w-6 text-center mr-4 mt-1"></i>
+                        <div>
+                            <h3 class="font-bold text-white">Descontos em Produtos</h3>
+                            <p class="text-sm text-secondary">Aproveite preços especiais em nossa linha de produtos para cabelo e barba.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-plus-circle text-primary text-lg w-6 text-center mr-4 mt-1"></i>
+                        <div>
+                            <h3 class="font-bold text-white">Serviços Adicionais com Desconto</h3>
+                            <p class="text-sm text-secondary">Tenha acesso a descontos exclusivos em serviços como hidratação, pigmentação e muito mais.</p>
+                        </div>
+                    </div>
+                     <div class="flex items-start">
+                        <i class="fas fa-star text-primary text-lg w-6 text-center mr-4 mt-1"></i>
+                        <div>
+                            <h3 class="font-bold text-white">Prioridade e Exclusividade</h3>
+                            <p class="text-sm text-secondary">Seja o primeiro a saber de novidades e tenha prioridade em eventos especiais.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="w-full mt-8 py-3 font-semibold rounded-lg btn-primary" onclick="closeModal()">Entendido</button>
+            </div>
+        `;
+        openModal(modalHtml, 'border-none', 'center');
+    }
+
     function showPagamentosModal() {
         const paymentsHtml = paymentHistory.map(p => `
             <div class="flex justify-between items-center py-3 border-b border-gray-700 last:border-b-0">
