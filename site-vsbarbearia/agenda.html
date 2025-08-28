@@ -565,13 +565,6 @@
                         </div>
                         <i class="fas fa-chevron-right text-gray-500"></i>
                     </div>
-                    <div id="select-data" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item disabled">
-                        <div class="flex items-center">
-                            <i class="fas fa-calendar-alt text-primary w-6 text-center"></i>
-                            <span id="data-text" class="ml-4 selection-item-text">Selecionar data e hora</span>
-                        </div>
-                        <i class="fas fa-chevron-right text-gray-500"></i>
-                    </div>
                     <div id="select-barbeiro" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item disabled">
                         <div class="flex items-center">
                             <i class="fas fa-user-tie text-primary w-6 text-center"></i>
@@ -583,6 +576,13 @@
                         <div class="flex items-center">
                             <i class="fas fa-cut text-primary w-6 text-center"></i>
                             <span id="servico-text" class="ml-4 selection-item-text">Selecionar serviço</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-500"></i>
+                    </div>
+                    <div id="select-data" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item disabled">
+                        <div class="flex items-center">
+                            <i class="fas fa-calendar-alt text-primary w-6 text-center"></i>
+                            <span id="data-text" class="ml-4 selection-item-text">Selecionar data e hora</span>
                         </div>
                         <i class="fas fa-chevron-right text-gray-500"></i>
                     </div>
@@ -1191,9 +1191,9 @@
     // --- LÓGICA DE AGENDAMENTO ---
     function attachAgendarEventListeners() {
         document.getElementById('select-unidade').addEventListener('click', showUnidades);
-        document.getElementById('select-data').addEventListener('click', showCalendario);
         document.getElementById('select-barbeiro').addEventListener('click', showBarbeiros);
         document.getElementById('select-servico').addEventListener('click', showServicos);
+        document.getElementById('select-data').addEventListener('click', showCalendario);
         
         document.getElementById('agendar-btn').addEventListener('click', () => {
              if (userLoggedIn) {
@@ -1231,7 +1231,7 @@
     }
 
     function updateStepUI() {
-        const steps = ['unidade', 'data', 'barbeiro', 'servico'];
+        const steps = ['unidade', 'barbeiro', 'servico', 'data'];
         let enabled = true;
         steps.forEach(step => {
             const el = document.getElementById(`select-${step}`);
@@ -1265,10 +1265,10 @@
         if (!selection.unidade) return;
         
         // Limpa seleções dependentes
-        selection.data = null;
-        selection.hora = null;
         selection.barbeiro = null;
         selection.servico = null;
+        selection.data = null;
+        selection.hora = null;
 
         const el = document.getElementById('unidade-text');
         el.textContent = selection.unidade.nome;
@@ -1281,7 +1281,7 @@
     }
 
     function showBarbeiros() {
-        if(!selection.unidade || !selection.data) return;
+        if(!selection.unidade) return;
         let content = `<h2 class="text-xl font-bold mb-6 text-center modal-title">Selecionar profissional</h2>`;
         content += barbeiros.map(b => `
             <div class="flex items-center p-3 rounded-lg mb-3 cursor-pointer selection-item" onclick="selectBarbeiro(${b.id})">
@@ -1310,9 +1310,9 @@
     }
 
     function showServicos() {
-        if(!selection.unidade || !selection.data || !selection.barbeiro) return;
+        if(!selection.unidade || !selection.barbeiro) return;
 
-        const diaDaSemana = new Date(selection.data).getDay();
+        const diaDaSemana = selection.data ? new Date(selection.data).getDay() : -1;
         const temPromocao = diaDaSemana >= 1 && diaDaSemana <= 3;
 
         let promoBanner = `
@@ -1328,22 +1328,29 @@
             </div>
         `;
 
-        let content = `${promoBanner}<h2 class="text-xl font-bold mb-4 text-center modal-title">Escolha um serviço</h2>`;
-        content += servicos.map(s => {
-            const precoFinal = temPromocao && s.promocao ? s.promocao : s.preco;
-            const precoAntigo = temPromocao && s.promocao ? `<span class="line-through text-gray-500">R$ ${s.preco.toFixed(2)}</span>` : '';
-            
-            return `
-                <div class="flex justify-between items-center p-4 rounded-lg mb-3 cursor-pointer selection-item" onclick="selectServico(${s.id})">
-                    <div>
-                        <p class="font-semibold text-white">${s.nome}</p>
-                        <p class="text-sm text-secondary">${precoAntigo} <span class="text-primary font-bold">R$ ${precoFinal.toFixed(2)}</span> &middot; ${s.duracao}</p>
-                    </div>
-                    <div class="w-6 h-6 border-2 border-gray-500 rounded-full"></div>
+        let content = `
+            <div class="flex flex-col h-full">
+                <h2 class="text-xl font-bold mb-4 text-center modal-title">Escolha um serviço</h2>
+                ${promoBanner}
+                <div class="flex-grow overflow-y-auto modal-scroll-hidden pr-2">
+                    ${servicos.map(s => {
+                        const precoFinal = temPromocao && s.promocao ? s.promocao : s.preco;
+                        const precoAntigo = temPromocao && s.promocao ? `<span class="line-through text-gray-500">R$ ${s.preco.toFixed(2)}</span>` : '';
+                        
+                        return `
+                            <div class="flex justify-between items-center p-4 rounded-lg mb-3 cursor-pointer selection-item" onclick="selectServico(${s.id})">
+                                <div>
+                                    <p class="font-semibold text-white">${s.nome}</p>
+                                    <p class="text-sm text-secondary">${precoAntigo} <span class="text-primary font-bold">R$ ${precoFinal.toFixed(2)}</span> &middot; ${s.duracao}</p>
+                                </div>
+                                <div class="w-6 h-6 border-2 border-gray-500 rounded-full"></div>
+                            </div>
+                        `;
+                    }).join('')}
                 </div>
-            `;
-        }).join('');
-        openModal(content);
+            </div>
+        `;
+        openModal(content, 'flex flex-col');
         
         const promoUnderline = document.getElementById('promo-title-underline');
         if(promoUnderline) {
@@ -1367,7 +1374,7 @@
     }
 
     function showCalendario() {
-        if(!selection.unidade) return;
+        if(!selection.unidade || !selection.barbeiro || !selection.servico) return;
         let displayMonth = new Date().getMonth();
         let displayYear = new Date().getFullYear();
         
@@ -1546,10 +1553,10 @@
     function resetSelections() {
         selection = {
             unidade: null,
-            data: null,
-            hora: null,
             barbeiro: null,
-            servico: null
+            servico: null,
+            data: null,
+            hora: null
         };
     }
 
@@ -2492,7 +2499,7 @@
     }
 
     function updateAgendarViewFromState() {
-        const steps = ['unidade', 'data', 'barbeiro', 'servico'];
+        const steps = ['unidade', 'barbeiro', 'servico', 'data'];
         let lastSelected = -1;
 
         steps.forEach((step, index) => {
@@ -3217,3 +3224,4 @@
 </script>
 </body>
 </html>
+
