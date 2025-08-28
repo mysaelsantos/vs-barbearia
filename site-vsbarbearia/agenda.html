@@ -75,6 +75,14 @@
         .selection-item:hover {
             border-color: #fbb62c;
         }
+         .selection-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #2a2a2a;
+        }
+        .selection-item.disabled:hover {
+            border-color: #444;
+        }
         .selection-item-text {
             color: #9ca3af; /* Cor cinza mais clara para placeholder */
         }
@@ -557,24 +565,24 @@
                         </div>
                         <i class="fas fa-chevron-right text-gray-500"></i>
                     </div>
-                    <div id="select-barbeiro" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item">
+                    <div id="select-data" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item disabled">
+                        <div class="flex items-center">
+                            <i class="fas fa-calendar-alt text-primary w-6 text-center"></i>
+                            <span id="data-text" class="ml-4 selection-item-text">Selecionar data e hora</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-500"></i>
+                    </div>
+                    <div id="select-barbeiro" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item disabled">
                         <div class="flex items-center">
                             <i class="fas fa-user-tie text-primary w-6 text-center"></i>
                             <span id="barbeiro-text" class="ml-4 selection-item-text">Selecionar barbeiro</span>
                         </div>
                         <i class="fas fa-chevron-right text-gray-500"></i>
                     </div>
-                    <div id="select-servico" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item">
+                    <div id="select-servico" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item disabled">
                         <div class="flex items-center">
                             <i class="fas fa-cut text-primary w-6 text-center"></i>
                             <span id="servico-text" class="ml-4 selection-item-text">Selecionar serviço</span>
-                        </div>
-                        <i class="fas fa-chevron-right text-gray-500"></i>
-                    </div>
-                    <div id="select-data" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item">
-                        <div class="flex items-center">
-                            <i class="fas fa-calendar-alt text-primary w-6 text-center"></i>
-                            <span id="data-text" class="ml-4 selection-item-text">Selecionar data e hora</span>
                         </div>
                         <i class="fas fa-chevron-right text-gray-500"></i>
                     </div>
@@ -885,7 +893,10 @@
         const dataFormatada = dataAgendamento.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
         const horaFormatada = dataAgendamento.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         
-        const preco = agendamento.servico.promocao ? agendamento.servico.promocao.toFixed(2) : agendamento.servico.preco.toFixed(2);
+        const diaDaSemana = dataAgendamento.getDay();
+        const temPromocao = diaDaSemana >= 1 && diaDaSemana <= 3;
+        const preco = temPromocao && agendamento.servico.promocao ? agendamento.servico.promocao.toFixed(2) : agendamento.servico.preco.toFixed(2);
+
 
         const remarcarButtonHtml = podeRemarcar
             ? `<button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="showRemarcarModal(${id})">Remarcar</button>`
@@ -994,8 +1005,12 @@
                     </div>
                     <div class="mt-6">
                         <h3 class="font-bold text-center mb-4 text-white">Escolha o novo horário</h3>
-                        <div id="time-slots-remarcar" class="grid grid-cols-3 gap-2 text-center">
-                            <p class="col-span-3 text-gray-400 text-sm">Selecione uma data para ver os horários</p>
+                         <div class="grid grid-cols-2 gap-2 mb-4">
+                            <button id="btn-remarcar-manha" class="py-2 rounded-lg btn-primary active" onclick="showTimeSlotsRemarcar('manha')">Manhã</button>
+                            <button id="btn-remarcar-tarde" class="py-2 rounded-lg btn-primary" onclick="showTimeSlotsRemarcar('tarde')">Tarde</button>
+                        </div>
+                        <div id="time-slots-remarcar" class="grid grid-cols-4 gap-2 text-center">
+                            <p class="col-span-4 text-gray-400 text-sm">Selecione uma data para ver os horários</p>
                         </div>
                     </div>
                 </div>
@@ -1023,33 +1038,50 @@
         updateCalendar();
     }
 
+    function showTimeSlotsRemarcar(periodo) {
+        const btnManha = document.getElementById('btn-remarcar-manha');
+        const btnTarde = document.getElementById('btn-remarcar-tarde');
+        
+        btnManha.classList.toggle('active', periodo === 'manha');
+        btnTarde.classList.toggle('active', periodo === 'tarde');
+
+        const timeSlotsContainer = document.getElementById('time-slots-remarcar');
+        if (!remarcarSelection.data) {
+            timeSlotsContainer.innerHTML = '<p class="col-span-4 text-gray-400 text-sm">Selecione uma data para ver os horários</p>';
+            return;
+        }
+
+        const allTimes = {
+            manha: ['08:00', '08:40', '09:20', '10:00', '10:40', '11:20'],
+            tarde: ['13:00', '13:40', '14:20', '15:00', '15:40', '16:20', '17:00', '17:40', '18:20', '19:00']
+        };
+
+        const now = new Date();
+        const selectedDate = new Date(remarcarSelection.data);
+        
+        let availableTimes = allTimes[periodo].filter(time => {
+            if (selectedDate.toDateString() === now.toDateString()) {
+                const [hours, minutes] = time.split(':');
+                const slotTime = new Date(selectedDate);
+                slotTime.setHours(parseInt(hours), parseInt(minutes));
+                return slotTime > now;
+            }
+            return true;
+        });
+
+        if (availableTimes.length > 0) {
+            timeSlotsContainer.innerHTML = availableTimes.map(time => `<div class="p-3 rounded-lg cursor-pointer time-slot" onclick="selectRemarcarTime(this, '${time}')">${time}</div>`).join('');
+        } else {
+            timeSlotsContainer.innerHTML = `<p class="col-span-4 text-gray-400 text-sm">Não há horários disponíveis para este período.</p>`;
+        }
+    }
+
     function selectRemarcarDate(element, year, month, day) {
         if (element.hasAttribute('disabled')) return;
         document.querySelectorAll('#calendar-container-remarcar .calendar-day.selected').forEach(el => el.classList.remove('selected'));
         element.classList.add('selected');
         remarcarSelection.data = new Date(year, month, day).toISOString();
-
-        const timeSlotsContainer = document.getElementById('time-slots-remarcar');
-        const allTimes = ['08:00', '08:40', '09:20', '10:00', '14:00', '14:40', '15:20', '16:00'];
-        const now = new Date();
-        const selectedDate = new Date(year, month, day);
-        
-        let availableTimes = allTimes;
-
-        if (selectedDate.toDateString() === now.toDateString()) {
-            availableTimes = allTimes.filter(time => {
-                const [hours, minutes] = time.split(':');
-                const slotTime = new Date(selectedDate);
-                slotTime.setHours(parseInt(hours), parseInt(minutes));
-                return slotTime > now;
-            });
-        }
-
-        if (availableTimes.length > 0) {
-            timeSlotsContainer.innerHTML = availableTimes.map(time => `<div class="p-3 rounded-lg cursor-pointer time-slot" onclick="selectRemarcarTime(this, '${time}')">${time}</div>`).join('');
-        } else {
-            timeSlotsContainer.innerHTML = '<p class="col-span-3 text-gray-400 text-sm">Não há horários disponíveis para hoje.</p>';
-        }
+        showTimeSlotsRemarcar('manha');
     }
 
     function selectRemarcarTime(element, time) {
@@ -1159,12 +1191,13 @@
     // --- LÓGICA DE AGENDAMENTO ---
     function attachAgendarEventListeners() {
         document.getElementById('select-unidade').addEventListener('click', showUnidades);
+        document.getElementById('select-data').addEventListener('click', showCalendario);
         document.getElementById('select-barbeiro').addEventListener('click', showBarbeiros);
         document.getElementById('select-servico').addEventListener('click', showServicos);
-        document.getElementById('select-data').addEventListener('click', showCalendario);
+        
         document.getElementById('agendar-btn').addEventListener('click', () => {
              if (userLoggedIn) {
-                 confirmarAgendamento();
+                 showResumoAgendamentoModal();
             } else {
                  showLogin();
             }
@@ -1175,23 +1208,19 @@
         const agendarBtn = document.getElementById('agendar-btn');
         if (!agendarBtn) return;
 
-        // --- LÓGICA DE VERIFICAÇÃO DE LIMITE DE AGENDAMENTOS ---
         if (agendamentos.abertos.length >= 2) {
             agendarBtn.textContent = 'Máximo de 2 agendamentos em aberto';
             agendarBtn.disabled = true;
             agendarBtn.classList.remove('active');
-            agendarBtn.style.backgroundColor = '#374151'; // Cor cinza para indicar bloqueio
+            agendarBtn.style.backgroundColor = '#374151';
             agendarBtn.style.cursor = 'not-allowed';
-            return; // Interrompe a execução para não prosseguir para a próxima verificação
+            return;
         }
-        // --- FIM DA LÓGICA DE VERIFICAÇÃO ---
-
-        // Reseta o estilo e o texto do botão caso o limite não seja atingido
+        
         agendarBtn.style.backgroundColor = '';
         agendarBtn.style.cursor = '';
         agendarBtn.textContent = 'Agendar';
 
-        // Lógica original para verificar se todos os campos estão preenchidos
         if (selection.unidade && selection.barbeiro && selection.servico && selection.data && selection.hora) {
             agendarBtn.classList.add('active');
             agendarBtn.disabled = false;
@@ -1199,6 +1228,22 @@
             agendarBtn.classList.remove('active');
             agendarBtn.disabled = true;
         }
+    }
+
+    function updateStepUI() {
+        const steps = ['unidade', 'data', 'barbeiro', 'servico'];
+        let enabled = true;
+        steps.forEach(step => {
+            const el = document.getElementById(`select-${step}`);
+            if (enabled) {
+                el.classList.remove('disabled');
+            } else {
+                el.classList.add('disabled');
+            }
+            if (!selection[step]) {
+                enabled = false;
+            }
+        });
     }
 
     function showUnidades() {
@@ -1218,17 +1263,25 @@
     function selectUnidade(id) {
         selection.unidade = unidades.find(u => u.id === id);
         if (!selection.unidade) return;
+        
+        // Limpa seleções dependentes
+        selection.data = null;
+        selection.hora = null;
+        selection.barbeiro = null;
+        selection.servico = null;
 
         const el = document.getElementById('unidade-text');
         el.textContent = selection.unidade.nome;
         el.classList.remove('selection-item-text');
         el.classList.add('selected');
+        
+        updateAgendarViewFromState();
         closeModal();
-        checkAgendarButton();
         saveState();
     }
 
     function showBarbeiros() {
+        if(!selection.unidade || !selection.data) return;
         let content = `<h2 class="text-xl font-bold mb-6 text-center modal-title">Selecionar profissional</h2>`;
         content += barbeiros.map(b => `
             <div class="flex items-center p-3 rounded-lg mb-3 cursor-pointer selection-item" onclick="selectBarbeiro(${b.id})">
@@ -1250,23 +1303,54 @@
         el.textContent = selection.barbeiro.nome;
         el.classList.remove('selection-item-text');
         el.classList.add('selected');
+        
+        updateAgendarViewFromState();
         closeModal();
-        checkAgendarButton();
         saveState();
     }
 
     function showServicos() {
-        let content = `<h2 class="text-xl font-bold mb-6 text-center modal-title">Escolha um serviço</h2>`;
-        content += servicos.map(s => `
-            <div class="flex justify-between items-center p-4 rounded-lg mb-3 cursor-pointer selection-item" onclick="selectServico(${s.id})">
-                <div>
-                    <p class="font-semibold text-white">${s.nome}</p>
-                    <p class="text-sm text-secondary">${s.promocao ? `<span class="line-through">R$ ${s.preco.toFixed(2)}</span> <span class="text-primary font-bold">R$ ${s.promocao.toFixed(2)}</span>` : `R$ ${s.preco.toFixed(2)}`} &middot; ${s.duracao}</p>
+        if(!selection.unidade || !selection.data || !selection.barbeiro) return;
+
+        const diaDaSemana = new Date(selection.data).getDay();
+        const temPromocao = diaDaSemana >= 1 && diaDaSemana <= 3;
+
+        let promoBanner = `
+            <div class="bg-[#1e1e1e] p-4 rounded-lg mb-6 text-center border border-primary/50">
+                <i class="fas fa-tags text-3xl text-primary"></i>
+                <h3 class="text-xl font-bold text-primary mt-2">Promoção de Segunda a Quarta!</h3>
+                <div class="w-20 h-1 bg-primary mx-auto mt-2 rounded-full transform scale-x-0 transition-transform duration-700 ease-out" id="promo-title-underline"></div>
+                <p class="text-secondary text-sm mt-3">Agendando de segunda a quarta o seu corte sai mais barato, aproveite a oferta!</p>
+                 <div class="text-sm mt-3 text-left border-t border-gray-700 pt-3">
+                   <p class="text-white"><span class="font-bold">Corte:</span> <del class="text-gray-500">R$ 50,00</del> <i class="fas fa-arrow-right text-xs mx-1"></i> <span class="font-bold text-primary">R$ 40,00</span></p>
+                   <p class="text-white"><span class="font-bold">Combo:</span> <del class="text-gray-500">R$ 100,00</del> <i class="fas fa-arrow-right text-xs mx-1"></i> <span class="font-bold text-primary">R$ 75,00</span></p>
                 </div>
-                <div class="w-6 h-6 border-2 border-gray-500 rounded-full"></div>
             </div>
-        `).join('');
+        `;
+
+        let content = `${promoBanner}<h2 class="text-xl font-bold mb-4 text-center modal-title">Escolha um serviço</h2>`;
+        content += servicos.map(s => {
+            const precoFinal = temPromocao && s.promocao ? s.promocao : s.preco;
+            const precoAntigo = temPromocao && s.promocao ? `<span class="line-through text-gray-500">R$ ${s.preco.toFixed(2)}</span>` : '';
+            
+            return `
+                <div class="flex justify-between items-center p-4 rounded-lg mb-3 cursor-pointer selection-item" onclick="selectServico(${s.id})">
+                    <div>
+                        <p class="font-semibold text-white">${s.nome}</p>
+                        <p class="text-sm text-secondary">${precoAntigo} <span class="text-primary font-bold">R$ ${precoFinal.toFixed(2)}</span> &middot; ${s.duracao}</p>
+                    </div>
+                    <div class="w-6 h-6 border-2 border-gray-500 rounded-full"></div>
+                </div>
+            `;
+        }).join('');
         openModal(content);
+        
+        const promoUnderline = document.getElementById('promo-title-underline');
+        if(promoUnderline) {
+            requestAnimationFrame(() => {
+                promoUnderline.classList.remove('scale-x-0');
+            });
+        }
     }
     function selectServico(id) {
         selection.servico = servicos.find(s => s.id === id);
@@ -1276,12 +1360,14 @@
         el.textContent = selection.servico.nome;
         el.classList.remove('selection-item-text');
         el.classList.add('selected');
+        
+        updateAgendarViewFromState();
         closeModal();
-        checkAgendarButton();
         saveState();
     }
 
     function showCalendario() {
+        if(!selection.unidade) return;
         let displayMonth = new Date().getMonth();
         let displayYear = new Date().getFullYear();
         
@@ -1342,8 +1428,12 @@
                 </div>
                 <div class="mt-6">
                     <h3 class="font-bold text-center mb-4 text-white">Escolha o melhor horário</h3>
-                    <div id="time-slots" class="grid grid-cols-3 gap-2 text-center">
-                        <p class="col-span-3 text-gray-400 text-sm">Selecione uma data para ver os horários</p>
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <button id="btn-manha" class="py-2 rounded-lg btn-primary active" onclick="showTimeSlots('manha')">Manhã</button>
+                        <button id="btn-tarde" class="py-2 rounded-lg btn-primary" onclick="showTimeSlots('tarde')">Tarde</button>
+                    </div>
+                    <div id="time-slots" class="grid grid-cols-4 gap-2 text-center">
+                        <p class="col-span-4 text-gray-400 text-sm">Selecione uma data para ver os horários</p>
                     </div>
                 </div>
             </div>
@@ -1366,14 +1456,50 @@
         updateCalendar();
     }
 
+    function showTimeSlots(periodo) {
+        const btnManha = document.getElementById('btn-manha');
+        const btnTarde = document.getElementById('btn-tarde');
+        
+        btnManha.classList.toggle('active', periodo === 'manha');
+        btnTarde.classList.toggle('active', periodo === 'tarde');
+
+        const timeSlotsContainer = document.getElementById('time-slots');
+        if (!selection.data) {
+            timeSlotsContainer.innerHTML = '<p class="col-span-4 text-gray-400 text-sm">Selecione uma data para ver os horários</p>';
+            return;
+        }
+
+        const allTimes = {
+            manha: ['08:00', '08:40', '09:20', '10:00', '10:40', '11:20'],
+            tarde: ['13:00', '13:40', '14:20', '15:00', '15:40', '16:20', '17:00', '17:40', '18:20', '19:00']
+        };
+
+        const now = new Date();
+        const selectedDate = new Date(selection.data);
+        
+        let availableTimes = allTimes[periodo].filter(time => {
+            if (selectedDate.toDateString() === now.toDateString()) {
+                const [hours, minutes] = time.split(':');
+                const slotTime = new Date(selectedDate);
+                slotTime.setHours(parseInt(hours), parseInt(minutes));
+                return slotTime > now;
+            }
+            return true;
+        });
+
+        if (availableTimes.length > 0) {
+            timeSlotsContainer.innerHTML = availableTimes.map(time => `<div class="p-3 rounded-lg cursor-pointer time-slot" onclick="selectTime(this, '${time}')">${time}</div>`).join('');
+        } else {
+            timeSlotsContainer.innerHTML = `<p class="col-span-4 text-gray-400 text-sm">Não há horários disponíveis para este período.</p>`;
+        }
+    }
+
     function selectDate(element, year, month, day) {
         if (element.hasAttribute('disabled')) return;
         document.querySelectorAll('.calendar-day.selected').forEach(el => el.classList.remove('selected'));
         element.classList.add('selected');
-        selection.data = new Date(year, month, day).toISOString(); // Salvar em formato ISO
+        selection.data = new Date(year, month, day).toISOString();
 
-        // --- LÓGICA ADICIONADA ---
-        // Limpa a hora para forçar uma nova seleção e atualiza a UI
         selection.hora = null;
         const dataTextEl = document.getElementById('data-text');
         if (dataTextEl) {
@@ -1381,31 +1507,9 @@
             dataTextEl.classList.add('selection-item-text');
             dataTextEl.classList.remove('selected');
         }
-        // Chama a função de verificação imediatamente após selecionar a data
-        checkAgendarButton();
-        // --- FIM DA LÓGICA ADICIONADA ---
-
-        const timeSlotsContainer = document.getElementById('time-slots');
-        const allTimes = ['08:00', '08:40', '09:20', '10:00', '14:00', '14:40', '15:20', '16:00'];
-        const now = new Date();
-        const selectedDate = new Date(year, month, day);
         
-        let availableTimes = allTimes;
-
-        if (selectedDate.toDateString() === now.toDateString()) {
-            availableTimes = allTimes.filter(time => {
-                const [hours, minutes] = time.split(':');
-                const slotTime = new Date(selectedDate);
-                slotTime.setHours(parseInt(hours), parseInt(minutes));
-                return slotTime > now;
-            });
-        }
-
-        if (availableTimes.length > 0) {
-            timeSlotsContainer.innerHTML = availableTimes.map(time => `<div class="p-3 rounded-lg cursor-pointer time-slot" onclick="selectTime(this, '${time}')">${time}</div>`).join('');
-        } else {
-            timeSlotsContainer.innerHTML = '<p class="col-span-3 text-gray-400 text-sm">Não há horários disponíveis para hoje.</p>';
-        }
+        updateAgendarViewFromState();
+        showTimeSlots('manha'); // Mostra os horários da manhã por padrão
     }
 
     function selectTime(element, time) {
@@ -1421,7 +1525,8 @@
         el.textContent = `${selection.hora} - ${dayName}, ${dayOfMonth} de ${monthName}`;
         el.classList.remove('selection-item-text');
         el.classList.add('selected');
-        checkAgendarButton();
+        
+        updateAgendarViewFromState();
         setTimeout(closeModal, 300);
         saveState();
     }
@@ -1441,14 +1546,14 @@
     function resetSelections() {
         selection = {
             unidade: null,
-            barbeiro: null,
-            servico: null,
             data: null,
-            hora: null
+            hora: null,
+            barbeiro: null,
+            servico: null
         };
     }
 
-    function confirmarAgendamento() {
+    function showResumoAgendamentoModal() {
         const agendarBtn = document.getElementById('agendar-btn');
         if(!agendarBtn || agendarBtn.disabled) return;
 
@@ -1457,6 +1562,112 @@
             return;
         }
 
+        const dataAgendamento = new Date(selection.data);
+        const diaDaSemana = dataAgendamento.getDay();
+        const temPromocao = diaDaSemana >= 1 && diaDaSemana <= 3;
+        const precoOriginal = selection.servico.preco;
+        const precoPromocional = selection.servico.promocao;
+        
+        const precoFinal = temPromocao && precoPromocional ? precoPromocional : precoOriginal;
+        const descontoSemana = temPromocao && precoPromocional ? precoOriginal - precoPromocional : 0;
+
+        const dataFormatada = dataAgendamento.toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: 'long'
+        });
+
+        const modalHtml = `
+            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col auth-form">
+                <h2 class="text-2xl font-bold text-center mb-6 modal-title">Resumo do Agendamento</h2>
+                
+                <div class="text-left space-y-3 text-sm mb-6">
+                    <p><strong class="text-gray-400">Unidade:</strong><br><span class="text-white">${selection.unidade.nome}</span></p>
+                    <p><strong class="text-gray-400">Data:</strong><br><span class="text-white">${dataFormatada} às ${selection.hora}</span></p>
+                    <p><strong class="text-gray-400">Profissional:</strong><br><span class="text-white">${selection.barbeiro.nome}</span></p>
+                    <p><strong class="text-gray-400">Serviço:</strong><br><span class="text-white">${selection.servico.nome}</span></p>
+                </div>
+
+                <div class="border-t border-gray-700 pt-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <input type="text" id="cupom-input" placeholder="Cupom de desconto" class="w-full p-2 rounded-lg mr-2">
+                        <button class="px-4 py-2 btn-primary rounded-lg text-sm font-bold" onclick="aplicarCupom()">Aplicar</button>
+                    </div>
+                    <div id="cupom-feedback" class="text-sm h-5 mb-2"></div>
+
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-secondary">Subtotal</span>
+                            <span>R$ ${precoOriginal.toFixed(2)}</span>
+                        </div>
+                        <div id="desconto-semana-row" class="flex justify-between text-green-400 ${descontoSemana > 0 ? '' : 'hidden'}">
+                            <span>Desconto Seg-Qua</span>
+                            <span>- R$ ${descontoSemana.toFixed(2)}</span>
+                        </div>
+                        <div id="desconto-cupom-row" class="flex justify-between text-green-400 hidden">
+                            <span>Desconto Cupom</span>
+                            <span id="desconto-cupom-valor"></span>
+                        </div>
+                        <div class="flex justify-between font-bold text-lg border-t border-gray-700 pt-2 mt-2">
+                            <span class="text-white">Total</span>
+                            <span id="total-valor" class="text-primary">R$ ${precoFinal.toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 grid grid-cols-2 gap-4">
+                    <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
+                    <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="finalizarAgendamento()">Confirmar</button>
+                </div>
+            </div>
+        `;
+        openModal(modalHtml, 'bg-transparent border-none', 'center');
+    }
+
+    function aplicarCupom() {
+        const cupomInput = document.getElementById('cupom-input');
+        const feedbackDiv = document.getElementById('cupom-feedback');
+        const cupomCode = cupomInput.value.toUpperCase();
+
+        // Lógica de validação do cupom (simulada)
+        if (cupomCode === 'VS10') {
+            feedbackDiv.textContent = 'Cupom de 10% aplicado!';
+            feedbackDiv.className = 'text-sm h-5 mb-2 text-green-400';
+            recalcularTotal(0.10); // 10% de desconto
+        } else {
+            feedbackDiv.textContent = 'Cupom inválido.';
+            feedbackDiv.className = 'text-sm h-5 mb-2 text-red-500';
+            recalcularTotal(0); // Sem desconto
+        }
+    }
+
+    function recalcularTotal(descontoCupomPercent) {
+        const dataAgendamento = new Date(selection.data);
+        const diaDaSemana = dataAgendamento.getDay();
+        const temPromocao = diaDaSemana >= 1 && diaDaSemana <= 3;
+        const precoOriginal = selection.servico.preco;
+        const precoPromocional = selection.servico.promocao;
+        
+        const precoBase = temPromocao && precoPromocional ? precoPromocional : precoOriginal;
+        
+        const valorDescontoCupom = precoBase * descontoCupomPercent;
+        const precoFinal = precoBase - valorDescontoCupom;
+
+        const descontoCupomRow = document.getElementById('desconto-cupom-row');
+        const descontoCupomValor = document.getElementById('desconto-cupom-valor');
+        const totalValor = document.getElementById('total-valor');
+
+        if (valorDescontoCupom > 0) {
+            descontoCupomValor.textContent = `- R$ ${valorDescontoCupom.toFixed(2)}`;
+            descontoCupomRow.classList.remove('hidden');
+        } else {
+            descontoCupomRow.classList.add('hidden');
+        }
+
+        totalValor.textContent = `R$ ${precoFinal.toFixed(2)}`;
+    }
+
+
+    function finalizarAgendamento() {
         const newId = Date.now();
         const [hours, minutes] = selection.hora.split(':');
         const finalDate = new Date(selection.data);
@@ -1554,7 +1765,7 @@
             userLoggedIn = true;
             saveState();
             closeModal();
-            setTimeout(confirmarAgendamento, 310);
+            setTimeout(showResumoAgendamentoModal, 310);
         }, 3000);
     }
 
@@ -1804,7 +2015,7 @@
         userLoggedIn = true;
         saveState();
         closeModal();
-        setTimeout(confirmarAgendamento, 310);
+        setTimeout(showResumoAgendamentoModal, 310);
     }
 
     function handleCadastro() {
@@ -2281,35 +2492,45 @@
     }
 
     function updateAgendarViewFromState() {
-        if (selection.unidade) {
-            const el = document.getElementById('unidade-text');
-            el.textContent = selection.unidade.nome;
-            el.classList.remove('selection-item-text');
-            el.classList.add('selected');
-        }
-        if (selection.barbeiro) {
-            const el = document.getElementById('barbeiro-text');
-            el.textContent = selection.barbeiro.nome;
-            el.classList.remove('selection-item-text');
-            el.classList.add('selected');
-        }
-        if (selection.servico) {
-            const el = document.getElementById('servico-text');
-            el.textContent = selection.servico.nome;
-            el.classList.remove('selection-item-text');
-            el.classList.add('selected');
-        }
-        if (selection.data && selection.hora) {
-            const date = new Date(selection.data);
-            const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-            const dayName = weekDays[date.getDay()];
-            const dayOfMonth = date.getDate();
-            const monthName = date.toLocaleString('pt-BR', { month: 'long' });
-            const el = document.getElementById('data-text');
-            el.textContent = `${selection.hora} - ${dayName}, ${dayOfMonth} de ${monthName}`;
-            el.classList.remove('selection-item-text');
-            el.classList.add('selected');
-        }
+        const steps = ['unidade', 'data', 'barbeiro', 'servico'];
+        let lastSelected = -1;
+
+        steps.forEach((step, index) => {
+            const elText = document.getElementById(`${step}-text`);
+            if (selection[step]) {
+                lastSelected = index;
+                if (step === 'data') {
+                    const date = new Date(selection.data);
+                    const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+                    const dayName = weekDays[date.getDay()];
+                    const dayOfMonth = date.getDate();
+                    const monthName = date.toLocaleString('pt-BR', { month: 'long' });
+                    elText.textContent = `${selection.hora} - ${dayName}, ${dayOfMonth} de ${monthName}`;
+                } else {
+                    elText.textContent = selection[step].nome;
+                }
+                elText.classList.remove('selection-item-text');
+                elText.classList.add('selected');
+            } else {
+                 if (step === 'data') {
+                    elText.textContent = 'Selecionar data e hora';
+                 } else {
+                    elText.textContent = `Selecionar ${step}`;
+                 }
+                elText.classList.add('selection-item-text');
+                elText.classList.remove('selected');
+            }
+        });
+
+        steps.forEach((step, index) => {
+            const elContainer = document.getElementById(`select-${step}`);
+            if (index <= lastSelected + 1) {
+                elContainer.classList.remove('disabled');
+            } else {
+                elContainer.classList.add('disabled');
+            }
+        });
+        
         checkAgendarButton();
     }
     
