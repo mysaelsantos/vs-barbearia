@@ -48,13 +48,32 @@
             opacity: 0;
             transition: opacity 0.5s ease-out;
         }
-        /* --- REMOVER BARRA DE SCROLL --- */
-        #main-content::-webkit-scrollbar, .modal-scroll-hidden::-webkit-scrollbar {
+        /* --- REMOVER E ESTILIZAR BARRA DE SCROLL --- */
+        #main-content::-webkit-scrollbar {
             display: none;
         }
-        #main-content, .modal-scroll-hidden {
+        #main-content {
             -ms-overflow-style: none;  /* IE and Edge */
             scrollbar-width: none;  /* Firefox */
+        }
+        .service-list-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .service-list-scroll::-webkit-scrollbar-track {
+            background: #1e1e1e;
+            border-radius: 10px;
+        }
+        .service-list-scroll::-webkit-scrollbar-thumb {
+            background-color: #fbb62c;
+            border-radius: 10px;
+            border: 2px solid #1e1e1e;
+        }
+        .modal-scroll-hidden::-webkit-scrollbar {
+            display: none;
+        }
+        .modal-scroll-hidden {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
         .modal-backdrop {
             background-color: rgba(0, 0, 0, 0.7);
@@ -382,6 +401,8 @@
         { id: 4, nome: 'Sobrancelha', preco: 20.00, promocao: null, duracao: '15 min' },
         { id: 5, nome: 'Pezinho', preco: 15.00, promocao: null, duracao: '10 min' },
         { id: 6, nome: 'Hidratação', preco: 30.00, promocao: null, duracao: '20 min' },
+        { id: 7, nome: 'Corte Infantil', preco: 40.00, promocao: null, duracao: '30 min' },
+        { id: 8, nome: 'Platinado', preco: 150.00, promocao: null, duracao: '2h' },
     ];
     const planos = [
         { title: 'Cabelo Limitado', price: '129,90', period: '/mês', features: ['Plano mensal limitado para cabelo', 'Válido nas duas unidades', 'Economia de até 35%'], popular: false },
@@ -1310,55 +1331,52 @@
     }
 
     function showServicos() {
-        if(!selection.unidade || !selection.barbeiro) return;
+        if (!selection.unidade || !selection.barbeiro) return;
 
         const diaDaSemana = selection.data ? new Date(selection.data).getDay() : -1;
         const temPromocao = diaDaSemana >= 1 && diaDaSemana <= 3;
 
         let promoBanner = `
-            <div class="bg-[#1e1e1e] p-4 rounded-lg mb-6 text-center border border-primary/50">
-                <i class="fas fa-tags text-3xl text-primary"></i>
-                <h3 class="text-xl font-bold text-primary mt-2">Promoção de Segunda a Quarta!</h3>
-                <div class="w-20 h-1 bg-primary mx-auto mt-2 rounded-full transform scale-x-0 transition-transform duration-700 ease-out" id="promo-title-underline"></div>
-                <p class="text-secondary text-sm mt-3">Agendando de segunda a quarta o seu corte sai mais barato, aproveite a oferta!</p>
-                 <div class="text-sm mt-3 text-left border-t border-gray-700 pt-3">
-                   <p class="text-white"><span class="font-bold">Corte:</span> <del class="text-gray-500">R$ 50,00</del> <i class="fas fa-arrow-right text-xs mx-1"></i> <span class="font-bold text-primary">R$ 40,00</span></p>
-                   <p class="text-white"><span class="font-bold">Combo:</span> <del class="text-gray-500">R$ 100,00</del> <i class="fas fa-arrow-right text-xs mx-1"></i> <span class="font-bold text-primary">R$ 75,00</span></p>
+            <div class="px-4 pt-4 flex-shrink-0">
+                <div class="bg-[#1e1e1e] p-4 rounded-lg text-center border-2 border-primary/50 shadow-lg">
+                    <h3 class="text-xl font-bold text-primary">Promoção de Segunda a Quarta!</h3>
+                    <div class="w-24 h-0.5 bg-primary mx-auto my-2 rounded-full"></div>
+                    <p class="text-secondary text-sm mt-3">Agendando de segunda a quarta o seu corte sai mais barato, aproveite a oferta!</p>
+                    <div class="text-sm mt-4 text-left border-t border-gray-700 pt-3 space-y-1">
+                        <p class="text-white"><strong class="font-semibold">Corte:</strong> <del class="text-gray-500">R$ 50,00</del> <i class="fas fa-arrow-right text-xs mx-1"></i> <span class="font-bold text-primary text-base">R$ 40,00</span></p>
+                        <p class="text-white"><strong class="font-semibold">Combo:</strong> <del class="text-gray-500">R$ 100,00</del> <i class="fas fa-arrow-right text-xs mx-1"></i> <span class="font-bold text-primary text-base">R$ 75,00</span></p>
+                    </div>
                 </div>
             </div>
         `;
 
-        let content = `
-            <div class="flex flex-col h-full">
-                <h2 class="text-xl font-bold mb-4 text-center modal-title">Escolha um serviço</h2>
-                ${promoBanner}
-                <div class="flex-grow overflow-y-auto modal-scroll-hidden pr-2">
-                    ${servicos.map(s => {
-                        const precoFinal = temPromocao && s.promocao ? s.promocao : s.preco;
-                        const precoAntigo = temPromocao && s.promocao ? `<span class="line-through text-gray-500">R$ ${s.preco.toFixed(2)}</span>` : '';
-                        
-                        return `
-                            <div class="flex justify-between items-center p-4 rounded-lg mb-3 cursor-pointer selection-item" onclick="selectServico(${s.id})">
-                                <div>
-                                    <p class="font-semibold text-white">${s.nome}</p>
-                                    <p class="text-sm text-secondary">${precoAntigo} <span class="text-primary font-bold">R$ ${precoFinal.toFixed(2)}</span> &middot; ${s.duracao}</p>
-                                </div>
-                                <div class="w-6 h-6 border-2 border-gray-500 rounded-full"></div>
-                            </div>
-                        `;
-                    }).join('')}
+        let titleHtml = `<h2 class="px-4 text-lg font-semibold my-4 text-center text-primary flex-shrink-0">Escolha um serviço</h2>`;
+
+        let servicesListHtml = servicos.map(s => {
+            const precoFinal = temPromocao && s.promocao ? s.promocao : s.preco;
+            const precoAntigo = temPromocao && s.promocao ? `<span class="line-through text-gray-500">R$ ${s.preco.toFixed(2)}</span>` : '';
+            
+            return `
+                <div class="flex justify-between items-center p-4 rounded-lg mb-3 cursor-pointer selection-item" onclick="selectServico(${s.id})">
+                    <div>
+                        <p class="font-semibold text-white">${s.nome}</p>
+                        <p class="text-sm text-secondary">${precoAntigo} <span class="text-primary font-bold">R$ ${precoFinal.toFixed(2)}</span> &middot; ${s.duracao}</p>
+                    </div>
+                    <div class="w-6 h-6 border-2 border-gray-500 rounded-full flex-shrink-0"></div>
                 </div>
-            </div>
+            `;
+        }).join('');
+
+        let content = `
+                ${promoBanner}
+                ${titleHtml}
+                <div class="flex-grow overflow-y-auto service-list-scroll px-4 pb-4 min-h-0">
+                    ${servicesListHtml}
+                </div>
         `;
-        openModal(content, 'flex flex-col');
-        
-        const promoUnderline = document.getElementById('promo-title-underline');
-        if(promoUnderline) {
-            requestAnimationFrame(() => {
-                promoUnderline.classList.remove('scale-x-0');
-            });
-        }
+        openModal(content, 'flex flex-col max-h-[85vh] p-0');
     }
+
     function selectServico(id) {
         selection.servico = servicos.find(s => s.id === id);
         if(!selection.servico) return;
