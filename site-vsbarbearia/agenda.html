@@ -360,9 +360,10 @@
                 <i class="fas fa-calendar-check text-xl"></i>
                 <span class="text-xs mt-1">Agendar</span>
             </a>
-            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-primary footer-nav-item" data-view="historico">
+            <a href="#" class="relative flex flex-col items-center text-gray-400 hover:text-primary footer-nav-item" data-view="historico">
                 <i class="fas fa-history text-xl"></i>
                 <span class="text-xs mt-1">Histórico</span>
+                <span id="review-notification-dot" class="absolute top-0 right-2 w-2 h-2 bg-red-500 rounded-full hidden"></span>
             </a>
             <a href="#" class="flex flex-col items-center text-gray-400 hover:text-primary footer-nav-item" data-view="planos">
                 <i class="fas fa-star text-xl"></i>
@@ -560,7 +561,23 @@
     }
 
     function renderAgendarView() {
+        // --- [NOVO] Lógica do lembrete de agendamento ---
+        let reminderHtml = '';
+        const today = new Date();
+        const todaysAppointment = agendamentos.abertos.find(ag => new Date(ag.data).toDateString() === today.toDateString());
+
+        if (todaysAppointment) {
+            const horaFormatada = new Date(todaysAppointment.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            reminderHtml = `
+                <div class="bg-primary/20 border-l-4 border-primary text-primary p-4 m-6 rounded-r-lg" role="alert">
+                    <p class="font-bold">Lembrete</p>
+                    <p class="text-sm">Seu horário é hoje às ${horaFormatada} na ${todaysAppointment.unidade.nome}.</p>
+                </div>
+            `;
+        }
+
         mainContent.innerHTML = `
+            ${reminderHtml}
             <div class="relative h-full flex flex-col">
                 <div class="video-background">
                     <video autoplay muted loop playsinline poster="https://i.postimg.cc/28q5gTbm/Design-sem-nome-76.png">
@@ -787,15 +804,16 @@
 
              let footerHtml = '';
              if (ag.avaliacao) {
-                 footerHtml = `<div class="flex justify-center items-center text-primary mt-3 pt-3 border-t border-gray-700">`;
-                 for (let i = 1; i <= 5; i++) {
-                     footerHtml += `<i class="fas fa-star ${i <= ag.avaliacao ? 'text-primary' : 'text-gray-600'}"></i>`;
-                 }
-                 footerHtml += `</div>`;
+                 footerHtml = `
+                    <div class="flex justify-center items-center text-primary mt-3 pt-3 border-t border-gray-700">
+                        ${[...Array(5)].map((_, i) => `<i class="fas fa-star ${i < ag.avaliacao ? 'text-primary' : 'text-gray-600'}"></i>`).join('')}
+                    </div>
+                 `;
              } else {
                  footerHtml = `
-                     <div class="mt-3 pt-3 border-t border-gray-700">
-                         <button class="btn-bordered w-full text-sm py-2" onclick="showAvaliacaoModal(${ag.id})">Avaliar serviço</button>
+                     <div class="mt-3 pt-3 border-t border-gray-700 grid grid-cols-2 gap-3">
+                         <button class="btn-bordered w-full text-sm py-2" onclick="showAvaliacaoModal(${ag.id})">Avaliar</button>
+                         <button class="btn-plan w-full text-sm py-2" onclick="rebookAppointment(${ag.id})">Agendar Novamente</button>
                      </div>
                  `;
              }
@@ -1438,7 +1456,7 @@
                     dayClass += ' unavailable';
                 }
 
-                daysGrid += `<div class="${dayClass}" ${!isSelectable ? 'disabled' : ''} onclick="selectDate(this, ${year}, ${month}, ${day})">${day}</div>`;
+                daysGrid += `<div class="${dayClass}" data-date="${year}-${month+1}-${day}" ${!isSelectable ? 'disabled' : ''} onclick="selectDate(this, ${year}, ${month}, ${day})">${day}</div>`;
             }
             daysGrid += `</div>`;
             
@@ -1477,8 +1495,29 @@
                 if (displayMonth > 11) { displayMonth = 0; displayYear++; }
                 updateCalendar();
             });
+
+            // --- [NOVO] Lógica de auto-seleção de data ---
+            setTimeout(autoSelectFirstAvailableDate, 50); 
         }
         updateCalendar();
+    }
+    
+    // --- [NOVO] Função para auto-selecionar a primeira data disponível ---
+    function autoSelectFirstAvailableDate() {
+        for (let i = 0; i < 7; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() + i);
+            if (date.getDay() !== 0) { // Não é domingo
+                const day = date.getDate();
+                const month = date.getMonth();
+                const year = date.getFullYear();
+                const dayElement = document.querySelector(`.calendar-day[data-date="${year}-${month+1}-${day}"]`);
+                if (dayElement && !dayElement.hasAttribute('disabled')) {
+                    selectDate(dayElement, year, month, day);
+                    return; // Sai da função após encontrar e selecionar
+                }
+            }
+        }
     }
 
     function showTimeSlots(periodo) {
@@ -1520,9 +1559,17 @@
     }
 
     function selectDate(element, year, month, day) {
-        if (element.hasAttribute('disabled')) return;
+        if (element && element.hasAttribute('disabled')) return;
+        
         document.querySelectorAll('.calendar-day.selected').forEach(el => el.classList.remove('selected'));
-        element.classList.add('selected');
+        if (element) {
+             element.classList.add('selected');
+        } else {
+            // Se o elemento não for passado, encontre-o para aplicar o estilo
+            const dayElement = document.querySelector(`.calendar-day[data-date="${year}-${month+1}-${day}"]`);
+            if(dayElement) dayElement.classList.add('selected');
+        }
+        
         selection.data = new Date(year, month, day).toISOString();
 
         selection.hora = null;
@@ -2081,6 +2128,31 @@
     }
 
     // --- MODAIS DO PERFIL E AVALIAÇÃO ---
+    
+    // --- [NOVO] Função para reagendar um serviço do histórico ---
+    function rebookAppointment(id) {
+        const appointmentToRebook = agendamentos.historico.find(ag => ag.id === id);
+        if (!appointmentToRebook) return;
+
+        clearSelectionState(); // Limpa seleções anteriores
+
+        // Preenche a seleção com os dados do agendamento antigo
+        selection.unidade = appointmentToRebook.unidade;
+        selection.barbeiro = appointmentToRebook.barbeiro;
+        selection.servico = appointmentToRebook.servico;
+
+        // Leva o usuário para a tela de agendamento
+        renderView('agendar');
+
+        // Abre o modal de calendário após a tela ser renderizada
+        setTimeout(() => {
+            const dataStepElement = document.getElementById('select-data');
+            if (dataStepElement) {
+                dataStepElement.click();
+            }
+        }, 100);
+    }
+
 
     /**
      * NOVO: Função para copiar o código de indicação e dar feedback visual.
@@ -2499,6 +2571,8 @@
         if (agendamento) {
             agendamento.avaliacao = currentRating;
         }
+        saveState();
+        updateReviewNotification();
         
         const successHtml = `
             <div class="info-card text-center p-6">
@@ -3176,6 +3250,53 @@
         openModal(modalHtml, 'border-none', 'center');
     }
 
+    // --- [NOVO] Funções de inicialização e verificação ---
+    function checkAppointments() {
+        const now = new Date();
+        const expiredAppointments = [];
+        const openAppointments = [];
+
+        agendamentos.abertos.forEach(ag => {
+            if (new Date(ag.data) < now) {
+                expiredAppointments.push(ag);
+            } else {
+                openAppointments.push(ag);
+            }
+        });
+
+        if (expiredAppointments.length > 0) {
+            agendamentos.abertos = openAppointments;
+            agendamentos.historico.unshift(...expiredAppointments);
+            saveState();
+
+            // Verifica se o usuário está logado e se há um serviço para avaliar
+            const firstToReview = expiredAppointments.find(ag => ag.avaliacao === null);
+            if (userLoggedIn && firstToReview) {
+                // Adiciona um pequeno delay para não abrir sobre a tela de loading
+                setTimeout(() => showAvaliacaoModal(firstToReview.id), 1000);
+            }
+        }
+    }
+
+    function updateReviewNotification() {
+        const notificationDot = document.getElementById('review-notification-dot');
+        if (!notificationDot) return;
+
+        const needsReview = agendamentos.historico.some(ag => ag.avaliacao === null);
+        if (needsReview) {
+            notificationDot.classList.remove('hidden');
+        } else {
+            notificationDot.classList.add('hidden');
+        }
+    }
+
+    function initializeApp() {
+        checkAppointments();
+        updateReviewNotification();
+        const activeView = document.querySelector('.footer-nav-item.active')?.dataset.view || 'agendar';
+        renderView(activeView);
+    }
+
 
     // --- INICIALIZAÇÃO ---
     document.addEventListener('DOMContentLoaded', () => {
@@ -3234,7 +3355,7 @@
             loadingScreen.classList.add('fade-out');
             setTimeout(() => {
                 loadingScreen.style.display = 'none';
-                renderView('agendar');
+                initializeApp(); // <--- [NOVO] Chamada da função de inicialização
             }, 500); // Corresponde à duração da animação de fade-out
         });
     });
@@ -3242,4 +3363,3 @@
 </script>
 </body>
 </html>
-
