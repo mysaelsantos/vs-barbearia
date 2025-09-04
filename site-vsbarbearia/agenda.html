@@ -498,7 +498,7 @@
         modalContainer.classList.remove('items-end', 'items-center');
         modalContainer.classList.add(position === 'center' ? 'items-center' : 'items-end');
 
-        const baseClasses = 'w-full max-w-sm p-4 transform-gpu transition-transform duration-300 ease-in-out'; // Otimizado para animação mais suave
+        const baseClasses = 'w-full max-w-sm p-4 transform-gpu transition-transform duration-300 ease-in-out';
         const styleClasses = position === 'center' 
             ? 'rounded-2xl translate-y-full' 
             : 'rounded-t-2xl mb-6 translate-y-full';
@@ -561,23 +561,7 @@
     }
 
     function renderAgendarView() {
-        // --- [NOVO] Lógica do lembrete de agendamento ---
-        let reminderHtml = '';
-        const today = new Date();
-        const todaysAppointment = agendamentos.abertos.find(ag => new Date(ag.data).toDateString() === today.toDateString());
-
-        if (todaysAppointment) {
-            const horaFormatada = new Date(todaysAppointment.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-            reminderHtml = `
-                <div class="bg-primary/20 border-l-4 border-primary text-primary p-4 m-6 rounded-r-lg" role="alert">
-                    <p class="font-bold">Lembrete</p>
-                    <p class="text-sm">Seu horário é hoje às ${horaFormatada} na ${todaysAppointment.unidade.nome}.</p>
-                </div>
-            `;
-        }
-
         mainContent.innerHTML = `
-            ${reminderHtml}
             <div class="relative h-full flex flex-col">
                 <div class="video-background">
                     <video autoplay muted loop playsinline poster="https://i.postimg.cc/28q5gTbm/Design-sem-nome-76.png">
@@ -1750,7 +1734,8 @@
             data: finalDate.toISOString(),
             unidade: selection.unidade,
             barbeiro: selection.barbeiro,
-            servico: selection.servico
+            servico: selection.servico,
+            avaliacao: null // --- [NOVO] Adicionado estado inicial da avaliação
         };
 
         agendamentos.abertos.push(novoAgendamento);
@@ -3298,7 +3283,7 @@
     }
 
 
-    // --- INICIALIZAÇÃO ---
+     // --- INICIALIZAÇÃO ---
     document.addEventListener('DOMContentLoaded', () => {
         loadState();
         document.querySelectorAll('.footer-nav-item').forEach(item => {
