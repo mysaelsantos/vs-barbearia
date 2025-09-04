@@ -421,11 +421,11 @@
     };
 
     let userSubscription = {
-        active: true,
-        plan: planos[2],
-        nextBillingDate: '10/09/2025',
-        lastServiceDate: '15/08/2025',
-        usedServices: 2,
+        active: false,
+        plan: null,
+        nextBillingDate: '',
+        lastServiceDate: '',
+        usedServices: 0,
         totalServices: 4
     };
 
@@ -465,7 +465,7 @@
 
     // --- FUNÇÕES DE ESTADO (CACHE) ---
     function saveState() {
-        localStorage.setItem('agendamentoState', JSON.stringify({ selection, userLoggedIn, agendamentos }));
+        localStorage.setItem('agendamentoState', JSON.stringify({ selection, userLoggedIn, agendamentos, userSubscription, paymentMethods }));
     }
 
     function loadState() {
@@ -474,6 +474,8 @@
             const state = JSON.parse(savedState);
             selection = state.selection || {};
             userLoggedIn = state.userLoggedIn || false;
+            userSubscription = state.userSubscription || { active: false, plan: null, usedServices: 0, totalServices: 4 };
+            paymentMethods = state.paymentMethods || [ { id: 1, type: 'card', last4: '1234', brand: 'visa', primary: true } ];
             if (state.agendamentos) {
                 agendamentos.abertos = state.agendamentos.abertos || [];
                 agendamentos.historico = state.agendamentos.historico || [
@@ -561,7 +563,22 @@
     }
 
     function renderAgendarView() {
+        let reminderHtml = '';
+        const today = new Date();
+        const todaysAppointment = agendamentos.abertos.find(ag => new Date(ag.data).toDateString() === today.toDateString());
+
+        if (todaysAppointment) {
+            const horaFormatada = new Date(todaysAppointment.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            reminderHtml = `
+                <div class="bg-primary/20 border-l-4 border-primary text-primary p-4 m-6 rounded-r-lg" role="alert">
+                    <p class="font-bold">Lembrete</p>
+                    <p class="text-sm">Seu horário é hoje às ${horaFormatada} na ${todaysAppointment.unidade.nome}.</p>
+                </div>
+            `;
+        }
+
         mainContent.innerHTML = `
+            ${reminderHtml}
             <div class="relative h-full flex flex-col">
                 <div class="video-background">
                     <video autoplay muted loop playsinline poster="https://i.postimg.cc/28q5gTbm/Design-sem-nome-76.png">
@@ -618,7 +635,7 @@
 
     function renderPlanosView() {
         let planStatusHtml = '';
-        if (userSubscription.active) {
+        if (userSubscription.active && userSubscription.plan) {
             const used = userSubscription.usedServices;
             const total = userSubscription.totalServices;
             
@@ -687,22 +704,25 @@
         }
 
 
-        const plansHtml = planos.map(plan => `
-            <div class="plan-card ${plan.popular ? 'popular' : ''} rounded-xl overflow-hidden flex flex-col">
-                ${plan.popular ? '<div class="bg-[#fbb62c] text-black text-center py-1 font-bold text-sm">MAIS POPULAR</div>' : ''}
-                <div class="p-6 flex flex-col flex-grow">
-                    <h3 class="text-xl font-bold mb-2 text-white">${plan.title}</h3>
-                    <div class="flex items-baseline mb-6">
-                        <span class="text-4xl font-bold text-primary">R$${plan.price}</span>
-                        <span class="text-gray-400 ml-1">${plan.period}</span>
+        const plansHtml = planos.map(plan => {
+            const isCurrentPlan = userSubscription.active && userSubscription.plan && userSubscription.plan.title === plan.title;
+            return `
+                <div class="plan-card ${plan.popular ? 'popular' : ''} ${isCurrentPlan ? 'border-2 border-primary' : ''} rounded-xl overflow-hidden flex flex-col">
+                    ${plan.popular ? '<div class="bg-[#fbb62c] text-black text-center py-1 font-bold text-sm">MAIS POPULAR</div>' : ''}
+                    <div class="p-6 flex flex-col flex-grow">
+                        <h3 class="text-xl font-bold mb-2 text-white">${plan.title}</h3>
+                        <div class="flex items-baseline mb-6">
+                            <span class="text-4xl font-bold text-primary">R$${plan.price}</span>
+                            <span class="text-gray-400 ml-1">${plan.period}</span>
+                        </div>
+                        <ul class="space-y-3 mb-8 flex-grow text-secondary text-sm">
+                            ${plan.features.map(f => `<li class="flex items-start"><i class="fas fa-check text-primary mr-3 mt-1"></i><span>${f}</span></li>`).join('')}
+                        </ul>
+                        <button class="btn-plan mt-auto" onclick="showSubscriptionModal('${plan.title}')" ${isCurrentPlan ? 'disabled' : ''}>${isCurrentPlan ? 'Seu Plano Atual' : 'Assinar Plano'}</button>
                     </div>
-                    <ul class="space-y-3 mb-8 flex-grow text-secondary text-sm">
-                        ${plan.features.map(f => `<li class="flex items-start"><i class="fas fa-check text-primary mr-3 mt-1"></i><span>${f}</span></li>`).join('')}
-                    </ul>
-                    <a href="#" class="btn-plan mt-auto">Assinar Plano</a>
                 </div>
-            </div>
-        `).join('');
+            `
+        }).join('');
 
         mainContent.innerHTML = `
             <div class="pb-24 flex flex-col">
@@ -731,7 +751,6 @@
             </div>
         `;
 
-        // --- INÍCIO DA LÓGICA DE ANIMAÇÃO ---
         if (userSubscription.active) {
             const progressBar = document.getElementById('plan-progress-bar');
             const titleUnderline = document.getElementById('plan-title-underline');
@@ -743,7 +762,7 @@
                     const progressPercentage = (used / total) * 100;
                     
                     progressBar.style.width = `${progressPercentage}%`;
-                    titleUnderline.classList.remove('scale-x-0');
+                    titleUnderline.style.transform = 'scaleX(1)';
                 });
             }
         }
@@ -1480,13 +1499,11 @@
                 updateCalendar();
             });
 
-            // --- [NOVO] Lógica de auto-seleção de data ---
             setTimeout(autoSelectFirstAvailableDate, 50); 
         }
         updateCalendar();
     }
     
-    // --- [NOVO] Função para auto-selecionar a primeira data disponível ---
     function autoSelectFirstAvailableDate() {
         for (let i = 0; i < 7; i++) {
             const date = new Date();
@@ -1498,7 +1515,7 @@
                 const dayElement = document.querySelector(`.calendar-day[data-date="${year}-${month+1}-${day}"]`);
                 if (dayElement && !dayElement.hasAttribute('disabled')) {
                     selectDate(dayElement, year, month, day);
-                    return; // Sai da função após encontrar e selecionar
+                    return;
                 }
             }
         }
@@ -1549,7 +1566,6 @@
         if (element) {
              element.classList.add('selected');
         } else {
-            // Se o elemento não for passado, encontre-o para aplicar o estilo
             const dayElement = document.querySelector(`.calendar-day[data-date="${year}-${month+1}-${day}"]`);
             if(dayElement) dayElement.classList.add('selected');
         }
@@ -1565,7 +1581,7 @@
         }
         
         updateAgendarViewFromState();
-        showTimeSlots('manha'); // Mostra os horários da manhã por padrão
+        showTimeSlots('manha');
     }
 
     function selectTime(element, time) {
@@ -1684,15 +1700,14 @@
         const feedbackDiv = document.getElementById('cupom-feedback');
         const cupomCode = cupomInput.value.toUpperCase();
 
-        // Lógica de validação do cupom (simulada)
         if (cupomCode === 'VS10') {
             feedbackDiv.textContent = 'Cupom de 10% aplicado!';
             feedbackDiv.className = 'text-sm h-5 mb-2 text-green-400';
-            recalcularTotal(0.10); // 10% de desconto
+            recalcularTotal(0.10);
         } else {
             feedbackDiv.textContent = 'Cupom inválido.';
             feedbackDiv.className = 'text-sm h-5 mb-2 text-red-500';
-            recalcularTotal(0); // Sem desconto
+            recalcularTotal(0);
         }
     }
 
@@ -1735,7 +1750,7 @@
             unidade: selection.unidade,
             barbeiro: selection.barbeiro,
             servico: selection.servico,
-            avaliacao: null // --- [NOVO] Adicionado estado inicial da avaliação
+            avaliacao: null
         };
 
         agendamentos.abertos.push(novoAgendamento);
@@ -1874,10 +1889,8 @@
         const button = document.getElementById('reset-continue-btn');
         const errorDiv = document.getElementById('reset-error');
         
-        // Limpa a mensagem de erro ao digitar
         errorDiv.textContent = '';
         
-        // Formata o telefone enquanto o usuário digita
         formatPhone(event);
         
         const cleanNumber = input.value.replace(/\D/g, '');
@@ -1895,21 +1908,18 @@
         const errorDiv = document.getElementById('reset-error');
         const cleanNumber = phoneInput.value.replace(/\D/g, '');
 
-        // Mostra o loading
         button.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
         button.disabled = true;
         
-        // Simula a verificação no "banco de dados"
         setTimeout(() => {
             if (cleanNumber === registeredPhone) {
                 showVerificarCodigo();
             } else {
                 errorDiv.textContent = 'Celular não encontrado em nosso cadastro.';
                 button.innerHTML = 'Continuar';
-                // O botão continua desabilitado até o usuário alterar o número
                 validateResetPhone({ target: phoneInput }); 
             }
-        }, 1500); // 1.5 segundos de simulação
+        }, 1500);
     }
 
 
@@ -2094,7 +2104,7 @@
         closeModal();
         setTimeout(() => {
             renderView('perfil');
-        }, 310); // Aguarda a animação do modal fechar
+        }, 310);
     }
 
     function showLogoutConfirmationModal() {
@@ -2114,22 +2124,18 @@
 
     // --- MODAIS DO PERFIL E AVALIAÇÃO ---
     
-    // --- [NOVO] Função para reagendar um serviço do histórico ---
     function rebookAppointment(id) {
         const appointmentToRebook = agendamentos.historico.find(ag => ag.id === id);
         if (!appointmentToRebook) return;
 
-        clearSelectionState(); // Limpa seleções anteriores
+        clearSelectionState();
 
-        // Preenche a seleção com os dados do agendamento antigo
         selection.unidade = appointmentToRebook.unidade;
         selection.barbeiro = appointmentToRebook.barbeiro;
         selection.servico = appointmentToRebook.servico;
 
-        // Leva o usuário para a tela de agendamento
         renderView('agendar');
 
-        // Abre o modal de calendário após a tela ser renderizada
         setTimeout(() => {
             const dataStepElement = document.getElementById('select-data');
             if (dataStepElement) {
@@ -2138,16 +2144,11 @@
         }, 100);
     }
 
-
-    /**
-     * NOVO: Função para copiar o código de indicação e dar feedback visual.
-     */
     function copyReferralCode() {
         const codeElement = document.getElementById('referral-code');
         if (!codeElement) return;
 
         const code = codeElement.innerText;
-        // Usa a API do Clipboard para maior compatibilidade e segurança
         navigator.clipboard.writeText(code).then(() => {
             const button = document.querySelector('#referral-code-box button');
             if(button) {
@@ -2160,19 +2161,9 @@
             }
         }).catch(err => {
             console.error('Falha ao copiar o código: ', err);
-            // Fallback para método antigo se a API falhar
-            const tempInput = document.createElement('textarea');
-            tempInput.value = code;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempInput);
         });
     }
 
-    /**
-     * NOVO: Modal "Indique um Amigo" totalmente funcional.
-     */
     function showIndiqueAmigoModal() {
         const referralCode = userInfo.referralCode || "VSBARBEARIA10";
         const message = `Fala, mestre! ✂️ Estou te dando um desconto de 20% no seu primeiro serviço na VS Barbearia. Use meu código *${referralCode}* no agendamento. Baixe o app e agende seu horário: https://vsbarbearia.com.br`;
@@ -2229,7 +2220,7 @@
 
     function formatBirthdate(event) {
         const input = event.target;
-        let value = input.value.replace(/\D/g, ''); // Remove tudo que não for dígito
+        let value = input.value.replace(/\D/g, '');
         
         if (value.length > 2) {
             value = `${value.substring(0, 2)}/${value.substring(2)}`;
@@ -2490,13 +2481,11 @@
             }
         });
 
-        // Habilita o botão de avaliação
         if(submitBtn) {
             submitBtn.disabled = false;
             submitBtn.classList.remove('opacity-50');
         }
 
-        // Muda o texto do comentário se a nota for baixa
         if(commentLabel) {
             commentLabel.style.opacity = 0;
             setTimeout(() => {
@@ -2506,14 +2495,14 @@
                     commentLabel.textContent = 'Deixar um comentário (opcional)';
                 }
                 commentLabel.style.opacity = 1;
-            }, 150); // Metade da duração da transição para um efeito suave
+            }, 150);
         }
     }
 
     function showAvaliacaoModal(id) {
         const agendamento = agendamentos.historico.find(ag => ag.id === id);
         if (!agendamento) return;
-        currentRating = 0; // Reset rating for new modal
+        currentRating = 0;
 
         const modalHtml = `
             <div class="p-6 text-white relative auth-form" style="background-color: #1e1e1e; border-radius: 1rem;">
@@ -2619,6 +2608,149 @@
     }
     
     // --- MODAIS DE PLANOS ---
+    function showSubscriptionModal(planTitle) {
+        const plan = planos.find(p => p.title === planTitle);
+        if (!plan) return;
+
+        const getBrandIcon = (brand) => {
+            if (brand === 'visa') return '<i class="fab fa-cc-visa text-3xl text-blue-400"></i>';
+            if (brand === 'mastercard') return '<i class="fab fa-cc-mastercard text-3xl text-red-500"></i>';
+            return '<i class="fas fa-credit-card text-3xl text-gray-400"></i>';
+        }
+
+        const primaryMethod = paymentMethods.find(p => p.primary);
+
+        let paymentMethodHtml = '';
+        if (primaryMethod) {
+            paymentMethodHtml = `
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center">
+                        ${getBrandIcon(primaryMethod.brand)}
+                        <div class="ml-4">
+                            <p class="text-sm font-bold text-white">Cartão final ${primaryMethod.last4}</p>
+                            <p class="text-xs text-secondary">Crédito</p>
+                        </div>
+                    </div>
+                    <button class="text-sm text-primary font-semibold" onclick="showAlterarPagamentoModal()">Alterar</button>
+                </div>
+            `;
+        } else {
+            paymentMethodHtml = `
+                <button class="w-full text-left p-4 rounded-lg bg-[#222] flex items-center justify-between" onclick="showAdicionarCartaoForm(() => showSubscriptionModal('${planTitle}'))">
+                    <span><i class="fas fa-plus-circle w-6 text-center mr-3 text-primary"></i>Adicionar forma de pagamento</span>
+                    <i class="fas fa-chevron-right text-gray-500"></i>
+                </button>
+            `;
+        }
+
+        const price = parseFloat(plan.price.replace(',', '.'));
+
+        const modalHtml = `
+            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col auth-form">
+                <h2 class="text-2xl font-bold text-center mb-6 modal-title">Confirmar Assinatura</h2>
+                
+                <div class="text-left space-y-4 mb-6">
+                    <div>
+                        <p class="text-sm font-semibold text-gray-400">Plano</p>
+                        <p class="font-bold text-white text-lg">${plan.title}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-400">Forma de Pagamento</p>
+                        ${paymentMethodHtml}
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-700 pt-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <input type="text" id="plan-cupom-input" placeholder="Cupom de desconto" class="w-full p-2 rounded-lg mr-2">
+                        <button class="px-4 py-2 btn-primary rounded-lg text-sm font-bold" onclick="applyPlanCoupon(${price})">Aplicar</button>
+                    </div>
+                    <div id="plan-cupom-feedback" class="text-sm h-5 mb-2"></div>
+
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-secondary">Subtotal</span>
+                            <span>R$ ${plan.price}</span>
+                        </div>
+                        <div id="plan-desconto-cupom-row" class="flex justify-between text-green-400 hidden">
+                            <span>Desconto Cupom</span>
+                            <span id="plan-desconto-cupom-valor"></span>
+                        </div>
+                        <div class="flex justify-between font-bold text-lg border-t border-gray-700 pt-2 mt-2">
+                            <span class="text-white">Total Mensal</span>
+                            <span id="plan-total-valor" class="text-primary">R$ ${plan.price}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 grid grid-cols-2 gap-4">
+                    <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
+                    <button id="confirm-subscription-btn" class="w-full py-3 font-bold rounded-lg btn-plan ${!primaryMethod ? 'opacity-50' : ''}" onclick="handleSubscription('${plan.title}')" ${!primaryMethod ? 'disabled' : ''}>Confirmar Assinatura</button>
+                </div>
+            </div>
+        `;
+        openModal(modalHtml, 'bg-transparent border-none', 'center');
+    }
+
+    function applyPlanCoupon(originalPrice) {
+        const cupomInput = document.getElementById('plan-cupom-input');
+        const feedbackDiv = document.getElementById('plan-cupom-feedback');
+        const cupomCode = cupomInput.value.toUpperCase();
+
+        if (cupomCode === 'PRIMEIRAASSINATURA') {
+            feedbackDiv.textContent = 'Cupom de 15% aplicado!';
+            feedbackDiv.className = 'text-sm h-5 mb-2 text-green-400';
+            recalculatePlanTotal(originalPrice, 0.15);
+        } else {
+            feedbackDiv.textContent = 'Cupom inválido.';
+            feedbackDiv.className = 'text-sm h-5 mb-2 text-red-500';
+            recalculatePlanTotal(originalPrice, 0);
+        }
+    }
+
+    function recalculatePlanTotal(originalPrice, discountPercent) {
+        const valorDescontoCupom = originalPrice * discountPercent;
+        const precoFinal = originalPrice - valorDescontoCupom;
+
+        const descontoCupomRow = document.getElementById('plan-desconto-cupom-row');
+        const descontoCupomValor = document.getElementById('plan-desconto-cupom-valor');
+        const totalValor = document.getElementById('plan-total-valor');
+
+        if (valorDescontoCupom > 0) {
+            descontoCupomValor.textContent = `- R$ ${valorDescontoCupom.toFixed(2).replace('.', ',')}`;
+            descontoCupomRow.classList.remove('hidden');
+        } else {
+            descontoCupomRow.classList.add('hidden');
+        }
+
+        totalValor.textContent = `R$ ${precoFinal.toFixed(2).replace('.', ',')}`;
+    }
+
+    function handleSubscription(planTitle) {
+        const newPlan = planos.find(p => p.title === planTitle);
+        if (!newPlan) return;
+
+        userSubscription.active = true;
+        userSubscription.plan = newPlan;
+        userSubscription.usedServices = 0;
+        userSubscription.nextBillingDate = new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('pt-BR');
+
+        saveState();
+        showSubscriptionSuccessModal(planTitle);
+    }
+
+    function showSubscriptionSuccessModal(planTitle) {
+        const modalHtml = `
+            <div class="info-card text-center p-6">
+                <i class="far fa-check-circle text-6xl text-primary mb-4"></i>
+                <h2 class="text-2xl font-bold mb-4 modal-title">Assinatura Confirmada!</h2>
+                <p class="text-secondary mb-6">Bem-vindo ao clube! Sua assinatura do plano <strong>${planTitle}</strong> está ativa.</p>
+                <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="closeModal(); renderView('planos');">Ver Meu Plano</button>
+            </div>
+        `;
+        openModal(modalHtml, 'border-none', 'center');
+    }
+
     function showBeneficiosModal() {
         const modalHtml = `
             <div class="info-card text-center p-6">
@@ -2784,7 +2916,6 @@
     }
     
     function selectReason(element) {
-        // Reset all items
         document.querySelectorAll('#cancel-reasons-container .reason-item').forEach(item => {
             item.classList.remove('border-primary');
             const icon = item.querySelector('.check-icon');
@@ -2792,13 +2923,11 @@
             icon.classList.add('fa-circle', 'far', 'text-gray-500');
         });
 
-        // Style the selected item
         element.classList.add('border-primary');
         const selectedIcon = element.querySelector('.check-icon');
         selectedIcon.classList.remove('fa-circle', 'far', 'text-gray-500');
         selectedIcon.classList.add('fa-check-circle', 'fas', 'text-primary');
 
-        // Enable confirm button
         const confirmBtn = document.getElementById('confirm-cancel-btn');
         if (confirmBtn) {
             confirmBtn.disabled = false;
@@ -2822,9 +2951,8 @@
     }
 
     function handleSubscriptionCancellation() {
-        // Lógica para cancelar a assinatura (ex: API call)
         userSubscription.active = false;
-        saveState(); // Salva o novo estado
+        saveState();
         showCancelamentoConfirmadoModal();
     }
 
@@ -2956,7 +3084,7 @@
     }
 
     // --- MODAIS DE PAGAMENTO ---
-    function showAlterarPagamentoModal() {
+    function showAlterarPagamentoModal(onCloseCallback) {
         const primaryMethod = paymentMethods.find(p => p.primary);
         const otherMethods = paymentMethods.filter(p => !p.primary);
 
@@ -2994,6 +3122,8 @@
                 <button class="text-xs text-primary font-semibold">Tornar Principal</button>
             </div>
         `).join('');
+        
+        const closeAction = onCloseCallback ? `(${onCloseCallback.toString()})()` : 'closeModal()';
 
         const modalHtml = `
             <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col" style="min-height: 550px;">
@@ -3007,7 +3137,7 @@
 
                 <div class="mt-auto pt-6">
                      <div class="space-y-3">
-                        <button class="w-full py-3 font-semibold rounded-lg bg-[#2a2a2a] flex items-center justify-center" onclick="showAdicionarCartaoForm()">
+                        <button class="w-full py-3 font-semibold rounded-lg bg-[#2a2a2a] flex items-center justify-center" onclick="showAdicionarCartaoForm(${onCloseCallback})">
                             <i class="fas fa-credit-card mr-3"></i> Adicionar Novo Cartão
                         </button>
                         <button class="w-full py-3 font-semibold rounded-lg bg-[#2a2a2a] flex items-center justify-center" onclick="showAdicionarPixForm()">
@@ -3015,17 +3145,18 @@
                         </button>
                      </div>
                      <div class="border-t border-gray-700 my-4"></div>
-                     <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
+                     <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="${closeAction}">Voltar</button>
                 </div>
             </div>
         `;
         openModal(modalHtml, 'bg-transparent border-none', 'center');
     }
 
-    function showAdicionarCartaoForm() {
+    function showAdicionarCartaoForm(onSuccessCallback) {
+        const backAction = onSuccessCallback ? `(${onSuccessCallback.toString()})()` : 'showAlterarPagamentoModal()';
+
         const modalHtml = `
             <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col auth-form" style="min-height: 550px;">
-                <button class="absolute top-4 right-4 text-2xl text-gray-400 hover:text-white" onclick="showAlterarPagamentoModal()">&times;</button>
                 <h2 class="text-2xl font-bold text-center mb-6 modal-title">Adicionar Cartão</h2>
                 
                 <div class="space-y-4 flex-grow">
@@ -3054,15 +3185,30 @@
                 </div>
 
                 <div class="mt-auto grid grid-cols-2 gap-4 pt-6">
-                    <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showAlterarPagamentoModal()">Voltar</button>
-                    <button id="save-card-btn" class="w-full py-3 font-semibold rounded-lg btn-plan opacity-50" onclick="showCartaoSalvoModal()" disabled>Salvar Cartão</button>
+                    <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="${backAction}">Voltar</button>
+                    <button id="save-card-btn" class="w-full py-3 font-semibold rounded-lg btn-plan opacity-50" disabled>Salvar Cartão</button>
                 </div>
             </div>
         `;
         modalContent.innerHTML = modalHtml;
+        document.getElementById('save-card-btn').onclick = () => handleCardSave(onSuccessCallback);
         setupCardInputMasks();
         validateCardForm();
     }
+    
+    function handleCardSave(onSuccessCallback) {
+        const newCard = {
+            id: Date.now(),
+            type: 'card',
+            last4: document.getElementById('card-number').value.slice(-4),
+            brand: 'visa',
+            primary: false
+        };
+        paymentMethods.push(newCard);
+        saveState();
+        showCartaoSalvoModal(onSuccessCallback);
+    }
+
 
     function setupCardInputMasks() {
         document.getElementById('card-number').addEventListener('input', (e) => {
@@ -3112,13 +3258,14 @@
     }
 
 
-    function showCartaoSalvoModal() {
+    function showCartaoSalvoModal(onCloseCallback) {
+        const closeAction = onCloseCallback ? `(${onCloseCallback.toString()})()` : 'showAlterarPagamentoModal()';
         const modalHtml = `
             <div class="info-card text-center p-6">
                 <i class="fas fa-credit-card text-5xl text-primary mb-4"></i>
                 <h2 class="text-xl font-bold mb-4 modal-title">Cartão Salvo!</h2>
                 <p class="text-secondary mb-6">Seu novo cartão foi adicionado com sucesso e já pode ser usado.</p>
-                <button class="w-full py-2 font-semibold rounded-lg btn-primary" onclick="showAlterarPagamentoModal()">Fechar</button>
+                <button class="w-full py-2 font-semibold rounded-lg btn-primary" onclick="${closeAction}">Fechar</button>
             </div>
         `;
         modalContent.innerHTML = modalHtml;
@@ -3235,7 +3382,7 @@
         openModal(modalHtml, 'border-none', 'center');
     }
 
-    // --- [NOVO] Funções de inicialização e verificação ---
+    // --- Funções de inicialização e verificação ---
     function checkAppointments() {
         const now = new Date();
         const expiredAppointments = [];
@@ -3254,10 +3401,8 @@
             agendamentos.historico.unshift(...expiredAppointments);
             saveState();
 
-            // Verifica se o usuário está logado e se há um serviço para avaliar
             const firstToReview = expiredAppointments.find(ag => ag.avaliacao === null);
             if (userLoggedIn && firstToReview) {
-                // Adiciona um pequeno delay para não abrir sobre a tela de loading
                 setTimeout(() => showAvaliacaoModal(firstToReview.id), 1000);
             }
         }
@@ -3283,7 +3428,7 @@
     }
 
 
-     // --- INICIALIZAÇÃO ---
+      // --- INICIALIZAÇÃO ---
     document.addEventListener('DOMContentLoaded', () => {
         loadState();
         document.querySelectorAll('.footer-nav-item').forEach(item => {
