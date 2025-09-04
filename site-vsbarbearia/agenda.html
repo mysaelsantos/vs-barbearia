@@ -2298,12 +2298,17 @@
         const birthdateInput = document.getElementById('edit-birthdate');
         const saveBtn = document.getElementById('save-profile-btn');
 
-        const hasChanged = nameInput.value !== userInfo.name || 
-                           phoneInput.value !== userInfo.phone || 
-                           emailInput.value !== userInfo.email ||
-                           birthdateInput.value !== (userInfo.birthdate || '');
+        const nameChanged = nameInput.value !== userInfo.name;
+        const phoneChanged = phoneInput.value !== userInfo.phone;
+        const emailChanged = emailInput.value !== userInfo.email;
+        const birthdateChanged = birthdateInput.value !== (userInfo.birthdate || '');
 
-        if (hasChanged) {
+        // A mudança na data de aniversário só é considerada válida para salvar se o campo estiver vazio ou completo (10 chars).
+        const isBirthdateChangeValid = birthdateChanged && (birthdateInput.value.length === 0 || birthdateInput.value.length === 10);
+
+        const enableButton = nameChanged || phoneChanged || emailChanged || isBirthdateChangeValid;
+
+        if (enableButton) {
             saveBtn.disabled = false;
             saveBtn.classList.remove('opacity-50');
         } else {
