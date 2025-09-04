@@ -202,8 +202,8 @@
             color: #fbb62c;
         }
         .bg-primary {
-    background-color: #fbb62c;
-}
+            background-color: #fbb62c;
+        }
         /* --- ESTILOS DOS PLANOS (DO SITE) --- */
         .plan-card {
             background-color: #000;
@@ -383,6 +383,9 @@
         </div>
     </div>
 
+    <!-- Input de arquivo para foto de perfil (escondido) -->
+    <input type="file" id="profile-pic-input" accept="image/*" class="hidden">
+
 <script>
     // --- DADOS MOCK (Simulação do Banco de Dados) ---
     const unidades = [
@@ -440,11 +443,13 @@
         { id: 2, type: 'card', last4: '5678', brand: 'mastercard', primary: false }
     ];
 
-    const userInfo = {
+    let userInfo = {
         name: 'Vanilton Santos',
         phone: '(37) 99999-9999',
         email: 'vanilton.santos@exemplo.com',
-        referralCode: 'VANILTONS10' // Adicionado código de indicação do usuário
+        referralCode: 'VANILTONS10',
+        profilePic: 'https://i.postimg.cc/pT3ScnBb/482320646-1375134203841648-765763137701876086-n.jpg',
+        birthdate: ''
     };
     
     // Simulação de um número de telefone cadastrado no "banco de dados"
@@ -461,11 +466,20 @@
     const modalContainer = document.getElementById('modal-container');
     const modalContent = document.getElementById('modal-content');
     const mainContent = document.getElementById('main-content');
-    const footerNav = document.getElementById('footer-nav'); 
+    const footerNav = document.getElementById('footer-nav');
+    const profilePicInput = document.getElementById('profile-pic-input');
+
 
     // --- FUNÇÕES DE ESTADO (CACHE) ---
     function saveState() {
-        localStorage.setItem('agendamentoState', JSON.stringify({ selection, userLoggedIn, agendamentos, userSubscription, paymentMethods }));
+        localStorage.setItem('agendamentoState', JSON.stringify({ 
+            selection, 
+            userLoggedIn, 
+            agendamentos, 
+            userSubscription, 
+            paymentMethods,
+            userInfo
+        }));
     }
 
     function loadState() {
@@ -473,9 +487,17 @@
         if (savedState) {
             const state = JSON.parse(savedState);
             selection = state.selection || {};
-            userLoggedIn = state.userLoggedIn || false;
+            userLoggedIn = state.userLoggedIn !== undefined ? state.userLoggedIn : true;
             userSubscription = state.userSubscription || { active: false, plan: null, usedServices: 0, totalServices: 4 };
             paymentMethods = state.paymentMethods || [ { id: 1, type: 'card', last4: '1234', brand: 'visa', primary: true } ];
+            userInfo = state.userInfo || {
+                name: 'Vanilton Santos',
+                phone: '(37) 99999-9999',
+                email: 'vanilton.santos@exemplo.com',
+                referralCode: 'VANILTONS10',
+                profilePic: 'https://i.postimg.cc/pT3ScnBb/482320646-1375134203841648-765763137701876086-n.jpg',
+                birthdate: ''
+            };
             if (state.agendamentos) {
                 agendamentos.abertos = state.agendamentos.abertos || [];
                 agendamentos.historico = state.agendamentos.historico || [
@@ -881,7 +903,7 @@
             <div class="p-6 pt-12">
                 <div class="flex flex-col items-center text-center mb-8">
                     <div class="relative mb-4">
-                        <img src="https://i.postimg.cc/pT3ScnBb/482320646-1375134203841648-765763137701876086-n.jpg" class="w-24 h-24 rounded-full object-cover border-4 border-primary">
+                        <img id="profile-view-pic" src="${userInfo.profilePic}" class="w-24 h-24 rounded-full object-cover border-4 border-primary">
                         <button class="absolute bottom-0 right-0 bg-gray-700 rounded-full h-8 w-8 flex items-center justify-center" onclick="showTrocarFotoModal()">
                             <i class="fas fa-camera text-white"></i>
                         </button>
@@ -921,6 +943,14 @@
                 </div>
             </div>
         `;
+    }
+    
+    function updateProfilePics() {
+        const newSrc = userInfo.profilePic;
+        const profileViewPic = document.getElementById('profile-view-pic');
+        const modalEditPic = document.getElementById('modal-edit-pic');
+        if (profileViewPic) profileViewPic.src = newSrc;
+        if (modalEditPic) modalEditPic.src = newSrc;
     }
 
     function showDetalhesAgendamento(id) {
@@ -2238,9 +2268,7 @@
                 <h2 class="text-2xl font-bold text-center mb-6 modal-title">Editar Perfil</h2>
 
                 <div class="flex flex-col items-center mb-8">
-                    <div class="w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center mb-2 border-2 border-gray-600">
-                        <i class="fas fa-user text-4xl text-gray-500"></i>
-                    </div>
+                    <img id="modal-edit-pic" src="${userInfo.profilePic}" class="w-24 h-24 rounded-full object-cover mb-2 border-2 border-gray-600">
                     <button class="text-primary text-sm font-semibold" onclick="showTrocarFotoModal()">Trocar foto</button>
                 </div>
 
@@ -2249,7 +2277,7 @@
                     <input type="tel" id="edit-phone" value="${userInfo.phone}" oninput="formatPhone(event); validateProfileForm();" placeholder="Telefone (celular)" class="w-full p-3 rounded-lg">
                     <input type="email" id="edit-email" value="${userInfo.email}" oninput="validateProfileForm()" placeholder="E-mail" class="w-full p-3 rounded-lg">
                     <div>
-                        <input type="text" id="edit-birthdate" oninput="formatBirthdate(event)" placeholder="Data de aniversário (DD/MM/AAAA)" class="w-full p-3 rounded-lg" maxlength="10" inputmode="numeric">
+                        <input type="text" id="edit-birthdate" value="${userInfo.birthdate || ''}" oninput="formatBirthdate(event); validateProfileForm();" placeholder="Data de aniversário (DD/MM/AAAA)" class="w-full p-3 rounded-lg" maxlength="10" inputmode="numeric">
                         <p class="text-xs text-gray-400 mt-3 text-center"><i class="fas fa-gift mr-1 text-primary"></i>Informe seu aniversário para ganhar mimos e descontos especiais!</p>
                     </div>
                 </form>
@@ -2267,11 +2295,13 @@
         const nameInput = document.getElementById('edit-name');
         const phoneInput = document.getElementById('edit-phone');
         const emailInput = document.getElementById('edit-email');
+        const birthdateInput = document.getElementById('edit-birthdate');
         const saveBtn = document.getElementById('save-profile-btn');
 
         const hasChanged = nameInput.value !== userInfo.name || 
                            phoneInput.value !== userInfo.phone || 
-                           emailInput.value !== userInfo.email;
+                           emailInput.value !== userInfo.email ||
+                           birthdateInput.value !== (userInfo.birthdate || '');
 
         if (hasChanged) {
             saveBtn.disabled = false;
@@ -2286,6 +2316,7 @@
         const newName = document.getElementById('edit-name').value;
         const newPhone = document.getElementById('edit-phone').value;
         const newEmail = document.getElementById('edit-email').value;
+        const newBirthdate = document.getElementById('edit-birthdate').value;
 
         const modalHtml = `
             <div class="info-card text-center p-6">
@@ -2294,33 +2325,42 @@
                 <p class="text-secondary mb-6">Deseja salvar as alterações feitas no seu perfil?</p>
                 <div class="flex justify-center space-x-4">
                     <button class="py-2 px-6 font-bold rounded-lg btn-dark border border-gray-600" onclick="showEditarPerfilModal()">Cancelar</button>
-                    <button class="py-2 px-6 font-bold rounded-lg btn-plan" onclick="handleProfileUpdate('${newName}', '${newPhone}', '${newEmail}')">Salvar</button>
+                    <button id="confirm-save-profile-btn" class="py-2 px-6 font-bold rounded-lg btn-plan" onclick="handleProfileUpdate('${newName}', '${newPhone}', '${newEmail}', '${newBirthdate}')">Salvar</button>
                 </div>
             </div>
         `;
         openModal(modalHtml, 'border-none', 'center');
     }
 
-    function handleProfileUpdate(newName, newPhone, newEmail) {
-        userInfo.name = newName;
-        userInfo.phone = newPhone;
-        userInfo.email = newEmail;
-        saveState();
-        
-        const successHtml = `
-            <div class="info-card text-center p-6">
-                <i class="far fa-check-circle text-6xl text-primary mb-4"></i>
-                <h2 class="text-2xl font-bold mb-4 modal-title">Perfil Atualizado!</h2>
-                <p class="text-secondary mb-6">Suas informações foram salvas com sucesso.</p>
-                <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="closeModal()">Fechar</button>
-            </div>
-        `;
-        modalContent.innerHTML = successHtml;
+    function handleProfileUpdate(newName, newPhone, newEmail, newBirthdate) {
+        const confirmBtn = document.getElementById('confirm-save-profile-btn');
+        if (confirmBtn) {
+            confirmBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+            confirmBtn.disabled = true;
+        }
 
         setTimeout(() => {
-            closeModal();
-            renderView('perfil');
-        }, 2500);
+            userInfo.name = newName;
+            userInfo.phone = newPhone;
+            userInfo.email = newEmail;
+            userInfo.birthdate = newBirthdate;
+            saveState();
+            
+            const successHtml = `
+                <div class="info-card text-center p-6">
+                    <i class="far fa-check-circle text-6xl text-primary mb-4"></i>
+                    <h2 class="text-2xl font-bold mb-4 modal-title">Perfil Atualizado!</h2>
+                    <p class="text-secondary mb-6">Suas informações foram salvas com sucesso.</p>
+                    <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="closeModal()">Fechar</button>
+                </div>
+            `;
+            modalContent.innerHTML = successHtml;
+
+            setTimeout(() => {
+                closeModal();
+                renderView('perfil');
+            }, 2500);
+        }, 1500);
     }
 
     function showNotificacoesModal() {
@@ -2470,8 +2510,15 @@
     }
 
     function handlePinChange() {
-        // Aqui iria a lógica para verificar o PIN atual e salvar o novo
-        showPinChangeSuccessModal();
+        const saveBtn = document.getElementById('save-pin-btn');
+        if (saveBtn) {
+            saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+            saveBtn.disabled = true;
+        }
+
+        setTimeout(() => {
+            showPinChangeSuccessModal();
+        }, 1500);
     }
 
     function showPinChangeSuccessModal() {
@@ -2904,71 +2951,25 @@
                  <h2 class="text-2xl font-bold text-center mb-4 text-red-500">Cancelar Assinatura</h2>
                  <p class="text-center text-secondary text-sm mb-8">Lamentamos ver você partir. Por favor, conte-nos o motivo.</p>
 
-                <div id="cancel-reasons-container" class="space-y-3 text-left flex-grow mb-6">
-                    <div class="reason-item flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg cursor-pointer border-2 border-transparent" onclick="selectReason(this)">
-                        <span>O valor está muito alto</span>
-                        <i class="far fa-circle text-gray-500 check-icon"></i>
-                    </div>
-                    <div class="reason-item flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg cursor-pointer border-2 border-transparent" onclick="selectReason(this)">
-                        <span>Não estou usando com<br>frequência</span>
-                        <i class="far fa-circle text-gray-500 check-icon"></i>
-                    </div>
-                     <div class="reason-item flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg cursor-pointer border-2 border-transparent" onclick="selectReason(this)">
-                        <span>Encontrei uma opção<br>melhor/mais barata</span>
-                        <i class="far fa-circle text-gray-500 check-icon"></i>
-                    </div>
-                    <div class="reason-item flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg cursor-pointer border-2 border-transparent" onclick="selectReason(this)">
-                        <span>Qualidade do<br>serviço/atendimento</span>
-                        <i class="far fa-circle text-gray-500 check-icon"></i>
-                    </div>
-                    <div class="reason-item flex items-center justify-between p-3 bg-[#2a2a2a] rounded-lg cursor-pointer border-2 border-transparent" onclick="selectReason(this)">
-                        <span>Outro</span>
-                        <i class="far fa-circle text-gray-500 check-icon"></i>
-                    </div>
+                <div class="space-y-3 text-left flex-grow mb-4">
+                    <select id="cancel-reason" class="w-full p-3 rounded-lg auth-form">
+                        <option value="">Selecione um motivo...</option>
+                        <option>O valor está muito alto</option>
+                        <option>Não estou usando com frequência</option>
+                        <option>Encontrei uma opção melhor/mais barata</option>
+                        <option>Qualidade do serviço/atendimento</option>
+                        <option>Outro</option>
+                    </select>
+                    <textarea id="cancel-comment" class="w-full p-3 rounded-lg auth-form" rows="4" placeholder="Deixe um comentário (opcional)"></textarea>
                 </div>
 
                 <div class="mt-auto grid grid-cols-2 gap-4">
-                    <button class="w-full py-2 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showGerenciarAssinaturaModal()">Voltar</button>
-                    <button id="confirm-cancel-btn" class="w-full py-2 font-semibold rounded-lg bg-red-600 text-white opacity-50" onclick="showConfirmarCancelamentoFinalModal()" disabled>Confirmar</button>
+                    <button class="w-full py-2 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showGerenciarAssinaturaModal()">Manter Plano</button>
+                    <button class="w-full py-2 font-semibold rounded-lg bg-red-600 text-white" onclick="handleSubscriptionCancellation()">Confirmar Cancelamento</button>
                 </div>
             </div>
         `;
         openModal(modalHtml, 'bg-transparent border-none', 'center');
-    }
-    
-    function selectReason(element) {
-        document.querySelectorAll('#cancel-reasons-container .reason-item').forEach(item => {
-            item.classList.remove('border-primary');
-            const icon = item.querySelector('.check-icon');
-            icon.classList.remove('fa-check-circle', 'fas', 'text-primary');
-            icon.classList.add('fa-circle', 'far', 'text-gray-500');
-        });
-
-        element.classList.add('border-primary');
-        const selectedIcon = element.querySelector('.check-icon');
-        selectedIcon.classList.remove('fa-circle', 'far', 'text-gray-500');
-        selectedIcon.classList.add('fa-check-circle', 'fas', 'text-primary');
-
-        const confirmBtn = document.getElementById('confirm-cancel-btn');
-        if (confirmBtn) {
-            confirmBtn.disabled = false;
-            confirmBtn.classList.remove('opacity-50');
-        }
-    }
-
-    function showConfirmarCancelamentoFinalModal() {
-        const modalHtml = `
-            <div class="info-card text-center p-6">
-                <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
-                <h2 class="text-xl font-bold mb-4 modal-title">Confirmar Cancelamento</h2>
-                <p class="text-secondary mb-6">Você tem certeza que deseja cancelar sua assinatura? Esta ação não pode ser desfeita.</p>
-                <div class="grid grid-cols-2 gap-4">
-                    <button class="w-full py-2 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showGerenciarAssinaturaModal()">Manter</button>
-                    <button class="w-full py-2 font-semibold rounded-lg bg-red-600 text-white" onclick="handleSubscriptionCancellation()">Cancelar</button>
-                </div>
-            </div>
-        `;
-        openModal(modalHtml, 'border-none', 'center');
     }
 
     function handleSubscriptionCancellation() {
@@ -3441,18 +3442,18 @@
         }
     }
 
-    // --- NOVOS MODAIS ADICIONADOS ---
+    // --- NOVOS MODAIS ADICIONADOS E ATUALIZADOS ---
 
     function showTrocarFotoModal() {
         const modalHtml = `
             <div class="info-card text-center p-6">
                 <h2 class="text-xl font-bold mb-8 modal-title">Alterar Foto de Perfil</h2>
                 <div class="space-y-4">
-                    <button class="w-full text-left p-4 rounded-lg bg-[#222] flex items-center hover:bg-[#333] transition-colors">
+                    <button id="choose-gallery-btn" class="w-full text-left p-4 rounded-lg bg-[#222] flex items-center hover:bg-[#333] transition-colors">
                         <i class="fas fa-image w-6 text-center mr-4 text-primary"></i>
                         <span class="text-white">Escolher da galeria</span>
                     </button>
-                    <button class="w-full text-left p-4 rounded-lg bg-[#222] flex items-center hover:bg-[#333] transition-colors">
+                    <button id="remove-photo-btn" class="w-full text-left p-4 rounded-lg bg-[#222] flex items-center hover:bg-[#333] transition-colors">
                         <i class="fas fa-trash-alt w-6 text-center mr-4 text-red-500"></i>
                         <span class="text-red-500">Remover foto</span>
                     </button>
@@ -3463,7 +3464,32 @@
             </div>
         `;
         openModal(modalHtml, 'border-none', 'center');
+
+        document.getElementById('choose-gallery-btn').onclick = () => {
+            profilePicInput.click();
+        };
+        document.getElementById('remove-photo-btn').onclick = () => {
+            const initials = userInfo.name.split(' ').map(n => n[0]).join('').substring(0, 2);
+            userInfo.profilePic = `https://placehold.co/100x100/333333/FFFFFF?text=${initials}`;
+            saveState();
+            updateProfilePics();
+            closeModal();
+        };
     }
+    
+    profilePicInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                userInfo.profilePic = e.target.result;
+                saveState();
+                updateProfilePics();
+                closeModal();
+            };
+            reader.readAsDataURL(file);
+        }
+    });
 
     function showTornarPrincipalConfirmacaoModal(methodId) {
         const method = paymentMethods.find(p => p.id === methodId);
@@ -3590,5 +3616,4 @@
 </script>
 </body>
 </html>
-
 
