@@ -2758,7 +2758,59 @@
 
                 <div class="mt-8 grid grid-cols-2 gap-4">
                     <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
-                    <button id="confirm-subscription-btn" class="w-full py-3 font-bold rounded-lg btn-plan ${!primaryMethod ? 'opacity-50' : ''}" onclick="handleSubscription('${plan.title}')" ${!primaryMethod ? 'disabled' : ''}>Confirmar Assinatura</button>
+                    <button id="confirm-subscription-btn" class="w-full py-3 font-bold rounded-lg btn-plan ${!primaryMethod ? 'opacity-50' : ''}" onclick="showFinalSubscriptionSummaryModal('${plan.title}', document.getElementById('plan-total-valor').textContent)" ${!primaryMethod ? 'disabled' : ''}>Continuar</button>
+                </div>
+            </div>
+        `;
+        openModal(modalHtml, 'bg-transparent border-none', 'center');
+    }
+
+    function showFinalSubscriptionSummaryModal(planTitle, finalPriceText) {
+        const plan = planos.find(p => p.title === planTitle);
+        if (!plan) return;
+
+        const modalHtml = `
+            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col" style="min-height: 550px;">
+                <h2 class="text-2xl font-bold text-center mb-6 modal-title">Revise sua Assinatura</h2>
+                
+                <div class="flex-grow space-y-5">
+                    <!-- Detalhes do Plano -->
+                    <div class="bg-[#2a2a2a] p-4 rounded-lg">
+                        <p class="text-sm font-semibold text-gray-400">Plano</p>
+                        <div class="flex justify-between items-baseline mt-1">
+                            <span class="font-bold text-white text-lg">${plan.title}</span>
+                            <span class="font-bold text-primary text-lg">${finalPriceText}</span>
+                        </div>
+                    </div>
+
+                    <!-- Informações de Cobrança -->
+                    <div>
+                        <h3 class="font-semibold text-gray-300 mb-3">Como funciona a cobrança</h3>
+                        <div class="text-sm space-y-3 text-secondary">
+                            <div class="flex items-start">
+                                <i class="fas fa-calendar-alt text-primary w-5 text-center mr-3 mt-1"></i>
+                                <p>Sua assinatura começa hoje e a primeira cobrança será efetuada no seu método de pagamento principal.</p>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-redo text-primary w-5 text-center mr-3 mt-1"></i>
+                                <p>A renovação é automática todos os meses para sua conveniência. Você será notificado antes de cada cobrança.</p>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-times-circle text-primary w-5 text-center mr-3 mt-1"></i>
+                                <p>Cancele quando quiser. Você pode gerenciar ou cancelar sua assinatura a qualquer momento na tela de Planos.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Termos e Condições -->
+                    <div class="text-center text-xs text-gray-500 pt-4">
+                        <p>Ao clicar em "Confirmar e Assinar", você concorda com a cobrança recorrente e com nossos <a href="#" class="underline text-primary" onclick="event.stopPropagation(); showTermosModal(); return false;">Termos de Serviço</a>.</p>
+                    </div>
+                </div>
+
+                <div class="mt-auto pt-6 grid grid-cols-2 gap-4">
+                    <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showSubscriptionModal('${plan.title}')">Voltar</button>
+                    <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="handleSubscription('${plan.title}')">Confirmar e Assinar</button>
                 </div>
             </div>
         `;
@@ -3621,4 +3673,3 @@
 </script>
 </body>
 </html>
-
