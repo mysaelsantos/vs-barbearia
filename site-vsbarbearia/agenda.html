@@ -342,9 +342,9 @@
         </div>
     
         <!-- Seção "Criado por" posicionada na parte inferior -->
-        <div class="absolute bottom-28 flex items-center justify-center space-x-2">
+        <div class="absolute bottom-28 flex items-center justify-center space-x-1">
             <span class="text-lg text-gray-400">Criado por</span>
-            <img src="https://i.postimg.cc/D0pp6j3q/Subcabe-alho-39.png" alt="Vel Sites Logo" class="h-10 relative -top-px" onerror="this.style.display='none'">
+            <img src="https://i.postimg.cc/D0pp6j3q/Subcabe-alho-39.png" alt="Vel Sites Logo" class="h-10 relative -top-px left-1" onerror="this.style.display='none'">
         </div>
     </div>
 
@@ -601,7 +601,7 @@
 
         mainContent.innerHTML = `
             ${reminderHtml}
-            <div class="relative h-full flex flex-col">
+            <div class="relative flex flex-col" style="height: 100%;">
                 <div class="video-background">
                     <video autoplay muted loop playsinline poster="https://i.postimg.cc/28q5gTbm/Design-sem-nome-76.png">
                         <source src="https://files.catbox.moe/fzxnia.mp4" type="video/mp4">
@@ -940,6 +940,14 @@
                 </div>
                 <div class="mt-8">
                     <button class="w-full py-3 font-bold rounded-lg btn-dark border border-red-500 text-red-500" onclick="handleLogout()">Sair</button>
+                </div>
+
+                <!-- Seção Criado Por -->
+                <div class="mt-16 mb-8 text-center">
+                    <div class="flex items-center justify-center space-x-2">
+                        <span class="text-base text-gray-400">Criado por</span>
+                        <img src="https://i.postimg.cc/D0pp6j3q/Subcabe-alho-39.png" alt="Vel Sites Logo" class="h-9 relative -top-px" onerror="this.style.display='none'">
+                    </div>
                 </div>
             </div>
         `;
@@ -3002,31 +3010,65 @@
         openModal(modalHtml, 'bg-transparent border-none', 'center');
     }
     
-    function showCancelarAssinaturaModal() {
-         const modalHtml = `
+    function showCancelarAssinaturaModal(selectedReason = '') {
+        const isReasonSelected = selectedReason !== '';
+        const confirmButtonDisabled = isReasonSelected ? '' : 'disabled';
+        const confirmButtonOpacity = isReasonSelected ? '' : 'opacity-50';
+
+        const modalHtml = `
             <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col" style="min-height: 550px;">
                  <h2 class="text-2xl font-bold text-center mb-4 text-red-500">Cancelar Assinatura</h2>
                  <p class="text-center text-secondary text-sm mb-8">Lamentamos ver você partir. Por favor, conte-nos o motivo.</p>
 
-                <div class="space-y-3 text-left flex-grow mb-4">
-                    <select id="cancel-reason" class="w-full p-3 rounded-lg auth-form">
-                        <option value="">Selecione um motivo...</option>
-                        <option>O valor está muito alto</option>
-                        <option>Não estou usando com frequência</option>
-                        <option>Encontrei uma opção melhor/mais barata</option>
-                        <option>Qualidade do serviço/atendimento</option>
-                        <option>Outro</option>
-                    </select>
-                    <textarea id="cancel-comment" class="w-full p-3 rounded-lg auth-form" rows="4" placeholder="Deixe um comentário (opcional)"></textarea>
+                <div class="space-y-4 text-left flex-grow mb-4 auth-form">
+                    <div id="select-cancel-reason" class="flex items-center justify-between p-3 rounded-lg cursor-pointer selection-item" onclick="showCancelReasonModal('${selectedReason}')">
+                        <span id="cancel-reason-text" class="${isReasonSelected ? 'text-white' : 'selection-item-text'}">${isReasonSelected ? selectedReason : 'Selecione um motivo...'}</span>
+                        <i class="fas fa-chevron-down text-gray-500"></i>
+                    </div>
+                    <textarea id="cancel-comment" class="w-full p-3 rounded-lg" rows="4" placeholder="Deixe um comentário (opcional)"></textarea>
                 </div>
 
                 <div class="mt-auto grid grid-cols-2 gap-4">
                     <button class="w-full py-2 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showGerenciarAssinaturaModal()">Manter Plano</button>
-                    <button class="w-full py-2 font-semibold rounded-lg bg-red-600 text-white" onclick="handleSubscriptionCancellation()">Confirmar Cancelamento</button>
+                    <button id="confirm-cancel-btn" class="w-full py-2 font-semibold rounded-lg bg-red-600 text-white ${confirmButtonOpacity}" onclick="handleSubscriptionCancellation()" ${confirmButtonDisabled}>Confirmar Cancelamento</button>
                 </div>
             </div>
         `;
         openModal(modalHtml, 'bg-transparent border-none', 'center');
+    }
+
+    function showCancelReasonModal(currentReason) {
+        const cancelReasons = [
+            'O valor está muito alto',
+            'Não estou usando com frequência',
+            'Encontrei uma opção melhor/mais barata',
+            'Qualidade do serviço/atendimento',
+            'Outro'
+        ];
+
+        const reasonsHtml = cancelReasons.map(reason => {
+            const isSelected = reason === currentReason;
+            return `
+            <div class="selection-item p-4 rounded-lg cursor-pointer hover:border-primary flex justify-between items-center ${isSelected ? 'border-primary border-2' : ''}" onclick="selectCancelReason('${reason}')">
+                <span class="text-white">${reason}</span>
+                ${isSelected ? '<i class="fas fa-check text-primary"></i>' : ''}
+            </div>
+        `}).join('');
+
+        const modalHtml = `
+            <div class="info-card p-6">
+                <h2 class="text-xl font-bold mb-6 text-center modal-title">Qual o motivo do cancelamento?</h2>
+                <div class="space-y-3">
+                    ${reasonsHtml}
+                </div>
+                <button class="w-full mt-6 py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showCancelarAssinaturaModal('${currentReason}')">Voltar</button>
+            </div>
+        `;
+        openModal(modalHtml, 'border-none', 'center');
+    }
+
+    function selectCancelReason(reason) {
+        showCancelarAssinaturaModal(reason);
     }
 
     function handleSubscriptionCancellation() {
@@ -3673,4 +3715,9 @@
 </script>
 </body>
 </html>
+
+
+
+
+
 
