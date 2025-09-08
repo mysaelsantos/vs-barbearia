@@ -269,12 +269,12 @@
             border: 1px solid #444;
         }
         /* Estilos para tela de Login/Cadastro */
-        .auth-form input, .auth-form textarea {
+        .auth-form input, .auth-form textarea, .auth-form select {
             background-color: #333;
             border: 1px solid #555;
             color: white;
         }
-        .auth-form input:focus, .auth-form textarea:focus {
+        .auth-form input:focus, .auth-form textarea:focus, .auth-form select:focus {
             border-color: #fbb62c;
             outline: none;
             box-shadow: 0 0 0 2px rgba(251, 182, 44, 0.5);
@@ -418,8 +418,8 @@
     const agendamentos = {
         abertos: [],
         historico: [
-            { id: 100, data: '2025-07-20T10:00:00', unidade: unidades[1], barbeiro: barbeiros[2], servico: servicos[0], avaliacao: 5 },
-            { id: 99, data: '2025-06-15T16:20:00', unidade: unidades[0], barbeiro: barbeiros[1], servico: servicos[1], avaliacao: null }
+            { id: 100, data: '2025-07-20T10:00:00', unidade: unidades[1], barbeiro: barbeiros[2], servico: servicos[0], avaliacao: 5, usedInPlan: true },
+            { id: 99, data: '2025-06-15T16:20:00', unidade: unidades[0], barbeiro: barbeiros[1], servico: servicos[1], avaliacao: null, usedInPlan: false }
         ]
     };
 
@@ -452,8 +452,15 @@
         birthdate: ''
     };
     
-    // Simulação de um número de telefone cadastrado no "banco de dados"
     const registeredPhone = '37999745723';
+
+    // Mapeamento de quais serviços cada plano cobre (por ID do serviço)
+    const planServiceMapping = {
+        'Cabelo Limitado': [1, 7], // Corte de Cabelo, Corte Infantil
+        'Barba Limitado': [2], // Barba
+        'Cabelo e Barba Limitado': [1, 2, 3, 7], // Corte, Barba, Combo, Infantil
+        'Cabelo e Barba Ilimitado': [1, 2, 3, 4, 5, 6, 7] // Todos os principais
+    };
 
 
     // --- ESTADO DA APLICAÇÃO ---
@@ -501,8 +508,8 @@
             if (state.agendamentos) {
                 agendamentos.abertos = state.agendamentos.abertos || [];
                 agendamentos.historico = state.agendamentos.historico || [
-                    { id: 100, data: '2025-07-20T10:00:00', unidade: unidades[1], barbeiro: barbeiros[2], servico: servicos[0], avaliacao: 5 },
-                    { id: 99, data: '2025-06-15T16:20:00', unidade: unidades[0], barbeiro: barbeiros[1], servico: servicos[1], avaliacao: null }
+                    { id: 100, data: '2025-07-20T10:00:00', unidade: unidades[1], barbeiro: barbeiros[2], servico: servicos[0], avaliacao: 5, usedInPlan: true },
+                    { id: 99, data: '2025-06-15T16:20:00', unidade: unidades[0], barbeiro: barbeiros[1], servico: servicos[1], avaliacao: null, usedInPlan: false }
                 ];
             }
         } else {
@@ -795,10 +802,14 @@
             const data = new Date(ag.data);
             const dataFormatada = data.toLocaleDateString('pt-BR');
             const horaFormatada = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            const planTag = ag.usedInPlan ? `<span class="bg-primary/20 text-primary text-xs font-semibold px-2 py-0.5 rounded-full ml-auto">Plano</span>` : '';
             return `
                 <div class="history-card cursor-pointer" onclick="showDetalhesAgendamento(${ag.id})">
                      <div class="pb-3">
-                        <h3 class="font-bold text-lg text-white">${ag.unidade.nome}</h3>
+                        <div class="flex items-start">
+                            <h3 class="font-bold text-lg text-white flex-grow">${ag.unidade.nome}</h3>
+                            ${planTag}
+                        </div>
                         <div class="flex justify-between text-secondary text-sm mt-2 mb-4">
                             <span><i class="far fa-calendar-alt mr-2 text-primary"></i>${dataFormatada}</span>
                             <span><i class="far fa-clock mr-2 text-primary"></i>${horaFormatada}</span>
@@ -826,6 +837,7 @@
              const data = new Date(ag.data);
              const dataFormatada = data.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
              const horaFormatada = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+             const planTag = ag.usedInPlan ? `<span class="bg-primary/20 text-primary text-xs font-semibold px-2 py-0.5 rounded-full">Plano</span>` : '';
 
              let footerHtml = '';
              if (ag.avaliacao) {
@@ -848,7 +860,10 @@
                      <p class="text-sm text-gray-400 mb-2"><i class="far fa-calendar-alt mr-2 text-primary"></i>${dataFormatada}</p>
                      <p class="text-sm text-gray-400 mb-4"><i class="far fa-clock mr-2 text-primary"></i>${horaFormatada}</p>
                      <div class="border-t border-gray-700 pt-3">
-                         <p class="font-semibold text-white mb-2">${ag.unidade.nome}</p>
+                        <div class="flex justify-between items-start">
+                             <p class="font-semibold text-white mb-2">${ag.unidade.nome}</p>
+                             ${planTag}
+                        </div>
                          <div class="flex justify-between text-sm">
                              <div>
                                  <p class="text-gray-400">Barbeiro</p>
@@ -973,9 +988,37 @@
         const dataFormatada = dataAgendamento.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
         const horaFormatada = dataAgendamento.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         
-        const diaDaSemana = dataAgendamento.getDay();
-        const temPromocao = diaDaSemana >= 1 && diaDaSemana <= 3;
-        const preco = temPromocao && agendamento.servico.promocao ? agendamento.servico.promocao.toFixed(2) : agendamento.servico.preco.toFixed(2);
+        let precoHtml;
+        if (agendamento.usedInPlan) {
+            precoHtml = `
+                <div class="border-t border-b border-gray-700 py-3 my-3">
+                    <div class="flex justify-between items-center text-green-400">
+                        <span>${agendamento.servico.nome}</span>
+                        <span class="font-bold">Incluso no Plano</span>
+                    </div>
+                </div>
+                 <div class="flex justify-between items-center font-bold text-lg">
+                    <span class="text-white">Total</span>
+                    <span class="text-primary">R$ 0,00</span>
+                </div>
+            `;
+        } else {
+            const diaDaSemana = dataAgendamento.getDay();
+            const temPromocao = diaDaSemana >= 1 && diaDaSemana <= 3;
+            const preco = temPromocao && agendamento.servico.promocao ? agendamento.servico.promocao.toFixed(2) : agendamento.servico.preco.toFixed(2);
+            precoHtml = `
+                <div class="border-t border-b border-gray-700 py-3 my-3">
+                    <div class="flex justify-between items-center">
+                        <span>${agendamento.servico.nome}</span>
+                        <span class="text-white font-bold">R$ ${preco}</span>
+                    </div>
+                </div>
+                 <div class="flex justify-between items-center font-bold text-lg">
+                    <span class="text-white">Total</span>
+                    <span class="text-primary">R$ ${preco}</span>
+                </div>
+            `;
+        }
 
 
         const remarcarButtonHtml = podeRemarcar
@@ -998,16 +1041,7 @@
                     <p><strong class="text-white">Data:</strong><br>${dataFormatada}</p>
                     <p><strong class="text-white">Horário:</strong><br>${horaFormatada}</p>
                     <p><strong class="text-white">Barbeiro:</strong><br>${agendamento.barbeiro.nome}</p>
-                    <div class="border-t border-b border-gray-700 py-3 my-3">
-                        <div class="flex justify-between items-center">
-                            <span>${agendamento.servico.nome}</span>
-                            <span class="text-white font-bold">R$ ${preco}</span>
-                        </div>
-                    </div>
-                     <div class="flex justify-between items-center font-bold text-lg">
-                        <span class="text-white">Total</span>
-                        <span class="text-primary">R$ ${preco}</span>
-                    </div>
+                    ${precoHtml}
                 </div>
                 <div class="mt-8 space-y-3">
                     ${remarcarButtonHtml}
@@ -1250,7 +1284,14 @@
     }
 
     function confirmarCancelamento(id) {
+        const agendamentoParaCancelar = agendamentos.abertos.find(ag => ag.id === id);
+
+        if (agendamentoParaCancelar && agendamentoParaCancelar.usedInPlan && userSubscription.usedServices > 0) {
+            userSubscription.usedServices--;
+        }
+        
         agendamentos.abertos = agendamentos.abertos.filter(ag => ag.id !== id);
+        
         saveState();
         closeModal();
         setTimeout(() => {
@@ -1663,6 +1704,24 @@
         };
     }
 
+    function checkSubscriptionCoverage(serviceId) {
+        if (!userSubscription.active || !userSubscription.plan) {
+            return { isCovered: false, remainingServices: 0 };
+        }
+
+        const coveredServices = planServiceMapping[userSubscription.plan.title];
+        if (!coveredServices || !coveredServices.includes(serviceId)) {
+            return { isCovered: false, remainingServices: userSubscription.totalServices - userSubscription.usedServices };
+        }
+
+        const remaining = userSubscription.totalServices - userSubscription.usedServices;
+        if (remaining > 0) {
+            return { isCovered: true, remainingServices: remaining };
+        }
+
+        return { isCovered: false, remainingServices: 0 };
+    }
+
     function showResumoAgendamentoModal() {
         const agendarBtn = document.getElementById('agendar-btn');
         if(!agendarBtn || agendarBtn.disabled) return;
@@ -1675,11 +1734,38 @@
         const dataAgendamento = new Date(selection.data);
         const diaDaSemana = dataAgendamento.getDay();
         const temPromocao = diaDaSemana >= 1 && diaDaSemana <= 3;
-        const precoOriginal = selection.servico.preco;
-        const precoPromocional = selection.servico.promocao;
         
-        const precoFinal = temPromocao && precoPromocional ? precoPromocional : precoOriginal;
-        const descontoSemana = temPromocao && precoPromocional ? precoOriginal - precoPromocional : 0;
+        // Lógica de Assinatura
+        const { isCovered, remainingServices } = checkSubscriptionCoverage(selection.servico.id);
+        
+        let precoFinal;
+        let precoOriginal = selection.servico.preco;
+        let descontoSemana = 0;
+        let planBenefitHtml = '';
+
+        if (isCovered) {
+            precoFinal = 0;
+            planBenefitHtml = `
+                <div class="flex justify-between text-green-400">
+                    <span>Incluso no seu plano</span>
+                    <span>- R$ ${precoOriginal.toFixed(2)}</span>
+                </div>
+                <div class="bg-primary/10 border-l-4 border-primary text-primary p-3 rounded-r-lg text-sm mt-3" role="alert">
+                    <p class="font-bold">Este serviço será abatido do seu plano.</p>
+                </div>
+            `;
+        } else {
+            precoFinal = temPromocao && selection.servico.promocao ? selection.servico.promocao : precoOriginal;
+            descontoSemana = temPromocao && selection.servico.promocao ? precoOriginal - precoFinal : 0;
+            if (userSubscription.active && !isCovered && remainingServices === 0) {
+                 planBenefitHtml = `
+                    <div class="bg-yellow-500/10 border-l-4 border-yellow-500 text-yellow-500 p-3 rounded-r-lg text-sm mt-3" role="alert">
+                        <p class="font-bold">Seus serviços do plano esgotaram. Este agendamento será cobrado à parte.</p>
+                    </div>
+                `;
+            }
+        }
+
 
         const dataFormatada = dataAgendamento.toLocaleDateString('pt-BR', {
             day: '2-digit',
@@ -1698,18 +1784,21 @@
                 </div>
 
                 <div class="border-t border-gray-700 pt-4">
-                    <div class="flex items-center justify-between mb-4">
-                        <input type="text" id="cupom-input" placeholder="Cupom de desconto" class="w-full p-2 rounded-lg mr-2">
-                        <button class="px-4 py-2 btn-primary rounded-lg text-sm font-bold" onclick="aplicarCupom()">Aplicar</button>
+                    <div id="cupom-section" class="${isCovered ? 'hidden' : ''}">
+                        <div class="flex items-center justify-between mb-4">
+                            <input type="text" id="cupom-input" placeholder="Cupom de desconto" class="w-full p-2 rounded-lg mr-2">
+                            <button class="px-4 py-2 btn-primary rounded-lg text-sm font-bold" onclick="aplicarCupom()">Aplicar</button>
+                        </div>
+                        <div id="cupom-feedback" class="text-sm h-5 mb-2"></div>
                     </div>
-                    <div id="cupom-feedback" class="text-sm h-5 mb-2"></div>
 
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between">
                             <span class="text-secondary">Subtotal</span>
                             <span>R$ ${precoOriginal.toFixed(2)}</span>
                         </div>
-                        <div id="desconto-semana-row" class="flex justify-between text-green-400 ${descontoSemana > 0 ? '' : 'hidden'}">
+                        ${planBenefitHtml}
+                        <div id="desconto-semana-row" class="flex justify-between text-green-400 ${descontoSemana > 0 && !isCovered ? '' : 'hidden'}">
                             <span>Desconto Seg-Qua</span>
                             <span>- R$ ${descontoSemana.toFixed(2)}</span>
                         </div>
@@ -1726,7 +1815,7 @@
 
                 <div class="mt-8 grid grid-cols-2 gap-4">
                     <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
-                    <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="finalizarAgendamento()">Confirmar</button>
+                    <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="finalizarAgendamento(${isCovered})">Confirmar</button>
                 </div>
             </div>
         `;
@@ -1776,11 +1865,15 @@
     }
 
 
-    function finalizarAgendamento() {
+    function finalizarAgendamento(usedInPlan) {
         const newId = Date.now();
         const [hours, minutes] = selection.hora.split(':');
         const finalDate = new Date(selection.data);
         finalDate.setHours(parseInt(hours), parseInt(minutes));
+
+        if(usedInPlan) {
+            userSubscription.usedServices++;
+        }
 
         const novoAgendamento = {
             id: newId,
@@ -1788,7 +1881,8 @@
             unidade: selection.unidade,
             barbeiro: selection.barbeiro,
             servico: selection.servico,
-            avaliacao: null
+            avaliacao: null,
+            usedInPlan: usedInPlan
         };
 
         agendamentos.abertos.push(novoAgendamento);
@@ -2866,7 +2960,10 @@
         userSubscription.active = true;
         userSubscription.plan = newPlan;
         userSubscription.usedServices = 0;
-        userSubscription.nextBillingDate = new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('pt-BR');
+        
+        const nextBilling = new Date();
+        nextBilling.setMonth(nextBilling.getMonth() + 1);
+        userSubscription.nextBillingDate = nextBilling.toLocaleDateString('pt-BR');
 
         saveState();
         showSubscriptionSuccessModal(planTitle);
@@ -3642,7 +3739,26 @@
         openModal(modalHtml, 'bg-transparent border-none', 'center');
     }
 
+    function checkSubscriptionRenewal() {
+        if (userSubscription.active && userSubscription.nextBillingDate) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const parts = userSubscription.nextBillingDate.split('/');
+            const nextBillingDate = new Date(parts[2], parts[1] - 1, parts[0]);
+
+            if (today >= nextBillingDate) {
+                userSubscription.usedServices = 0;
+                const newNextBilling = new Date(nextBillingDate);
+                newNextBilling.setMonth(newNextBilling.getMonth() + 1);
+                userSubscription.nextBillingDate = newNextBilling.toLocaleDateString('pt-BR');
+                saveState();
+            }
+        }
+    }
+
     function initializeApp() {
+        checkSubscriptionRenewal();
         checkAppointments();
         updateReviewNotification();
         const activeView = document.querySelector('.footer-nav-item.active')?.dataset.view || 'agendar';
@@ -3715,8 +3831,6 @@
 </script>
 </body>
 </html>
-
-
 
 
 
