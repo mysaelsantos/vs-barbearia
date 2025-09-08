@@ -321,6 +321,83 @@
             color: #fbb62c; /* primary color */
             border: 1px solid #fbb62c;
         }
+        /* --- NOVOS ESTILOS PARA GAMIFICAÇÃO --- */
+        #credit-card-details {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, padding 0.5s ease-in-out;
+            padding-top: 0;
+        }
+        #credit-card-toggle-icon {
+            transition: transform 0.3s ease;
+        }
+        .goal-item {
+            display: flex;
+            align-items: center;
+            opacity: 0.5; /* Opacidade padrão para metas não alcançadas */
+            transition: opacity 0.3s ease;
+        }
+        .goal-item.achieved {
+            opacity: 1;
+        }
+        .goal-icon {
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: #333;
+            border: 2px solid #555;
+            color: #888;
+        }
+        .goal-item.achieved .goal-icon {
+            background-color: #fbb62c;
+            border-color: #fbb62c;
+            color: #111;
+        }
+        .goal-progress {
+            flex-grow: 1;
+            height: 4px;
+            background-color: #444;
+            margin: 0 1rem;
+        }
+        .goal-progress-bar {
+            height: 100%;
+            background-color: #888;
+            transition: width 0.5s ease-out;
+        }
+        .goal-item.achieved .goal-progress-bar {
+            background-color: #fbb62c;
+        }
+        .achievement-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 70px;
+            text-align: center;
+        }
+        .achievement-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #333;
+            color: #fbb62c;
+            border: 2px solid #fbb62c;
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+        .achievement-name {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #ddd;
+        }
     </style>
 </head>
 <body>
@@ -449,18 +526,36 @@
         email: 'vanilton.santos@exemplo.com',
         referralCode: 'VANILTONS10',
         profilePic: 'https://i.postimg.cc/pT3ScnBb/482320646-1375134203841648-765763137701876086-n.jpg',
-        birthdate: ''
+        birthdate: '',
+        referralCredits: 20.00,
+        referralsMade: 7, // Exemplo: 7 amigos indicados
+        achievements: [],
+        unlockedPrizes: []
     };
     
-    const registeredPhone = '37999745723';
-
-    // Mapeamento de quais serviços cada plano cobre (por ID do serviço)
+    const registeredPhone = '3799745723';
+    
     const planServiceMapping = {
-        'Cabelo Limitado': [1, 7], // Corte de Cabelo, Corte Infantil
-        'Barba Limitado': [2], // Barba
-        'Cabelo e Barba Limitado': [1, 2, 3, 7], // Corte, Barba, Combo, Infantil
-        'Cabelo e Barba Ilimitado': [1, 2, 3, 4, 5, 6, 7] // Todos os principais
+        'Cabelo Limitado': [1, 7], 
+        'Barba Limitado': [2],
+        'Cabelo e Barba Limitado': [1, 2, 3, 7],
+        'Cabelo e Barba Ilimitado': [1, 2, 3, 4, 5, 6, 7]
     };
+    
+    const referralGoals = [
+        { referrals: 5, prize: 'Hidratação Grátis', icon: 'fas fa-tint' },
+        { referrals: 8, prize: 'Brinde Especial', icon: 'fas fa-box-open' },
+        { referrals: 12, prize: 'Shampoo Jaboque', icon: 'fas fa-bottle-droplet' }
+    ];
+
+    const leaderboardData = [
+        { name: 'João S.', referrals: 15, pic: 'https://placehold.co/40x40/555/FFF?text=JS' },
+        { name: 'Maria C.', referrals: 13, pic: 'https://placehold.co/40x40/555/FFF?text=MC' },
+        { name: 'Carlos P.', referrals: 11, pic: 'https://placehold.co/40x40/555/FFF?text=CP' },
+        { name: 'Ana B.', referrals: 9, pic: 'https://placehold.co/40x40/555/FFF?text=AB' },
+        { name: userInfo.name, referrals: userInfo.referralsMade, pic: userInfo.profilePic, isCurrentUser: true },
+        { name: 'Lucas F.', referrals: 6, pic: 'https://placehold.co/40x40/555/FFF?text=LF' }
+    ].sort((a, b) => b.referrals - a.referrals);
 
 
     // --- ESTADO DA APLICAÇÃO ---
@@ -468,6 +563,7 @@
     let userLoggedIn = true; // Mantendo logado para testes
     let isAuthModalOpen = false;
     let remarcarSelection = {}; // Estado para remarcação
+    let isCreditCardExpanded = false;
 
     // --- ELEMENTOS DO DOM ---
     const modalContainer = document.getElementById('modal-container');
@@ -503,7 +599,11 @@
                 email: 'vanilton.santos@exemplo.com',
                 referralCode: 'VANILTONS10',
                 profilePic: 'https://i.postimg.cc/pT3ScnBb/482320646-1375134203841648-765763137701876086-n.jpg',
-                birthdate: ''
+                birthdate: '',
+                referralCredits: 20.00,
+                referralsMade: 7,
+                achievements: [],
+                unlockedPrizes: []
             };
             if (state.agendamentos) {
                 agendamentos.abertos = state.agendamentos.abertos || [];
@@ -591,6 +691,17 @@
         }
     }
 
+    function renderCampaignBanner() {
+        const isCampaignActive = true; // Simples flag para ativar/desativar
+        if (!isCampaignActive) return '';
+
+        return `
+            <div class="bg-gradient-to-r from-primary to-yellow-400 text-black text-center p-3 font-bold text-sm m-6 rounded-lg shadow-lg">
+                <i class="fas fa-gift mr-2"></i> Fim de Semana do Crédito em Dobro! Cada indicação vale R$20,00.
+            </div>
+        `;
+    }
+
     function renderAgendarView() {
         let reminderHtml = '';
         const today = new Date();
@@ -607,6 +718,7 @@
         }
 
         mainContent.innerHTML = `
+            ${renderCampaignBanner()}
             ${reminderHtml}
             <div class="relative flex flex-col" style="height: 100%;">
                 <div class="video-background">
@@ -802,13 +914,20 @@
             const data = new Date(ag.data);
             const dataFormatada = data.toLocaleDateString('pt-BR');
             const horaFormatada = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-            const planTag = ag.usedInPlan ? `<span class="bg-primary/20 text-primary text-xs font-semibold px-2 py-0.5 rounded-full ml-auto">Plano</span>` : '';
+            
+            let tagHtml = '';
+            if (ag.usedInPlan) {
+                tagHtml = `<span class="bg-primary/20 text-primary text-xs font-semibold px-2 py-0.5 rounded-full ml-auto">Plano</span>`;
+            } else if (ag.usedReferralCredit || ag.usedPrize) {
+                tagHtml = `<span class="bg-green-500/20 text-green-400 text-xs font-semibold px-2 py-0.5 rounded-full ml-auto">${ag.usedPrize ? 'Prêmio' : 'Crédito'}</span>`;
+            }
+
             return `
                 <div class="history-card cursor-pointer" onclick="showDetalhesAgendamento(${ag.id})">
                      <div class="pb-3">
                         <div class="flex items-start">
                             <h3 class="font-bold text-lg text-white flex-grow">${ag.unidade.nome}</h3>
-                            ${planTag}
+                            ${tagHtml}
                         </div>
                         <div class="flex justify-between text-secondary text-sm mt-2 mb-4">
                             <span><i class="far fa-calendar-alt mr-2 text-primary"></i>${dataFormatada}</span>
@@ -837,7 +956,13 @@
              const data = new Date(ag.data);
              const dataFormatada = data.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
              const horaFormatada = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-             const planTag = ag.usedInPlan ? `<span class="bg-primary/20 text-primary text-xs font-semibold px-2 py-0.5 rounded-full">Plano</span>` : '';
+             
+             let tagHtml = '';
+             if (ag.usedInPlan) {
+                tagHtml = `<span class="bg-primary/20 text-primary text-xs font-semibold px-2 py-0.5 rounded-full">Plano</span>`;
+             } else if (ag.usedReferralCredit) {
+                tagHtml = `<span class="bg-green-500/20 text-green-400 text-xs font-semibold px-2 py-0.5 rounded-full">Crédito</span>`;
+             }
 
              let footerHtml = '';
              if (ag.avaliacao) {
@@ -862,7 +987,7 @@
                      <div class="border-t border-gray-700 pt-3">
                         <div class="flex justify-between items-start">
                              <p class="font-semibold text-white mb-2">${ag.unidade.nome}</p>
-                             ${planTag}
+                             ${tagHtml}
                         </div>
                          <div class="flex justify-between text-sm">
                              <div>
@@ -900,6 +1025,96 @@
             </div>
         `;
     }
+    
+    function toggleCreditCard() {
+        isCreditCardExpanded = !isCreditCardExpanded;
+        const details = document.getElementById('credit-card-details');
+        const icon = document.getElementById('credit-card-toggle-icon');
+        const buttonText = document.getElementById('credit-card-toggle-text');
+        
+        if (details && icon) {
+            if (isCreditCardExpanded) {
+                details.style.maxHeight = details.scrollHeight + "px";
+                details.style.opacity = 1;
+                details.style.paddingTop = '1.25rem';
+                icon.style.transform = 'rotate(180deg)';
+                buttonText.textContent = 'Recolher';
+            } else {
+                details.style.maxHeight = '0px';
+                details.style.opacity = 0;
+                details.style.paddingTop = '0';
+                icon.style.transform = 'rotate(0deg)';
+                buttonText.textContent = 'Ver detalhes';
+            }
+        }
+    }
+    
+    function renderCreditCard() {
+        if (userInfo.referralCredits >= 50) {
+            return `
+                <div class="bg-gradient-to-br from-primary to-[#dca52c] p-5 rounded-2xl border-2 border-primary/50 shadow-lg text-center text-black relative overflow-hidden">
+                    <div class="absolute -top-4 -right-4 w-20 h-20 bg-white/20 rounded-full z-0"></div>
+                    <div class="absolute -bottom-8 -left-2 w-24 h-24 bg-white/10 rounded-full z-0"></div>
+                    
+                    <div class="relative z-10">
+                        <i class="fas fa-gift text-4xl mb-3 text-black/70"></i>
+                        <p class="font-bold text-xl drop-shadow">Parabéns! Você conseguiu!</p>
+                        <p class="text-5xl font-extrabold my-2 drop-shadow-md">R$ ${userInfo.referralCredits.toFixed(2).replace('.', ',')}</p>
+                        <p class="text-sm font-medium mb-4 drop-shadow">em créditos para usar</p>
+                        <button class="w-full py-3 font-bold rounded-lg bg-black text-primary transition-transform duration-200 hover:scale-105 shadow-xl" onclick="showResgatarCreditoModal()">Resgatar Corte Grátis</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        const goalsHtml = referralGoals.map((goal, index) => {
+            const isAchieved = userInfo.referralsMade >= goal.referrals;
+            const progress = Math.min((userInfo.referralsMade / goal.referrals) * 100, 100);
+            const isUnlocked = userInfo.unlockedPrizes.includes(goal.prize);
+            
+            let actionButton = '';
+            if(isUnlocked) {
+                 actionButton = `<button class="btn-plan text-xs px-3 py-1" onclick="handlePrizeRedemption('${goal.prize}')">Resgatar</button>`;
+            }
+
+            return `
+                <div class="goal-item ${isAchieved ? 'achieved' : ''}">
+                    <div class="goal-icon"><i class="${goal.icon}"></i></div>
+                    <div class="flex-grow text-left">
+                        <p class="font-bold text-sm ${isAchieved ? 'text-white' : 'text-gray-400'}">${goal.prize}</p>
+                        <p class="text-xs ${isAchieved ? 'text-primary' : 'text-gray-500'}">${goal.referrals} indicações</p>
+                    </div>
+                    ${actionButton || `<div class="w-16"></div>`}
+                </div>
+                ${index < referralGoals.length - 1 ? `<div class="h-6 w-px bg-gray-600 ml-5"></div>` : ''}
+            `;
+        }).join('');
+
+        return `
+            <div class="bg-[#1e1e1e] p-5 rounded-2xl border border-gray-800 shadow-lg">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-secondary text-sm">Crédito disponível</p>
+                        <p class="text-3xl font-bold text-white">R$ ${userInfo.referralCredits.toFixed(2).replace('.', ',')}</p>
+                    </div>
+                    <button onclick="toggleCreditCard()" class="flex items-center space-x-2 text-primary font-semibold text-sm">
+                        <span id="credit-card-toggle-text">Ver detalhes</span>
+                        <i id="credit-card-toggle-icon" class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+                
+                <div id="credit-card-details">
+                    <div class="border-t border-gray-700 mt-4"></div>
+                    <p class="text-xs text-secondary text-center mt-4">Acumule créditos para trocar por serviços.</p>
+                    
+                    <h4 class="font-semibold text-primary text-center mt-6 mb-4">Metas de Indicação</h4>
+                    <div class="flex flex-col items-start">
+                        ${goalsHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
 
     function renderPerfilView() {
         if (!userLoggedIn) {
@@ -914,6 +1129,14 @@
             return;
         }
 
+        const creditCardHtml = renderCreditCard();
+        const achievementsHtml = userInfo.achievements.map(ach => `
+            <div class="achievement-badge">
+                <div class="achievement-icon"><i class="${ach.icon}"></i></div>
+                <p class="achievement-name">${ach.name}</p>
+            </div>
+        `).join('');
+
         mainContent.innerHTML = `
             <div class="p-6 pt-12">
                 <div class="flex flex-col items-center text-center mb-8">
@@ -926,7 +1149,23 @@
                     <h2 class="text-2xl font-bold text-white">${userInfo.name}</h2>
                 </div>
 
-                <div>
+                <!-- Card de Créditos e Metas -->
+                <div class="mt-8">
+                    <h3 class="text-lg font-semibold text-primary mb-4">Recompensas e Créditos</h3>
+                    ${creditCardHtml}
+                </div>
+
+                <!-- Conquistas -->
+                ${achievementsHtml ? `
+                <div class="mt-8">
+                    <h3 class="text-lg font-semibold text-primary mb-4">Conquistas</h3>
+                    <div class="bg-[#1e1e1e] p-4 rounded-2xl border border-gray-800 flex justify-around">
+                        ${achievementsHtml}
+                    </div>
+                </div>
+                ` : ''}
+
+                <div class="mt-8">
                     <h3 class="text-lg font-semibold text-primary mb-4">Suas informações</h3>
                     <div class="space-y-4 text-secondary">
                         <div class="flex items-center">
@@ -989,12 +1228,16 @@
         const horaFormatada = dataAgendamento.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         
         let precoHtml;
-        if (agendamento.usedInPlan) {
+        if (agendamento.usedInPlan || agendamento.usedReferralCredit || agendamento.usedPrize) {
+            let benefitText = 'Incluso no Plano';
+            if(agendamento.usedReferralCredit) benefitText = 'Resgatado com Créditos';
+            if(agendamento.usedPrize) benefitText = `Resgatado com Prêmio`;
+
             precoHtml = `
                 <div class="border-t border-b border-gray-700 py-3 my-3">
                     <div class="flex justify-between items-center text-green-400">
                         <span>${agendamento.servico.nome}</span>
-                        <span class="font-bold">Incluso no Plano</span>
+                        <span class="font-bold">${benefitText}</span>
                     </div>
                 </div>
                  <div class="flex justify-between items-center font-bold text-lg">
@@ -1286,8 +1529,13 @@
     function confirmarCancelamento(id) {
         const agendamentoParaCancelar = agendamentos.abertos.find(ag => ag.id === id);
 
-        if (agendamentoParaCancelar && agendamentoParaCancelar.usedInPlan && userSubscription.usedServices > 0) {
-            userSubscription.usedServices--;
+        if (agendamentoParaCancelar) {
+            if (agendamentoParaCancelar.usedInPlan && userSubscription.usedServices > 0) {
+                userSubscription.usedServices--;
+            }
+            if (agendamentoParaCancelar.usedReferralCredit) {
+                userInfo.referralCredits += 50;
+            }
         }
         
         agendamentos.abertos = agendamentos.abertos.filter(ag => ag.id !== id);
@@ -1700,7 +1948,9 @@
             barbeiro: null,
             servico: null,
             data: null,
-            hora: null
+            hora: null,
+            isFromCreditRedemption: false,
+            isFromPrizeRedemption: false
         };
     }
 
@@ -1735,42 +1985,26 @@
         const diaDaSemana = dataAgendamento.getDay();
         const temPromocao = diaDaSemana >= 1 && diaDaSemana <= 3;
         
-        // Lógica de Assinatura
-        const { isCovered, remainingServices } = checkSubscriptionCoverage(selection.servico.id);
+        const { isCovered } = checkSubscriptionCoverage(selection.servico.id);
         
         let precoFinal;
         let precoOriginal = selection.servico.preco;
-        let descontoSemana = 0;
-        let planBenefitHtml = '';
+        let benefitHtml = '';
 
-        if (isCovered) {
+        if (selection.isFromCreditRedemption) {
             precoFinal = 0;
-            planBenefitHtml = `
-                <div class="flex justify-between text-green-400">
-                    <span>Incluso no seu plano</span>
-                    <span>- R$ ${precoOriginal.toFixed(2)}</span>
-                </div>
-                <div class="bg-primary/10 border-l-4 border-primary text-primary p-3 rounded-r-lg text-sm mt-3" role="alert">
-                    <p class="font-bold">Este serviço será abatido do seu plano.</p>
-                </div>
-            `;
+            benefitHtml = `<div class="flex justify-between text-green-400"><span>Resgate de Crédito</span><span>- R$ ${precoOriginal.toFixed(2)}</span></div>`;
+        } else if (selection.isFromPrizeRedemption) {
+            precoFinal = 0;
+            benefitHtml = `<div class="flex justify-between text-green-400"><span>Prêmio Resgatado</span><span>- R$ ${precoOriginal.toFixed(2)}</span></div>`;
+        } else if (isCovered) {
+            precoFinal = 0;
+            benefitHtml = `<div class="flex justify-between text-green-400"><span>Incluso no seu plano</span><span>- R$ ${precoOriginal.toFixed(2)}</span></div>`;
         } else {
             precoFinal = temPromocao && selection.servico.promocao ? selection.servico.promocao : precoOriginal;
-            descontoSemana = temPromocao && selection.servico.promocao ? precoOriginal - precoFinal : 0;
-            if (userSubscription.active && !isCovered && remainingServices === 0) {
-                 planBenefitHtml = `
-                    <div class="bg-yellow-500/10 border-l-4 border-yellow-500 text-yellow-500 p-3 rounded-r-lg text-sm mt-3" role="alert">
-                        <p class="font-bold">Seus serviços do plano esgotaram. Este agendamento será cobrado à parte.</p>
-                    </div>
-                `;
-            }
         }
 
-
-        const dataFormatada = dataAgendamento.toLocaleDateString('pt-BR', {
-            day: '2-digit',
-            month: 'long'
-        });
+        const dataFormatada = dataAgendamento.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' });
 
         const modalHtml = `
             <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col auth-form">
@@ -1784,28 +2018,12 @@
                 </div>
 
                 <div class="border-t border-gray-700 pt-4">
-                    <div id="cupom-section" class="${isCovered ? 'hidden' : ''}">
-                        <div class="flex items-center justify-between mb-4">
-                            <input type="text" id="cupom-input" placeholder="Cupom de desconto" class="w-full p-2 rounded-lg mr-2">
-                            <button class="px-4 py-2 btn-primary rounded-lg text-sm font-bold" onclick="aplicarCupom()">Aplicar</button>
-                        </div>
-                        <div id="cupom-feedback" class="text-sm h-5 mb-2"></div>
-                    </div>
-
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between">
                             <span class="text-secondary">Subtotal</span>
                             <span>R$ ${precoOriginal.toFixed(2)}</span>
                         </div>
-                        ${planBenefitHtml}
-                        <div id="desconto-semana-row" class="flex justify-between text-green-400 ${descontoSemana > 0 && !isCovered ? '' : 'hidden'}">
-                            <span>Desconto Seg-Qua</span>
-                            <span>- R$ ${descontoSemana.toFixed(2)}</span>
-                        </div>
-                        <div id="desconto-cupom-row" class="flex justify-between text-green-400 hidden">
-                            <span>Desconto Cupom</span>
-                            <span id="desconto-cupom-valor"></span>
-                        </div>
+                        ${benefitHtml}
                         <div class="flex justify-between font-bold text-lg border-t border-gray-700 pt-2 mt-2">
                             <span class="text-white">Total</span>
                             <span id="total-valor" class="text-primary">R$ ${precoFinal.toFixed(2)}</span>
@@ -1821,49 +2039,6 @@
         `;
         openModal(modalHtml, 'bg-transparent border-none', 'center');
     }
-
-    function aplicarCupom() {
-        const cupomInput = document.getElementById('cupom-input');
-        const feedbackDiv = document.getElementById('cupom-feedback');
-        const cupomCode = cupomInput.value.toUpperCase();
-
-        if (cupomCode === 'VS10') {
-            feedbackDiv.textContent = 'Cupom de 10% aplicado!';
-            feedbackDiv.className = 'text-sm h-5 mb-2 text-green-400';
-            recalcularTotal(0.10);
-        } else {
-            feedbackDiv.textContent = 'Cupom inválido.';
-            feedbackDiv.className = 'text-sm h-5 mb-2 text-red-500';
-            recalcularTotal(0);
-        }
-    }
-
-    function recalcularTotal(descontoCupomPercent) {
-        const dataAgendamento = new Date(selection.data);
-        const diaDaSemana = dataAgendamento.getDay();
-        const temPromocao = diaDaSemana >= 1 && diaDaSemana <= 3;
-        const precoOriginal = selection.servico.preco;
-        const precoPromocional = selection.servico.promocao;
-        
-        const precoBase = temPromocao && precoPromocional ? precoPromocional : precoOriginal;
-        
-        const valorDescontoCupom = precoBase * descontoCupomPercent;
-        const precoFinal = precoBase - valorDescontoCupom;
-
-        const descontoCupomRow = document.getElementById('desconto-cupom-row');
-        const descontoCupomValor = document.getElementById('desconto-cupom-valor');
-        const totalValor = document.getElementById('total-valor');
-
-        if (valorDescontoCupom > 0) {
-            descontoCupomValor.textContent = `- R$ ${valorDescontoCupom.toFixed(2)}`;
-            descontoCupomRow.classList.remove('hidden');
-        } else {
-            descontoCupomRow.classList.add('hidden');
-        }
-
-        totalValor.textContent = `R$ ${precoFinal.toFixed(2)}`;
-    }
-
 
     function finalizarAgendamento(usedInPlan) {
         const newId = Date.now();
@@ -1882,7 +2057,9 @@
             barbeiro: selection.barbeiro,
             servico: selection.servico,
             avaliacao: null,
-            usedInPlan: usedInPlan
+            usedInPlan: usedInPlan,
+            usedReferralCredit: !!selection.isFromCreditRedemption,
+            usedPrize: !!selection.isFromPrizeRedemption
         };
 
         agendamentos.abertos.push(novoAgendamento);
@@ -2230,6 +2407,42 @@
         showLogoutConfirmationModal();
     }
 
+    function showResgatarCreditoModal() {
+        const modalHtml = `
+            <div class="info-card text-center p-6">
+                <i class="fas fa-gift text-4xl text-primary mb-4"></i>
+                <h2 class="text-xl font-bold mb-4 modal-title">Resgatar Crédito</h2>
+                <p class="text-secondary mb-6">Você está prestes a usar R$ 50,00 dos seus créditos para resgatar um <strong>Corte de Cabelo</strong>. Deseja continuar?</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <button class="w-full py-2 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Cancelar</button>
+                    <button class="w-full py-2 font-semibold rounded-lg btn-plan" onclick="handleResgateDeCredito()">Sim, Resgatar</button>
+                </div>
+            </div>
+        `;
+        openModal(modalHtml, 'border-none', 'center');
+    }
+
+    function handleResgateDeCredito() {
+        if (userInfo.referralCredits < 50) return;
+        userInfo.referralCredits -= 50;
+        saveState();
+        
+        clearSelectionState();
+        const corteDeCabelo = servicos.find(s => s.id === 1);
+        if (corteDeCabelo) {
+            selection.servico = corteDeCabelo;
+        }
+        selection.isFromCreditRedemption = true; 
+        
+        closeModal();
+        setTimeout(() => {
+            renderView('agendar');
+            setTimeout(() => {
+                document.getElementById('select-unidade')?.click();
+            }, 100);
+        }, 310);
+    }
+
     function confirmLogout() {
         userLoggedIn = false;
         clearSelectionState();
@@ -2269,10 +2482,7 @@
         renderView('agendar');
 
         setTimeout(() => {
-            const dataStepElement = document.getElementById('select-data');
-            if (dataStepElement) {
-                dataStepElement.click();
-            }
+            document.getElementById('select-data')?.click();
         }, 100);
     }
 
@@ -2301,53 +2511,68 @@
         const message = `Fala, mestre! ✂️ Estou te dando um desconto de 20% no seu primeiro serviço na VS Barbearia. Use meu código *${referralCode}* no agendamento. Baixe o app e agende seu horário: https://vsbarbearia.com.br`;
         const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
 
+        const goalsHtml = referralGoals.map(goal => `
+            <div class="flex items-start">
+                <i class="${goal.icon} text-primary text-lg w-6 text-center mr-3 mt-1"></i>
+                <div>
+                    <h4 class="font-bold text-white">Indique ${goal.referrals} amigos</h4>
+                    <p class="text-sm text-secondary">E ganhe: ${goal.prize}</p>
+                </div>
+            </div>
+        `).join('');
+
         const modalHtml = `
-            <div class="info-card text-center p-6">
-                <i class="fas fa-gift text-5xl text-primary mb-4"></i>
-                <h2 class="text-2xl font-bold mb-2 modal-title">Indique e Ganhe!</h2>
-                <p class="text-secondary mb-6">Convide seus amigos para a VS Barbearia e ganhem benefícios juntos.</p>
+            <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col" style="min-height: 550px; max-height: 90vh;">
+                <div class="text-center mb-6">
+                    <i class="fas fa-gift text-5xl text-primary mb-3"></i>
+                    <h2 class="text-2xl font-bold modal-title">Indique e Ganhe!</h2>
+                    <p class="text-secondary text-sm">Convide seus amigos e ganhem benefícios juntos.</p>
+                </div>
                 
-                <div class="text-left space-y-4 mb-8 p-4 bg-[#1e1e1e] rounded-lg border border-gray-700">
-                    <div class="flex items-start">
-                        <i class="fas fa-share-square text-primary text-lg mr-4 mt-1"></i>
-                        <div>
-                            <h3 class="font-bold text-white">Compartilhe seu código</h3>
-                            <p class="text-sm text-secondary">Envie seu código exclusivo para seus amigos.</p>
+                <div class="flex-grow overflow-y-auto pr-2 modal-scroll-hidden space-y-6">
+                    <div class="bg-[#2a2a2a] p-4 rounded-lg space-y-4">
+                        <div class="flex items-start">
+                           <i class="fas fa-hand-holding-usd text-primary text-xl w-8 text-center mr-4 mt-1"></i>
+                           <div>
+                               <h3 class="font-bold text-white">Você ganha R$10 de crédito</h3>
+                               <p class="text-sm text-secondary">Para cada amigo que usar seu código, você recebe R$10.</p>
+                           </div>
+                       </div>
+                        <div class="flex items-start">
+                           <i class="fas fa-percent text-primary text-xl w-8 text-center mr-4 mt-1"></i>
+                           <div>
+                               <h3 class="font-bold text-white">Seu amigo ganha 20% OFF</h3>
+                               <p class="text-sm text-secondary">Ele aproveita um desconto especial no primeiro serviço.</p>
+                           </div>
+                       </div>
+                    </div>
+
+                    <div class="bg-[#2a2a2a] p-4 rounded-lg">
+                        <h3 class="font-bold text-white text-center mb-4">E ainda tem mais prêmios!</h3>
+                        <div class="space-y-4">
+                            ${goalsHtml}
                         </div>
                     </div>
-                     <div class="flex items-start">
-                        <i class="fas fa-percent text-primary text-lg mr-4 mt-1"></i>
-                        <div>
-                            <h3 class="font-bold text-white">Seu amigo ganha 20% OFF</h3>
-                            <p class="text-sm text-secondary">Ele aproveita um desconto no primeiro serviço.</p>
-                        </div>
-                    </div>
-                     <div class="flex items-start">
-                        <i class="fas fa-hand-holding-usd text-primary text-lg mr-4 mt-1"></i>
-                        <div>
-                            <h3 class="font-bold text-white">Você ganha R$10 de crédito</h3>
-                            <p class="text-sm text-secondary">Após o primeiro serviço do seu amigo, você recebe o crédito.</p>
+
+                    <div class="text-center pt-4">
+                        <p class="text-sm text-gray-400 mb-2">Seu código de indicação</p>
+                        <div id="referral-code-box" class="flex items-center justify-between p-3 bg-[#111] border-2 border-dashed border-gray-600 rounded-lg">
+                            <span id="referral-code" class="text-2xl font-bold tracking-widest text-white">${referralCode}</span>
+                            <button onclick="copyReferralCode()" class="bg-primary text-black font-bold py-2 px-4 rounded-md text-sm transition-transform duration-200 hover:scale-105">COPIAR</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="mb-6">
-                    <p class="text-sm text-gray-400 mb-2">Seu código de indicação</p>
-                    <div id="referral-code-box" class="flex items-center justify-between p-3 bg-[#111] border-2 border-dashed border-gray-600 rounded-lg">
-                        <span id="referral-code" class="text-xl font-bold tracking-widest text-white">${referralCode}</span>
-                        <button onclick="copyReferralCode()" class="bg-primary text-black font-bold py-1 px-3 rounded-md text-sm transition-transform duration-200 hover:scale-105">COPIAR</button>
-                    </div>
-                </div>
-                
-                <div class="space-y-3">
-                    <a href="${whatsappUrl}" target="_blank" class="btn-plan flex items-center justify-center w-full !bg-green-500 hover:!bg-green-600 !text-white">
+                <div class="mt-auto pt-6 space-y-3">
+                    <a href="${whatsappUrl}" target="_blank" class="btn-plan flex items-center justify-center w-full !bg-green-500 hover:!bg-green-600 !text-white text-base py-3">
                         <i class="fab fa-whatsapp mr-2"></i>Compartilhar via WhatsApp
                     </a>
-                    <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Fechar</button>
+                    <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showLeaderboardModal()">Ver Ranking</button>
+                    <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
                 </div>
             </div>
         `;
-        openModal(modalHtml, 'border-none', 'center');
+        openModal(modalHtml, 'bg-transparent border-none p-0', 'center');
     }
 
     function formatBirthdate(event) {
@@ -2405,7 +2630,6 @@
         const emailChanged = emailInput.value !== userInfo.email;
         const birthdateChanged = birthdateInput.value !== (userInfo.birthdate || '');
 
-        // A mudança na data de aniversário só é considerada válida para salvar se o campo estiver vazio ou completo (10 chars).
         const isBirthdateChangeValid = birthdateChanged && (birthdateInput.value.length === 0 || birthdateInput.value.length === 10);
 
         const enableButton = nameChanged || phoneChanged || emailChanged || isBirthdateChangeValid;
@@ -2471,7 +2695,6 @@
     }
 
     function showNotificacoesModal() {
-        // Estado inicial e atual das notificações
         let currentNotificationsState = { email: true, push: true };
         const initialNotificationsState = { ...currentNotificationsState };
 
@@ -2531,7 +2754,6 @@
         `;
         openModal(modalHtml, 'bg-transparent border-none', 'center');
         
-        // Inicializa a UI com o estado atual e adiciona os listeners
         updateToggleUI('email-notif-toggle', currentNotificationsState.email);
         updateToggleUI('push-notif-toggle', currentNotificationsState.push);
 
@@ -2592,7 +2814,7 @@
         confirmNewPin.value = confirmNewPin.value.replace(/\D/g, '');
 
         let allValid = true;
-        errorDiv.textContent = ''; // Limpa o erro
+        errorDiv.textContent = ''; 
 
         if (newPin.value.length === 6 && newPin.value === currentPin.value) {
             errorDiv.textContent = 'O novo PIN não pode ser igual ao atual.';
@@ -2639,7 +2861,6 @@
         `;
         modalContent.innerHTML = modalHtml;
     }
-
 
     let currentRating = 0;
     function setRating(rating) {
@@ -2818,8 +3039,6 @@
             `;
         }
 
-        const price = parseFloat(plan.price.replace(',', '.'));
-
         const modalHtml = `
             <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col auth-form">
                 <h2 class="text-2xl font-bold text-center mb-6 modal-title">Confirmar Assinatura</h2>
@@ -2836,22 +3055,8 @@
                 </div>
 
                 <div class="border-t border-gray-700 pt-4">
-                    <div class="flex items-center justify-between mb-4">
-                        <input type="text" id="plan-cupom-input" placeholder="Cupom de desconto" class="w-full p-2 rounded-lg mr-2">
-                        <button class="px-4 py-2 btn-primary rounded-lg text-sm font-bold" onclick="applyPlanCoupon(${price})">Aplicar</button>
-                    </div>
-                    <div id="plan-cupom-feedback" class="text-sm h-5 mb-2"></div>
-
                     <div class="space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-secondary">Subtotal</span>
-                            <span>R$ ${plan.price}</span>
-                        </div>
-                        <div id="plan-desconto-cupom-row" class="flex justify-between text-green-400 hidden">
-                            <span>Desconto Cupom</span>
-                            <span id="plan-desconto-cupom-valor"></span>
-                        </div>
-                        <div class="flex justify-between font-bold text-lg border-t border-gray-700 pt-2 mt-2">
+                        <div class="flex justify-between font-bold text-lg pt-2 mt-2">
                             <span class="text-white">Total Mensal</span>
                             <span id="plan-total-valor" class="text-primary">R$ ${plan.price}</span>
                         </div>
@@ -2876,7 +3081,6 @@
                 <h2 class="text-2xl font-bold text-center mb-6 modal-title">Revise sua Assinatura</h2>
                 
                 <div class="flex-grow space-y-5">
-                    <!-- Detalhes do Plano -->
                     <div class="bg-[#2a2a2a] p-4 rounded-lg">
                         <p class="text-sm font-semibold text-gray-400">Plano</p>
                         <div class="flex justify-between items-baseline mt-1">
@@ -2885,7 +3089,6 @@
                         </div>
                     </div>
 
-                    <!-- Informações de Cobrança -->
                     <div>
                         <h3 class="font-semibold text-gray-300 mb-3">Como funciona a cobrança</h3>
                         <div class="text-sm space-y-3 text-secondary">
@@ -2904,53 +3107,18 @@
                         </div>
                     </div>
 
-                    <!-- Termos e Condições -->
                     <div class="text-center text-xs text-gray-500 pt-4">
-                        <p>Ao clicar em "Confirmar e Assinar", você concorda com a cobrança recorrente e com nossos <a href="#" class="underline text-primary" onclick="event.stopPropagation(); showTermosModal(); return false;">Termos de Serviço</a>.</p>
+                        <p>Ao clicar em "Confirmar", você concorda com a cobrança recorrente e com nossos <a href="#" class="underline text-primary" onclick="event.stopPropagation(); showTermosModal(); return false;">Termos de Serviço</a>.</p>
                     </div>
                 </div>
 
                 <div class="mt-auto pt-6 grid grid-cols-2 gap-4">
                     <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showSubscriptionModal('${plan.title}')">Voltar</button>
-                    <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="handleSubscription('${plan.title}')">Confirmar e Assinar</button>
+                    <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="handleSubscription('${plan.title}')">Confirmar</button>
                 </div>
             </div>
         `;
-        openModal(modalHtml, 'bg-transparent border-none', 'center');
-    }
-
-    function applyPlanCoupon(originalPrice) {
-        const cupomInput = document.getElementById('plan-cupom-input');
-        const feedbackDiv = document.getElementById('plan-cupom-feedback');
-        const cupomCode = cupomInput.value.toUpperCase();
-
-        if (cupomCode === 'PRIMEIRAASSINATURA') {
-            feedbackDiv.textContent = 'Cupom de 15% aplicado!';
-            feedbackDiv.className = 'text-sm h-5 mb-2 text-green-400';
-            recalculatePlanTotal(originalPrice, 0.15);
-        } else {
-            feedbackDiv.textContent = 'Cupom inválido.';
-            feedbackDiv.className = 'text-sm h-5 mb-2 text-red-500';
-            recalculatePlanTotal(originalPrice, 0);
-        }
-    }
-
-    function recalculatePlanTotal(originalPrice, discountPercent) {
-        const valorDescontoCupom = originalPrice * discountPercent;
-        const precoFinal = originalPrice - valorDescontoCupom;
-
-        const descontoCupomRow = document.getElementById('plan-desconto-cupom-row');
-        const descontoCupomValor = document.getElementById('plan-desconto-cupom-valor');
-        const totalValor = document.getElementById('plan-total-valor');
-
-        if (valorDescontoCupom > 0) {
-            descontoCupomValor.textContent = `- R$ ${valorDescontoCupom.toFixed(2).replace('.', ',')}`;
-            descontoCupomRow.classList.remove('hidden');
-        } else {
-            descontoCupomRow.classList.add('hidden');
-        }
-
-        totalValor.textContent = `R$ ${precoFinal.toFixed(2).replace('.', ',')}`;
+        openModal(modalHtml, 'bg-transparent border-none p-0', 'center');
     }
 
     function handleSubscription(planTitle) {
@@ -2985,7 +3153,7 @@
         const modalHtml = `
             <div class="info-card text-center p-6">
                 <i class="fas fa-gem text-5xl text-primary mb-4"></i>
-                <h2 class="text-2xl font-bold mb-2 modal-title">Benefícios do Clube VS</h2>
+                <h2 class="text-2xl font-bold mb-2 modal-title">Benefícios do VS Clube</h2>
                 <p class="text-secondary mb-8">Veja as vantagens exclusivas de ser um assinante.</p>
 
                 <div class="text-left space-y-5">
@@ -3027,29 +3195,39 @@
 
     function showPagamentosModal() {
         const paymentsHtml = paymentHistory.map(p => `
-            <div class="flex justify-between items-center py-3 border-b border-gray-700 last:border-b-0">
-                <div>
-                    <p class="font-semibold text-white">Pagamento de ${new Date(p.date.split('/').reverse().join('-')).toLocaleString('pt-BR', { month: 'long' })}</p>
-                    <p class="text-xs text-secondary">${p.method}</p>
+            <div class="flex justify-between items-center py-4 border-b border-gray-700 last:border-b-0">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-[#2a2a2a] rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-receipt text-primary"></i>
+                    </div>
+                    <div>
+                        <p class="font-bold text-white">Pagamento de ${new Date(p.date.split('/').reverse().join('-')).toLocaleString('pt-BR', { month: 'long' })}</p>
+                        <p class="text-xs text-secondary">${p.method}</p>
+                    </div>
                 </div>
                 <div class="text-right">
                      <p class="font-bold text-white">R$ ${p.amount}</p>
                      <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-500/20 text-green-400">${p.status}</span>
                 </div>
-                 <button class="text-gray-400 hover:text-white ml-4"><i class="fas fa-download"></i></button>
+                 <button class="text-gray-400 hover:text-white ml-4 text-lg"><i class="fas fa-download"></i></button>
             </div>
         `).join('');
 
         const content = `
-            <div class="info-card p-5">
-                <h2 class="text-xl font-bold mb-4 text-center modal-title">Histórico de Pagamentos</h2>
-                <div class="space-y-2 max-h-[50vh] overflow-y-auto pr-2">
-                    ${paymentsHtml}
+            <div class="info-card p-6 flex flex-col" style="min-height: 550px;">
+                <div class="text-center mb-6">
+                    <i class="fas fa-receipt text-4xl text-primary mb-3"></i>
+                    <h2 class="text-2xl font-bold modal-title">Histórico de Pagamentos</h2>
                 </div>
-                <button class="w-full mt-6 py-2 btn-dark border border-gray-600" onclick="closeModal()">Fechar</button>
+                <div class="flex-grow space-y-2 max-h-[60vh] overflow-y-auto pr-2 service-list-scroll">
+                    ${paymentsHtml || '<p class="text-secondary text-center col-span-full">Nenhum pagamento encontrado.</p>'}
+                </div>
+                <div class="mt-auto pt-6">
+                    <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
+                </div>
             </div>
         `;
-        openModal(content, 'border-none', 'center');
+        openModal(content, 'bg-transparent border-none p-0', 'center');
     }
 
     function showGerenciarAssinaturaModal() {
@@ -3057,7 +3235,6 @@
             <div class="p-6 text-white relative bg-[#1e1e1e] rounded-2xl flex flex-col" style="min-height: 550px;">
                  <h2 class="text-2xl font-bold text-center mb-8 modal-title">Gerenciar Assinatura</h2>
 
-                <!-- Seção Meu Plano -->
                 <div class="bg-[#2a2a2a] p-5 rounded-lg mb-6">
                     <h3 class="font-bold text-lg mb-3 text-white">Meu Plano</h3>
                     <div class="flex justify-between items-center text-sm">
@@ -3068,7 +3245,6 @@
                     <p class="text-xs text-secondary">Próxima cobrança em: ${userSubscription.nextBillingDate}</p>
                 </div>
 
-                <!-- Seção Pagamento -->
                 <div class="bg-[#2a2a2a] p-5 rounded-lg mb-6">
                     <h3 class="font-bold text-lg mb-3 text-white">Pagamento</h3>
                     <div class="flex justify-between items-center">
@@ -3083,7 +3259,6 @@
                     </div>
                 </div>
                 
-                <!-- Seção Ações -->
                  <div class="space-y-4 flex-grow">
                     <button class="w-full text-left p-5 rounded-lg bg-[#2a2a2a] flex items-center justify-between hover:bg-[#3a3a3a] transition-colors" onclick="showMudarPlanoModal()">
                         <span class="font-semibold"><i class="fas fa-exchange-alt w-6 text-center mr-3 text-primary"></i>Mudar de plano</span>
@@ -3250,10 +3425,8 @@
 
         let confirmationMessage = '';
         if (newPrice > currentPrice) {
-            // Upgrade
             confirmationMessage = `Você gostaria de iniciar seu novo plano agora? A diferença de valor será cobrada hoje.`;
         } else {
-            // Downgrade
             confirmationMessage = `Sua mudança para o novo plano será efetivada na próxima renovação, em ${userSubscription.nextBillingDate}.`;
         }
 
@@ -3287,7 +3460,6 @@
         `;
         modalContent.innerHTML = successHtml;
     }
-
 
     function showPausarAssinaturaModal() {
         const modalHtml = `
@@ -3831,7 +4003,5 @@
 </script>
 </body>
 </html>
-
-
 
 
