@@ -1450,7 +1450,7 @@
                 <p class="text-secondary mb-6">Você tem certeza que deseja cancelar este agendamento? Esta ação não pode ser desfeita.</p>
                 <div class="flex justify-center space-x-4">
                     <button class="py-2 px-6 font-bold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
-                    <button class="py-2 px-6 font-bold rounded-lg bg-red-600 text-white" onclick="confirmarCancelamento(${id})">Cancelar</button>
+                    <button id="confirm-cancel-action-btn" class="py-2 px-6 font-bold rounded-lg bg-red-600 text-white" onclick="confirmarCancelamento(${id})">Cancelar</button>
                 </div>
             </div>
         `;
@@ -1458,23 +1458,31 @@
     }
 
     function confirmarCancelamento(id) {
-        const agendamentoParaCancelar = agendamentos.abertos.find(ag => ag.id === id);
-
-        if (agendamentoParaCancelar) {
-            if (agendamentoParaCancelar.usedInPlan && userSubscription.usedServices > 0) {
-                userSubscription.usedServices--;
-            }
-            if (agendamentoParaCancelar.usedReferralCredit) {
-                userInfo.referralCredits += 50;
-            }
+        const confirmBtn = document.getElementById('confirm-cancel-action-btn');
+        if (confirmBtn) {
+            confirmBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+            confirmBtn.disabled = true;
         }
-        
-        agendamentos.abertos = agendamentos.abertos.filter(ag => ag.id !== id);
-        
-        saveState();
-        closeModal(() => {
-            renderView('historico');
-        });
+
+        setTimeout(() => {
+            const agendamentoParaCancelar = agendamentos.abertos.find(ag => ag.id === id);
+
+            if (agendamentoParaCancelar) {
+                if (agendamentoParaCancelar.usedInPlan && userSubscription.usedServices > 0) {
+                    userSubscription.usedServices--;
+                }
+                if (agendamentoParaCancelar.usedReferralCredit) {
+                    userInfo.referralCredits += 50;
+                }
+            }
+            
+            agendamentos.abertos = agendamentos.abertos.filter(ag => ag.id !== id);
+            
+            saveState();
+            closeModal(() => {
+                renderView('historico');
+            });
+        }, 1500);
     }
 
     function renderPlaceholderView(viewName) {
@@ -2026,16 +2034,26 @@
         const cupomInput = document.getElementById('cupom-input');
         const feedbackDiv = document.getElementById('cupom-feedback');
         const cupomCode = cupomInput.value.toUpperCase();
+        const applyBtn = cupomInput.nextElementSibling;
 
-        if (cupomCode === 'VS10') {
-            feedbackDiv.textContent = 'Cupom de 10% aplicado!';
-            feedbackDiv.className = 'text-sm h-5 mb-2 text-green-400';
-            recalcularTotal(0.10);
-        } else {
-            feedbackDiv.textContent = 'Cupom inválido.';
-            feedbackDiv.className = 'text-sm h-5 mb-2 text-red-500';
-            recalcularTotal(0);
-        }
+        if (!applyBtn || applyBtn.disabled) return;
+
+        applyBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+        applyBtn.disabled = true;
+
+        setTimeout(() => {
+            if (cupomCode === 'VS10') {
+                feedbackDiv.textContent = 'Cupom de 10% aplicado!';
+                feedbackDiv.className = 'text-sm h-5 mb-2 text-green-400';
+                recalcularTotal(0.10);
+            } else {
+                feedbackDiv.textContent = 'Cupom inválido.';
+                feedbackDiv.className = 'text-sm h-5 mb-2 text-red-500';
+                recalcularTotal(0);
+            }
+            applyBtn.innerHTML = `Aplicar`;
+            applyBtn.disabled = false;
+        }, 1000);
     }
 
     function recalcularTotal(descontoCupomPercent) {
@@ -2187,9 +2205,18 @@
         setTimeout(() => {
             userLoggedIn = true;
             saveState();
-            closeModal();
-            setTimeout(showResumoAgendamentoModal, 310);
-        }, 3000);
+            
+            const activeView = document.querySelector('.footer-nav-item.active')?.dataset.view || 'agendar';
+            
+            // Se o login foi iniciado a partir da aba de perfil, recarrega a view do perfil.
+            if (activeView === 'perfil') {
+                closeModal(renderPerfilView); 
+            } else {
+                // Se o login foi iniciado a partir do fluxo de agendamento, continua para o resumo.
+                closeModal();
+                setTimeout(showResumoAgendamentoModal, 310);
+            }
+        }, 1500);
     }
 
     function showCadastro() {
@@ -2432,7 +2459,16 @@
     function handleWelcomeContinue() {
         userLoggedIn = true;
         saveState();
-        closeModal(showResumoAgendamentoModal);
+        
+        const activeView = document.querySelector('.footer-nav-item.active')?.dataset.view || 'agendar';
+
+        // Se o cadastro foi iniciado a partir da aba de perfil, recarrega a view do perfil.
+        if (activeView === 'perfil') {
+            closeModal(renderPerfilView);
+        } else {
+             // Se o cadastro foi iniciado a partir do fluxo de agendamento, continua para o resumo.
+            closeModal(showResumoAgendamentoModal);
+        }
     }
 
     function handleCadastro() {
@@ -2690,7 +2726,7 @@
 
                 <div class="mt-auto grid grid-cols-2 gap-4 pt-6">
                     <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
-                    <button id="save-profile-btn" class="w-full py-3 font-semibold rounded-lg btn-plan opacity-50" onclick="showSaveProfileConfirmation()" disabled>Salvar</button>
+                    <button id="save-profile-btn" class="w-full py-3 font-semibold rounded-lg btn-plan opacity-50" onclick="handleProfileUpdate()" disabled>Salvar</button>
                 </div>
             </div>
         `;
@@ -2723,32 +2759,17 @@
         }
     }
 
-    function showSaveProfileConfirmation() {
+    function handleProfileUpdate() {
+        const saveBtn = document.getElementById('save-profile-btn');
+        if (saveBtn) {
+            saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+            saveBtn.disabled = true;
+        }
+
         const newName = document.getElementById('edit-name').value;
         const newPhone = document.getElementById('edit-phone').value;
         const newEmail = document.getElementById('edit-email').value;
         const newBirthdate = document.getElementById('edit-birthdate').value;
-
-        const modalHtml = `
-            <div class="info-card text-center p-6">
-                <i class="fas fa-save text-4xl text-primary mb-4"></i>
-                <h2 class="text-xl font-bold mb-4 modal-title">Confirmar Alterações</h2>
-                <p class="text-secondary mb-6">Deseja salvar as alterações feitas no seu perfil?</p>
-                <div class="flex justify-center space-x-4">
-                    <button class="py-2 px-6 font-bold rounded-lg btn-dark border border-gray-600" onclick="showEditarPerfilModal()">Cancelar</button>
-                    <button id="confirm-save-profile-btn" class="py-2 px-6 font-bold rounded-lg btn-plan" onclick="handleProfileUpdate('${newName}', '${newPhone}', '${newEmail}', '${newBirthdate}')">Salvar</button>
-                </div>
-            </div>
-        `;
-        openModal(modalHtml, 'border-none', 'center');
-    }
-
-    function handleProfileUpdate(newName, newPhone, newEmail, newBirthdate) {
-        const confirmBtn = document.getElementById('confirm-save-profile-btn');
-        if (confirmBtn) {
-            confirmBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
-            confirmBtn.disabled = true;
-        }
 
         setTimeout(() => {
             userInfo.name = newName;
@@ -2762,15 +2783,10 @@
                     <i class="far fa-check-circle text-6xl text-primary mb-4"></i>
                     <h2 class="text-2xl font-bold mb-4 modal-title">Perfil Atualizado!</h2>
                     <p class="text-secondary mb-6">Suas informações foram salvas com sucesso.</p>
-                    <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="closeModal()">Fechar</button>
+                    <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="closeModalAndRender('perfil')">Fechar</button>
                 </div>
             `;
             modalContent.innerHTML = successHtml;
-
-            setTimeout(() => {
-                closeModal();
-                renderView('perfil');
-            }, 2500);
         }, 1500);
     }
 
@@ -2829,7 +2845,7 @@
                 </div>
                 <div class="mt-auto grid grid-cols-2 gap-4 pt-6">
                     <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
-                    <button id="save-notifications-btn" class="w-full py-3 font-semibold rounded-lg btn-plan opacity-50" onclick="closeModal()" disabled>Salvar</button>
+                    <button id="save-notifications-btn" class="w-full py-3 font-semibold rounded-lg btn-plan opacity-50" onclick="handleSaveNotifications()" disabled>Salvar</button>
                 </div>
             </div>
         `;
@@ -2849,6 +2865,20 @@
             updateToggleUI('push-notif-toggle', currentNotificationsState.push);
             validateNotificationChanges();
         });
+    }
+
+    function handleSaveNotifications() {
+        const saveBtn = document.getElementById('save-notifications-btn');
+        if (saveBtn) {
+            saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+            saveBtn.disabled = true;
+        }
+
+        // Simula o salvamento
+        setTimeout(() => {
+            // Aqui você salvaria o estado `currentNotificationsState`
+            closeModal();
+        }, 1500);
     }
 
     function showAlterarPinModal() {
@@ -3020,27 +3050,32 @@
         const submitBtn = document.getElementById('submit-avaliacao-btn');
         if (!submitBtn || submitBtn.disabled) return;
 
-        const agendamento = agendamentos.historico.find(ag => ag.id === id);
-        if (agendamento) {
-            agendamento.avaliacao = currentRating;
-        }
-        saveState();
-        updateReviewNotification();
-        
-        const successHtml = `
-            <div class="info-card text-center p-6">
-                <i class="far fa-check-circle text-6xl text-primary mb-4"></i>
-                <h2 class="text-2xl font-bold mb-4 modal-title">Avaliação Enviada!</h2>
-                <p class="text-secondary mb-6">Obrigado pelo seu feedback!</p>
-                <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="closeModal()">Fechar</button>
-            </div>
-        `;
-        modalContent.innerHTML = successHtml;
+        submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+        submitBtn.disabled = true;
 
         setTimeout(() => {
-            closeModal();
-            renderView('historico');
-        }, 2000);
+            const agendamento = agendamentos.historico.find(ag => ag.id === id);
+            if (agendamento) {
+                agendamento.avaliacao = currentRating;
+            }
+            saveState();
+            updateReviewNotification();
+            
+            const successHtml = `
+                <div class="info-card text-center p-6">
+                    <i class="far fa-check-circle text-6xl text-primary mb-4"></i>
+                    <h2 class="text-2xl font-bold mb-4 modal-title">Avaliação Enviada!</h2>
+                    <p class="text-secondary mb-6">Obrigado pelo seu feedback!</p>
+                    <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="closeModal()">Fechar</button>
+                </div>
+            `;
+            modalContent.innerHTML = successHtml;
+
+            setTimeout(() => {
+                closeModal();
+                renderView('historico');
+            }, 2000);
+        }, 1500);
     }
 
     function updateAgendarViewFromState() {
@@ -3249,7 +3284,7 @@
 
                 <div class="mt-auto pt-6 grid grid-cols-2 gap-4">
                     <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="showSubscriptionModal('${plan.title}')">Voltar</button>
-                    <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="handleSubscription('${plan.title}')">Confirmar</button>
+                    <button id="final-confirm-subscription-btn" class="w-full py-3 font-bold rounded-lg btn-plan" onclick="handleSubscription('${plan.title}')">Confirmar</button>
                 </div>
             </div>
         `;
@@ -3291,19 +3326,27 @@
     }
 
     function handleSubscription(planTitle) {
-        const newPlan = planos.find(p => p.title === planTitle);
-        if (!newPlan) return;
+        const confirmBtn = document.getElementById('final-confirm-subscription-btn');
+        if (confirmBtn) {
+            confirmBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+            confirmBtn.disabled = true;
+        }
 
-        userSubscription.active = true;
-        userSubscription.plan = newPlan;
-        userSubscription.usedServices = 0;
-        
-        const nextBilling = new Date();
-        nextBilling.setMonth(nextBilling.getMonth() + 1);
-        userSubscription.nextBillingDate = nextBilling.toLocaleDateString('pt-BR');
+        setTimeout(() => {
+            const newPlan = planos.find(p => p.title === planTitle);
+            if (!newPlan) return;
 
-        saveState();
-        showSubscriptionSuccessModal(planTitle);
+            userSubscription.active = true;
+            userSubscription.plan = newPlan;
+            userSubscription.usedServices = 0;
+            
+            const nextBilling = new Date();
+            nextBilling.setMonth(nextBilling.getMonth() + 1);
+            userSubscription.nextBillingDate = nextBilling.toLocaleDateString('pt-BR');
+
+            saveState();
+            showSubscriptionSuccessModal(planTitle);
+        }, 1500);
     }
 
     function showSubscriptionSuccessModal(planTitle) {
@@ -3367,7 +3410,7 @@
             <div class="flex justify-between items-center py-4 border-b border-gray-700 last:border-b-0">
                 <div class="flex items-center">
                     <div class="w-10 h-10 bg-[#2a2a2a] rounded-lg flex items-center justify-center mr-4">
-                        <i class="fas fa-receipt text-primary"></i>
+                        <i class="fas fa-file-invoice-dollar text-primary"></i>
                     </div>
                     <div>
                         <p class="font-bold text-white">Pagamento de ${new Date(p.date.split('/').reverse().join('-')).toLocaleString('pt-BR', { month: 'long' })}</p>
@@ -3378,25 +3421,21 @@
                      <p class="font-bold text-white">R$ ${p.amount}</p>
                      <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-500/20 text-green-400">${p.status}</span>
                 </div>
-                 <button class="text-gray-400 hover:text-white ml-4 text-lg"><i class="fas fa-download"></i></button>
             </div>
         `).join('');
 
         const content = `
-            <div class="info-card p-6 flex flex-col" style="min-height: 550px;">
-                <div class="text-center mb-6">
-                    <i class="fas fa-receipt text-4xl text-primary mb-3"></i>
-                    <h2 class="text-2xl font-bold modal-title">Histórico de Pagamentos</h2>
-                </div>
-                <div class="flex-grow space-y-2 max-h-[60vh] overflow-y-auto pr-2 service-list-scroll">
+            <div class="info-card p-6">
+                <h2 class="text-2xl font-bold modal-title text-center mb-6">Histórico de Pagamentos</h2>
+                <div class="space-y-2 max-h-[60vh] overflow-y-auto pr-2 service-list-scroll">
                     ${paymentsHtml || '<p class="text-secondary text-center col-span-full">Nenhum pagamento encontrado.</p>'}
                 </div>
-                <div class="mt-auto pt-6">
+                <div class="mt-6 pt-6 border-t border-gray-700">
                     <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
                 </div>
             </div>
         `;
-        openModal(content, 'bg-transparent border-none p-0', 'center');
+        openModal(content, 'border-none', 'center');
     }
 
     function showGerenciarAssinaturaModal() {
@@ -4178,6 +4217,16 @@
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
 
 
 
