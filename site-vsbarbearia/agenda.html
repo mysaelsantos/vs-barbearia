@@ -321,6 +321,19 @@
             color: #fbb62c; /* primary color */
             border: 1px solid #fbb62c;
         }
+
+        /* Animações para o card de créditos */
+        #credit-card-details {
+            transition: all 0.5s ease-in-out;
+            max-height: 0;
+            overflow: hidden;
+        }
+        #credit-card-details.expanded {
+            max-height: 500px; /* Altura suficiente para o conteúdo */
+        }
+        .progress-bar-animated {
+            transition: width 1s ease-out;
+        }
     </style>
 </head>
 <body>
@@ -415,6 +428,12 @@
         { title: 'Cabelo e Barba Ilimitado', price: '259,90', period: '/mês', features: ['Plano mensal ilimitado para cabelo e barba', 'Válido nas duas unidades', 'Sem limite de uso'], popular: false },
     ];
     
+    const goals = [
+        { id: 1, target: 5, prize: 'Hidratação Grátis', icon: 'fas fa-tint', serviceId: 6 },
+        { id: 2, target: 8, prize: 'Brinde Exclusivo', icon: 'fas fa-box-open', serviceId: null },
+        { id: 3, target: 12, prize: 'Shampoo Jaboque', icon: 'fas fa-bottle-droplet', serviceId: null }
+    ];
+
     const agendamentos = {
         abertos: [],
         historico: [
@@ -450,7 +469,9 @@
         referralCode: 'VANILTONS10',
         profilePic: 'https://i.postimg.cc/pT3ScnBb/482320646-1375134203841648-765763137701876086-n.jpg',
         birthdate: '',
-        referralCredits: 20.00 // Créditos de indicação
+        referralCredits: 20.00, // Créditos de indicação
+        referralsMade: 6, // Número de indicações bem-sucedidas
+        redeemedGoals: [] // IDs das metas já resgatadas
     };
     
     const registeredPhone = '3799745723';
@@ -504,7 +525,9 @@
                 referralCode: 'VANILTONS10',
                 profilePic: 'https://i.postimg.cc/pT3ScnBb/482320646-1375134203841648-765763137701876086-n.jpg',
                 birthdate: '',
-                referralCredits: 20.00
+                referralCredits: 20.00,
+                referralsMade: 6,
+                redeemedGoals: []
             };
             if (state.agendamentos) {
                 agendamentos.abertos = state.agendamentos.abertos || [];
@@ -516,11 +539,6 @@
         } else {
             resetSelections();
         }
-    }
-
-    function clearSelectionState() {
-        resetSelections();
-        saveState();
     }
 
     // --- FUNÇÕES DO MODAL ---
@@ -548,7 +566,7 @@
         }, 10);
     }
 
-    function closeModal() {
+    function closeModal(callback) {
         modalContent.classList.add('translate-y-full');
         mainContent.classList.remove('content-blur');
         footerNav.classList.remove('content-blur');
@@ -556,8 +574,17 @@
             modalContainer.classList.add('hidden');
             modalContent.innerHTML = '';
             isAuthModalOpen = false;
+            if (callback && typeof callback === 'function') {
+                callback();
+            }
         }, 300);
     }
+    
+    // Função helper para usar em `onclick`
+    function closeModalAndRender(view) {
+        closeModal(() => renderView(view));
+    }
+
 
     modalContainer.addEventListener('click', (e) => {
         if (e.target === modalContainer && !isAuthModalOpen) {
@@ -928,9 +955,9 @@
             return;
         }
 
-        const creditProgress = Math.min((userInfo.referralCredits / 50) * 100, 100);
         let creditCardHtml = '';
-
+        const referrals = userInfo.referralsMade;
+        
         if (userInfo.referralCredits >= 50) {
             creditCardHtml = `
                 <div class="bg-gradient-to-br from-primary to-[#dca52c] p-5 rounded-2xl border-2 border-primary/50 shadow-lg text-center text-black relative overflow-hidden">
@@ -938,23 +965,72 @@
                     <div class="absolute -bottom-8 -left-2 w-24 h-24 bg-white/10 rounded-full z-0"></div>
                     
                     <div class="relative z-10">
-                        <i class="fas fa-gift text-4xl mb-3 text-black/70"></i>
-                        <p class="font-bold text-xl drop-shadow">Parabéns! Você conseguiu!</p>
-                        <p class="text-5xl font-extrabold my-2 drop-shadow-md">R$ ${userInfo.referralCredits.toFixed(2).replace('.', ',')}</p>
-                        <p class="text-sm font-medium mb-4 drop-shadow">em créditos para usar</p>
+                        <i class="fas fa-gift text-4xl mb-3 text-black"></i>
+                        <p class="font-bold text-xl drop-shadow text-black">Parabéns! Você conseguiu!</p>
+                        <p class="text-4xl font-extrabold my-2 drop-shadow-md text-black">R$ ${userInfo.referralCredits.toFixed(2).replace('.', ',')}</p>
+                        <p class="text-sm font-medium mb-4 drop-shadow text-black">em créditos para usar</p>
                         <button class="w-full py-3 font-bold rounded-lg bg-black text-primary transition-transform duration-200 hover:scale-105 shadow-xl" onclick="showResgatarCreditoModal()">Resgatar Corte Grátis</button>
                     </div>
                 </div>
             `;
         } else {
-            creditCardHtml = `
-                <div class="bg-[#1e1e1e] p-5 rounded-2xl border border-gray-800 shadow-lg text-center">
-                    <p class="text-secondary text-sm">Crédito disponível</p>
-                    <p class="text-4xl font-bold text-white my-2">R$ ${userInfo.referralCredits.toFixed(2).replace('.', ',')}</p>
-                    <div class="w-full bg-gray-700 rounded-full h-2.5 my-4">
-                        <div class="bg-primary h-2.5 rounded-full transition-all duration-1000 ease-out" style="width: ${creditProgress}%"></div>
+             const goalsHtml = goals.map(goal => {
+                const progress = Math.min((referrals / goal.target) * 100, 100);
+                const achieved = referrals >= goal.target;
+                const redeemed = userInfo.redeemedGoals.includes(goal.id);
+
+                let rewardButtonHtml = '';
+
+                if (redeemed) {
+                    rewardButtonHtml = `<span class="bg-gray-700 text-secondary text-xs font-bold py-1.5 px-3 rounded-full mt-2 cursor-default">Resgatado</span>`;
+                } else if (achieved && goal.serviceId) {
+                    rewardButtonHtml = `<button class="bg-primary text-black text-xs font-bold py-1.5 px-3 rounded-full mt-2 hover:bg-yellow-400 transition-all" onclick="resgatarMetaServico(${goal.serviceId})">Resgatar</button>`;
+                } else if (achieved) {
+                    rewardButtonHtml = `<span class="text-xs text-secondary mt-2 block">Retire na barbearia</span>`;
+                }
+
+
+                return `
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center ${achieved ? 'bg-gradient-to-br from-primary to-yellow-400 text-black shadow-lg' : 'bg-gray-700/50 border-2 border-gray-600'}">
+                            <i class="${goal.icon} text-xl ${achieved ? '' : 'text-primary'}"></i>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-baseline mb-1">
+                                <p class="font-bold text-sm ${achieved ? 'text-primary' : 'text-white'}">${goal.prize}</p>
+                                <p class="text-xs ${achieved ? 'text-primary font-bold' : 'text-secondary'}">${achieved ? 'Concluído!' : `${referrals}/${goal.target}`}</p>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div class="bg-primary h-2 rounded-full progress-bar-animated" style="width: 0%" data-progress="${progress}"></div>
+                            </div>
+                            ${rewardButtonHtml}
+                        </div>
                     </div>
-                    <p class="text-xs text-secondary">Acumule R$ 50,00 para trocar por um corte de cabelo!</p>
+                `;
+            }).join('');
+
+            creditCardHtml = `
+                <div class="bg-gradient-to-b from-[#2a2a2a] to-[#1e1e1e] p-5 rounded-2xl border border-gray-800 shadow-lg">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-secondary text-sm">Crédito disponível</p>
+                            <p class="text-3xl font-bold text-white mt-1">R$ ${userInfo.referralCredits.toFixed(2).replace('.', ',')}</p>
+                        </div>
+                         <button id="credit-card-toggle" class="text-sm font-semibold text-primary flex items-center" onclick="toggleCreditCardDetails(true)">
+                            <span id="toggle-text">Ver metas</span> <i id="toggle-icon" class="fas fa-chevron-down ml-2 text-xs transition-transform"></i>
+                         </button>
+                    </div>
+                    
+                    <div id="credit-card-details">
+                         <div class="mt-4 pt-4 border-t border-gray-700/50">
+                            <h4 class="font-semibold text-primary mb-4 text-center">Metas de Indicação</h4>
+                             <div class="space-y-5">
+                                ${goalsHtml}
+                             </div>
+                         </div>
+                    </div>
+
+                    <p class="text-xs text-secondary text-center mt-4 pt-4 border-t border-gray-700/50">Acumule crédito para trocar por serviços.</p>
                 </div>
             `;
         }
@@ -1017,6 +1093,40 @@
                 </div>
             </div>
         `;
+    }
+
+    function toggleCreditCardDetails(show) {
+        const detailsDiv = document.getElementById('credit-card-details');
+        const toggleButton = document.getElementById('credit-card-toggle');
+        const toggleText = document.getElementById('toggle-text');
+        const toggleIcon = document.getElementById('toggle-icon');
+
+        if (detailsDiv && toggleButton && toggleText && toggleIcon) {
+            if (show) {
+                detailsDiv.classList.add('expanded');
+                toggleText.textContent = 'Recolher';
+                toggleIcon.classList.add('rotate-180');
+                toggleButton.setAttribute('onclick', 'toggleCreditCardDetails(false)');
+                
+                // Animar as barras de progresso ao expandir
+                setTimeout(() => {
+                    document.querySelectorAll('.progress-bar-animated').forEach(bar => {
+                        bar.style.width = bar.dataset.progress + '%';
+                    });
+                }, 100); // Pequeno delay para a animação ser visível
+
+            } else {
+                detailsDiv.classList.remove('expanded');
+                toggleText.textContent = 'Ver metas';
+                toggleIcon.classList.remove('rotate-180');
+                toggleButton.setAttribute('onclick', 'toggleCreditCardDetails(true)');
+
+                 // Resetar as barras de progresso ao recolher
+                document.querySelectorAll('.progress-bar-animated').forEach(bar => {
+                    bar.style.width = '0%';
+                });
+            }
+        }
     }
     
     function updateProfilePics() {
@@ -1326,7 +1436,7 @@
                 <i class="far fa-check-circle text-5xl text-primary mb-4"></i>
                 <h2 class="text-xl font-bold mb-4 modal-title">Agendamento Remarcado!</h2>
                 <p class="text-secondary mb-6">Seu horário foi atualizado com sucesso.</p>
-                <button class="w-full py-2 font-semibold rounded-lg btn-primary" onclick="closeModal(); renderView('historico');">Fechar</button>
+                <button class="w-full py-2 font-semibold rounded-lg btn-primary" onclick="closeModalAndRender('historico')">Fechar</button>
             </div>
         `;
         openModal(modalHtml, 'border-none', 'center');
@@ -1362,10 +1472,9 @@
         agendamentos.abertos = agendamentos.abertos.filter(ag => ag.id !== id);
         
         saveState();
-        closeModal();
-        setTimeout(() => {
+        closeModal(() => {
             renderView('historico');
-        }, 310);
+        });
     }
 
     function renderPlaceholderView(viewName) {
@@ -1453,29 +1562,26 @@
     function selectUnidade(id) {
         selection.unidade = unidades.find(u => u.id === id);
         if (!selection.unidade) return;
-        
-        // Limpa seleções dependentes
+
+        // Reseta as seleções seguintes, mas preserva o serviço se for resgate
         selection.barbeiro = null;
-        selection.servico = null;
+        if (!selection.isFromCreditRedemption) {
+            selection.servico = null;
+        }
         selection.data = null;
         selection.hora = null;
 
-        const el = document.getElementById('unidade-text');
-        el.textContent = selection.unidade.nome;
-        el.classList.remove('selection-item-text');
-        el.classList.add('selected');
-        
         updateAgendarViewFromState();
         closeModal();
         saveState();
     }
 
     function showBarbeiros() {
-        if(!selection.unidade) return;
-        let content = `<h2 class="text-xl font-bold mb-6 text-center modal-title">Selecionar profissional</h2>`;
+        if (!selection.unidade) return;
+        let content = `<h2 class="text-xl font-bold mb-6 text-center modal-title">Escolha um profissional</h2>`;
         content += barbeiros.map(b => `
             <div class="flex items-center p-3 rounded-lg mb-3 cursor-pointer selection-item" onclick="selectBarbeiro(${b.id})">
-                <img src="${b.img || 'https://placehold.co/100x100/333333/FFFFFF?text=S/P'}" alt="${b.nome}" class="w-16 h-16 rounded-full mr-4 object-cover border-2 border-primary">
+                <img src="${b.img || 'https://placehold.co/100x100/333333/FFFFFF?text=S/F'}" alt="${b.nome}" class="w-16 h-16 rounded-full mr-4 object-cover">
                 <div>
                     <p class="font-semibold text-white">${b.nome}</p>
                     <p class="text-sm text-secondary">${b.funcao}</p>
@@ -1487,73 +1593,76 @@
 
     function selectBarbeiro(id) {
         selection.barbeiro = barbeiros.find(b => b.id === id);
-        if (!selection.barbeiro) return;
+        if(!selection.barbeiro) return;
 
-        const el = document.getElementById('barbeiro-text');
-        el.textContent = selection.barbeiro.nome;
-        el.classList.remove('selection-item-text');
-        el.classList.add('selected');
+        // Reseta as seleções seguintes, mas preserva o serviço se for resgate
+        if (!selection.isFromCreditRedemption) {
+            selection.servico = null;
+        }
+        selection.data = null;
+        selection.hora = null;
         
-        updateAgendarViewFromState();
-        closeModal();
-        saveState();
+        // Pula para a seleção de data se o serviço já estiver definido (resgate)
+        if (selection.isFromCreditRedemption && selection.servico) {
+            updateAgendarViewFromState();
+            saveState(); 
+            // Passa a função showCalendario como callback para ser executada após o modal fechar
+            closeModal(showCalendario);
+        } else {
+            updateAgendarViewFromState();
+            closeModal();
+            saveState();
+        }
     }
-
+    
     function showServicos() {
         if (!selection.unidade || !selection.barbeiro) return;
+        
+        // Bloqueia a seleção de serviço se for um resgate de meta
+        if (selection.isFromCreditRedemption && servicos.some(s => s.id === selection.servico?.id)) {
+            return;
+        }
 
         const diaDaSemana = selection.data ? new Date(selection.data).getDay() : -1;
         const temPromocao = diaDaSemana >= 1 && diaDaSemana <= 3;
 
-        let promoBanner = `
-            <div class="px-4 pt-4 flex-shrink-0">
-                <div class="bg-[#1e1e1e] p-4 rounded-lg text-center border-2 border-primary/50 shadow-lg">
-                    <h3 class="text-xl font-bold text-primary">Promoção de Segunda a Quarta!</h3>
-                    <div class="w-24 h-0.5 bg-primary mx-auto my-2 rounded-full"></div>
-                    <p class="text-secondary text-sm mt-3">Agendando de segunda a quarta o seu corte sai mais barato, aproveite a oferta!</p>
-                    <div class="text-sm mt-4 text-left border-t border-gray-700 pt-3 space-y-1">
-                        <p class="text-white"><strong class="font-semibold">Corte:</strong> <del class="text-gray-500">R$ 50,00</del> <i class="fas fa-arrow-right text-xs mx-1"></i> <span class="font-bold text-primary text-base">R$ 40,00</span></p>
-                        <p class="text-white"><strong class="font-semibold">Combo:</strong> <del class="text-gray-500">R$ 100,00</del> <i class="fas fa-arrow-right text-xs mx-1"></i> <span class="font-bold text-primary text-base">R$ 75,00</span></p>
-                    </div>
-                </div>
-            </div>
-        `;
+        let content = `<h2 class="text-xl font-bold mb-6 text-center modal-title">Escolha um serviço</h2>`;
+        content += '<div class="space-y-3 service-list-scroll max-h-[60vh] overflow-y-auto pr-2">';
+        content += servicos.map(s => {
+            const precoHtml = temPromocao && s.promocao
+                ? `<span class="font-bold text-primary">R$ ${s.promocao.toFixed(2)}</span> <span class="text-xs line-through text-gray-400">R$ ${s.preco.toFixed(2)}</span>`
+                : `<span class="font-bold text-white">R$ ${s.preco.toFixed(2)}</span>`;
 
-        let titleHtml = `<h2 class="px-4 text-lg font-semibold my-4 text-center text-primary flex-shrink-0">Escolha um serviço</h2>`;
-
-        let servicesListHtml = servicos.map(s => {
-            const precoFinal = temPromocao && s.promocao ? s.promocao : s.preco;
-            const precoAntigo = temPromocao && s.promocao ? `<span class="line-through text-gray-500">R$ ${s.preco.toFixed(2)}</span>` : '';
-            
             return `
-                <div class="flex justify-between items-center p-4 rounded-lg mb-3 cursor-pointer selection-item" onclick="selectServico(${s.id})">
+                <div class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item" onclick="selectServico(${s.id})">
                     <div>
                         <p class="font-semibold text-white">${s.nome}</p>
-                        <p class="text-sm text-secondary">${precoAntigo} <span class="text-primary font-bold">R$ ${precoFinal.toFixed(2)}</span> &middot; ${s.duracao}</p>
+                        <p class="text-sm text-secondary"><i class="far fa-clock mr-1 text-primary"></i>${s.duracao}</p>
                     </div>
-                    <div class="w-6 h-6 border-2 border-gray-500 rounded-full flex-shrink-0"></div>
+                    <div class="text-right">
+                        ${precoHtml}
+                    </div>
                 </div>
             `;
         }).join('');
-
-        let content = `
-                ${promoBanner}
-                ${titleHtml}
-                <div class="flex-grow overflow-y-auto service-list-scroll px-4 pb-4 min-h-0">
-                    ${servicesListHtml}
-                </div>
-        `;
-        openModal(content, 'flex flex-col max-h-[85vh] p-0');
+        content += '</div>';
+        openModal(content);
     }
 
     function selectServico(id) {
+        // Fallback guard clause to prevent changing service during redemption
+        if (selection.isFromCreditRedemption) return;
+
         selection.servico = servicos.find(s => s.id === id);
         if(!selection.servico) return;
         
         const el = document.getElementById('servico-text');
-        el.textContent = selection.servico.nome;
-        el.classList.remove('selection-item-text');
-        el.classList.add('selected');
+        // This element might not exist if the view was manipulated by another flow, so we check it.
+        if (el) {
+            el.textContent = selection.servico.nome;
+            el.classList.remove('selection-item-text');
+            el.classList.add('selected');
+        }
         
         updateAgendarViewFromState();
         closeModal();
@@ -1796,6 +1905,14 @@
         const agendarBtn = document.getElementById('agendar-btn');
         if(!agendarBtn || agendarBtn.disabled) return;
 
+        // Verificação defensiva para prevenir o erro reportado
+        if (!selection.servico) {
+            console.error("showResumoAgendamentoModal foi chamado sem um serviço selecionado.", selection);
+            // Opcionalmente, mostrar uma mensagem de erro amigável aqui.
+            // Por enquanto, vamos apenas prevenir o travamento.
+            return;
+        }
+
         if (agendamentos.abertos.length >= 2) {
             showLimiteAgendamentosModal();
             return;
@@ -1957,6 +2074,14 @@
         if(usedInPlan) {
             userSubscription.usedServices++;
         }
+        
+        // Lógica para marcar meta como resgatada
+        if (selection.isFromCreditRedemption) {
+            const redeemedGoal = goals.find(g => g.serviceId === selection.servico.id);
+            if (redeemedGoal && !userInfo.redeemedGoals.includes(redeemedGoal.id)) {
+                userInfo.redeemedGoals.push(redeemedGoal.id);
+            }
+        }
 
         const novoAgendamento = {
             id: newId,
@@ -2000,7 +2125,8 @@
             </div>
         `;
         openModal(successMessage);
-        clearSelectionState();
+        resetSelections();
+        renderAgendarView(); // Adicionado para resetar a view de agendamento em segundo plano
     }
 
     // --- LÓGICA DE LOGIN/CADASTRO E REDEFINIÇÃO DE SENHA ---
@@ -2297,8 +2423,7 @@
     function handleWelcomeContinue() {
         userLoggedIn = true;
         saveState();
-        closeModal();
-        setTimeout(showResumoAgendamentoModal, 310);
+        closeModal(showResumoAgendamentoModal);
     }
 
     function handleCadastro() {
@@ -2306,13 +2431,52 @@
         const firstName = nameInput ? nameInput.value.trim().split(' ')[0] : '';
         userLoggedIn = true;
         saveState();
-        closeModal();
-        setTimeout(() => showWelcomeModal(firstName), 310);
+        closeModal(() => showWelcomeModal(firstName));
     }
     
     function handleLogout() {
         showLogoutConfirmationModal();
     }
+
+    function resgatarMetaServico(serviceId) {
+        const servicoMeta = servicos.find(s => s.id === serviceId);
+        if (!servicoMeta) return;
+
+        resetSelections();
+        selection.servico = servicoMeta;
+        selection.isFromCreditRedemption = true; // Usamos a mesma flag para indicar que é uma cortesia
+
+        showResgateMetaConfirmacaoModal(servicoMeta.nome);
+    }
+    
+    function showResgateMetaConfirmacaoModal(serviceName) {
+        const modalHtml = `
+            <div class="info-card text-center p-6">
+                <i class="fas fa-gift text-4xl text-primary mb-4"></i>
+                <h2 class="text-xl font-bold mb-4 modal-title">Resgatar Recompensa</h2>
+                <p class="text-secondary mb-6">Parabéns! Você está prestes a resgatar sua <strong>${serviceName}</strong>. Vamos agendar seu horário?</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <button class="w-full py-2 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Depois</button>
+                    <button class="w-full py-2 font-semibold rounded-lg btn-plan" onclick="handleResgateDeMeta()">Agendar Agora</button>
+                </div>
+            </div>
+        `;
+        openModal(modalHtml, 'border-none', 'center');
+    }
+    
+    function handleResgateDeMeta() {
+        closeModal(() => {
+            renderView('agendar');
+            // Inicia o fluxo de agendamento, como se o usuário tivesse clicado no primeiro passo
+            setTimeout(() => {
+                const unidadeStep = document.getElementById('select-unidade');
+                if (unidadeStep && !unidadeStep.classList.contains('disabled')) {
+                    unidadeStep.click();
+                }
+            }, 100);
+        });
+    }
+
 
     function showResgatarCreditoModal() {
         const modalHtml = `
@@ -2334,15 +2498,14 @@
         userInfo.referralCredits -= 50;
         saveState();
         
-        clearSelectionState();
+        resetSelections();
         const corteDeCabelo = servicos.find(s => s.id === 1); // ID 1 = Corte de Cabelo
         if (corteDeCabelo) {
             selection.servico = corteDeCabelo;
         }
         selection.isFromCreditRedemption = true; 
         
-        closeModal();
-        setTimeout(() => {
+        closeModal(() => {
             renderView('agendar');
             setTimeout(() => {
                 const unidadeStep = document.getElementById('select-unidade');
@@ -2350,16 +2513,15 @@
                     unidadeStep.click();
                 }
             }, 100);
-        }, 310);
+        });
     }
 
     function confirmLogout() {
         userLoggedIn = false;
-        clearSelectionState();
-        closeModal();
-        setTimeout(() => {
+        resetSelections();
+        closeModal(() => {
             renderView('perfil');
-        }, 310);
+        });
     }
 
     function showLogoutConfirmationModal() {
@@ -2383,7 +2545,7 @@
         const appointmentToRebook = agendamentos.historico.find(ag => ag.id === id);
         if (!appointmentToRebook) return;
 
-        clearSelectionState();
+        resetSelections();
 
         selection.unidade = appointmentToRebook.unidade;
         selection.barbeiro = appointmentToRebook.barbeiro;
@@ -2432,26 +2594,28 @@
                     <p class="text-secondary text-sm">Convide seus amigos e ganhem benefícios juntos.</p>
                 </div>
                 
-                <div class="flex-grow overflow-y-auto pr-2 modal-scroll-hidden space-y-6">
+                <div class="flex-grow overflow-y-auto pr-2 modal-scroll-hidden space-y-4">
                     <div class="bg-[#2a2a2a] p-4 rounded-lg flex items-start">
-                        <i class="fas fa-share-square text-primary text-xl w-8 text-center mr-4 mt-1"></i>
-                        <div>
-                            <h3 class="font-bold text-white">1. Compartilhe seu código</h3>
-                            <p class="text-sm text-secondary">Envie seu código exclusivo para seus amigos. Quanto mais amigos, mais benefícios!</p>
-                        </div>
-                    </div>
-                     <div class="bg-[#2a2a2a] p-4 rounded-lg flex items-start">
                         <i class="fas fa-percent text-primary text-xl w-8 text-center mr-4 mt-1"></i>
                         <div>
-                            <h3 class="font-bold text-white">2. Seu amigo ganha 20% OFF</h3>
+                            <h3 class="font-bold text-white">Seu amigo ganha 20% OFF</h3>
                             <p class="text-sm text-secondary">Ele aproveita um desconto especial no primeiro serviço ao usar seu código.</p>
                         </div>
                     </div>
                      <div class="bg-[#2a2a2a] p-4 rounded-lg flex items-start">
                         <i class="fas fa-hand-holding-usd text-primary text-xl w-8 text-center mr-4 mt-1"></i>
                         <div>
-                            <h3 class="font-bold text-white">3. Você ganha R$10 de crédito</h3>
-                            <p class="text-sm text-secondary">Após o primeiro serviço do seu amigo, você recebe R$10 de crédito para usar como quiser.</p>
+                            <h3 class="font-bold text-white">Você ganha R$10 de crédito</h3>
+                            <p class="text-sm text-secondary">Após o primeiro serviço do seu amigo, você recebe R$10 de crédito.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#2a2a2a] p-4 rounded-lg">
+                        <h3 class="font-bold text-primary text-center mb-3">Metas de Indicação</h3>
+                        <div class="space-y-3 text-sm">
+                            <p><i class="fas fa-star text-yellow-400 mr-2"></i><strong>5 amigos:</strong> Ganhe uma Hidratação Grátis.</p>
+                            <p><i class="fas fa-star text-yellow-400 mr-2"></i><strong>8 amigos:</strong> Ganhe um Brinde Exclusivo.</p>
+                            <p><i class="fas fa-star text-yellow-400 mr-2"></i><strong>12 amigos:</strong> Ganhe um Shampoo Jaboque.</p>
                         </div>
                     </div>
 
@@ -2870,39 +3034,72 @@
 
         steps.forEach((step, index) => {
             const elText = document.getElementById(`${step}-text`);
-            if (selection[step]) {
-                lastSelected = index;
-                if (step === 'data') {
-                    const date = new Date(selection.data);
-                    const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-                    const dayName = weekDays[date.getDay()];
-                    const dayOfMonth = date.getDate();
-                    const monthName = date.toLocaleString('pt-BR', { month: 'long' });
-                    elText.textContent = `${selection.hora} - ${dayName}, ${dayOfMonth} de ${monthName}`;
+            // FIX: Adicionada verificação de existência do elemento para evitar erro no fluxo de resgate,
+            // onde o span de serviço é substituído.
+            if (elText) { 
+                if (selection[step]) {
+                    lastSelected = index;
+                    if (step === 'data') {
+                        const date = new Date(selection.data);
+                        const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+                        const dayName = weekDays[date.getDay()];
+                        const dayOfMonth = date.getDate();
+                        const monthName = date.toLocaleString('pt-BR', { month: 'long' });
+                        elText.textContent = `${selection.hora} - ${dayName}, ${dayOfMonth} de ${monthName}`;
+                    } else {
+                        elText.textContent = selection[step].nome;
+                    }
+                    elText.classList.remove('selection-item-text');
+                    elText.classList.add('selected');
                 } else {
-                    elText.textContent = selection[step].nome;
+                     if (step === 'data') {
+                        elText.textContent = 'Selecionar data e hora';
+                     } else {
+                        elText.textContent = `Selecionar ${step}`;
+                     }
+                    elText.classList.add('selection-item-text');
+                    elText.classList.remove('selected');
                 }
-                elText.classList.remove('selection-item-text');
-                elText.classList.add('selected');
-            } else {
-                 if (step === 'data') {
-                    elText.textContent = 'Selecionar data e hora';
-                 } else {
-                    elText.textContent = `Selecionar ${step}`;
-                 }
-                elText.classList.add('selection-item-text');
-                elText.classList.remove('selected');
+            } else if (step === 'servico' && selection.servico) {
+                // Se o span de texto do serviço não existe, mas um serviço está selecionado,
+                // significa que estamos no fluxo de resgate e o passo deve ser considerado preenchido.
+                lastSelected = index;
             }
         });
 
         steps.forEach((step, index) => {
             const elContainer = document.getElementById(`select-${step}`);
-            if (index <= lastSelected + 1) {
+            if (!elContainer) return; // Defensive check
+            
+            // Se for resgate, habilita unidade e barbeiro para o usuário poder escolher
+            if (selection.isFromCreditRedemption && (step === 'unidade' || step === 'barbeiro')) {
+                 elContainer.classList.remove('disabled');
+            } else if (index <= lastSelected + 1) {
                 elContainer.classList.remove('disabled');
             } else {
                 elContainer.classList.add('disabled');
             }
         });
+        
+        // Desabilita a troca de serviço se for um resgate de meta
+        const servicoContainer = document.getElementById('select-servico');
+        if (selection.isFromCreditRedemption && selection.servico) {
+            servicoContainer.classList.add('disabled');
+            servicoContainer.style.borderColor = '#fbb62c'; // Destaque visual
+            servicoContainer.onclick = null; // Remove o evento de clique para travar a seleção
+            servicoContainer.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-gift text-primary w-6 text-center"></i>
+                    <div class="ml-4">
+                        <span class="text-white font-bold">${selection.servico.nome}</span>
+                        <p class="text-xs text-secondary">Sua recompensa de meta!</p>
+                    </div>
+                </div>
+                <i class="fas fa-lock text-gray-500"></i>
+            `;
+        } else if (servicoContainer) {
+             servicoContainer.onclick = showServicos; // Restaura o evento de clique se não for resgate
+        }
         
         checkAgendarButton();
     }
@@ -3966,6 +4163,17 @@
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
 
 
 
