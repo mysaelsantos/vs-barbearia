@@ -982,17 +982,17 @@
                 let rewardButtonHtml = '';
 
                 if (redeemed) {
-                    rewardButtonHtml = `<span class="bg-gray-700 text-secondary text-xs font-bold py-1.5 px-3 rounded-full mt-2 cursor-default">Resgatado</span>`;
+                    rewardButtonHtml = `<span class="bg-gray-700 text-secondary text-xs font-bold py-1.5 px-3 rounded-full cursor-default">Resgatado</span>`;
                 } else if (achieved && goal.serviceId) {
-                    rewardButtonHtml = `<button class="bg-primary text-black text-xs font-bold py-1.5 px-3 rounded-full mt-2 hover:bg-yellow-400 transition-all" onclick="resgatarMetaServico(${goal.serviceId})">Resgatar</button>`;
+                    rewardButtonHtml = `<button class="bg-primary text-black text-xs font-bold py-1.5 px-3 rounded-full hover:bg-yellow-400 transition-all" onclick="resgatarMetaServico(${goal.serviceId})">Resgatar</button>`;
                 } else if (achieved) {
-                    rewardButtonHtml = `<span class="text-xs text-secondary mt-2 block">Retire na barbearia</span>`;
+                    rewardButtonHtml = `<span class="text-xs text-secondary block">Retire na barbearia</span>`;
                 }
 
 
                 return `
                     <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 rounded-full flex items-center justify-center ${achieved ? 'bg-gradient-to-br from-primary to-yellow-400 text-black shadow-lg' : 'bg-gray-700/50 border-2 border-gray-600'}">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center ${achieved ? 'bg-primary text-black shadow-lg' : 'bg-gray-700/50 border-2 border-gray-600'}">
                             <i class="${goal.icon} text-xl ${achieved ? '' : 'text-primary'}"></i>
                         </div>
                         <div class="flex-grow">
@@ -1003,7 +1003,7 @@
                             <div class="w-full bg-gray-700 rounded-full h-2">
                                 <div class="bg-primary h-2 rounded-full progress-bar-animated" style="width: 0%" data-progress="${progress}"></div>
                             </div>
-                            ${rewardButtonHtml}
+                            ${rewardButtonHtml ? `<div class="pt-2">${rewardButtonHtml}</div>` : ''}
                         </div>
                     </div>
                 `;
@@ -1024,7 +1024,7 @@
                     <div id="credit-card-details">
                          <div class="mt-4 pt-4 border-t border-gray-700/50">
                             <h4 class="font-semibold text-primary mb-4 text-center">Metas de Indicação</h4>
-                             <div class="space-y-5">
+                             <div class="space-y-6">
                                 ${goalsHtml}
                              </div>
                          </div>
@@ -2015,7 +2015,7 @@
 
                 <div class="mt-8 grid grid-cols-2 gap-4">
                     <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
-                    <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="finalizarAgendamento(${isCovered})">Confirmar</button>
+                    <button id="confirm-agendamento-btn" class="w-full py-3 font-bold rounded-lg btn-plan" onclick="finalizarAgendamento(${isCovered})">Confirmar</button>
                 </div>
             </div>
         `;
@@ -2066,67 +2066,76 @@
 
 
     function finalizarAgendamento(usedInPlan) {
-        const newId = Date.now();
-        const [hours, minutes] = selection.hora.split(':');
-        const finalDate = new Date(selection.data);
-        finalDate.setHours(parseInt(hours), parseInt(minutes));
-
-        if(usedInPlan) {
-            userSubscription.usedServices++;
+        const confirmBtn = document.getElementById('confirm-agendamento-btn');
+        if (confirmBtn) {
+            confirmBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+            confirmBtn.disabled = true;
         }
-        
-        // Lógica para marcar meta como resgatada
-        if (selection.isFromCreditRedemption) {
-            const redeemedGoal = goals.find(g => g.serviceId === selection.servico.id);
-            if (redeemedGoal && !userInfo.redeemedGoals.includes(redeemedGoal.id)) {
-                userInfo.redeemedGoals.push(redeemedGoal.id);
+
+        // Simula um delay de processamento para o loading ser visível
+        setTimeout(() => {
+            const newId = Date.now();
+            const [hours, minutes] = selection.hora.split(':');
+            const finalDate = new Date(selection.data);
+            finalDate.setHours(parseInt(hours), parseInt(minutes));
+
+            if(usedInPlan) {
+                userSubscription.usedServices++;
             }
-        }
+            
+            // Lógica para marcar meta como resgatada
+            if (selection.isFromCreditRedemption) {
+                const redeemedGoal = goals.find(g => g.serviceId === selection.servico.id);
+                if (redeemedGoal && !userInfo.redeemedGoals.includes(redeemedGoal.id)) {
+                    userInfo.redeemedGoals.push(redeemedGoal.id);
+                }
+            }
 
-        const novoAgendamento = {
-            id: newId,
-            data: finalDate.toISOString(),
-            unidade: selection.unidade,
-            barbeiro: selection.barbeiro,
-            servico: selection.servico,
-            avaliacao: null,
-            usedInPlan: usedInPlan,
-            usedReferralCredit: !!selection.isFromCreditRedemption
-        };
+            const novoAgendamento = {
+                id: newId,
+                data: finalDate.toISOString(),
+                unidade: selection.unidade,
+                barbeiro: selection.barbeiro,
+                servico: selection.servico,
+                avaliacao: null,
+                usedInPlan: usedInPlan,
+                usedReferralCredit: !!selection.isFromCreditRedemption
+            };
 
-        agendamentos.abertos.push(novoAgendamento);
-        saveState();
-        
-        const dataFormatada = new Date(selection.data).toLocaleDateString('pt-BR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
+            agendamentos.abertos.push(novoAgendamento);
+            saveState();
+            
+            const dataFormatada = new Date(selection.data).toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
 
-        const successMessage = `
-            <div class="info-card text-center p-6 flex flex-col justify-center">
-                <div class="mb-4">
-                    <i class="far fa-check-circle text-6xl text-primary"></i>
-                </div>
-                <h2 class="text-2xl font-bold mb-6 modal-title">Agendamento Confirmado!</h2>
-                
-                <div class="text-left space-y-5 text-secondary mb-8 text-base">
-                    <div>
-                        <p><strong class="text-white">Unidade:</strong> ${selection.unidade.nome}</p>
-                        <a href="${selection.unidade.mapsUrl}" target="_blank" class="block w-full text-white font-semibold py-2 px-4 rounded-xl transition text-center mt-3 text-sm" style="background-color: #0b0b0a;">Ver localização</a>
+            const successMessage = `
+                <div class="info-card text-center p-6 flex flex-col justify-center">
+                    <div class="mb-4">
+                        <i class="far fa-check-circle text-6xl text-primary"></i>
                     </div>
-                    <p><strong class="text-white">Barbeiro:</strong> ${selection.barbeiro.nome}</p>
-                    <p><strong class="text-white">Serviços:</strong> ${selection.servico.nome}</p>
-                    <p><strong class="text-white">Data:</strong> ${dataFormatada}</p>
-                    <p><strong class="text-white">Horário:</strong> Às ${selection.hora}</p>
-                </div>
+                    <h2 class="text-2xl font-bold mb-6 modal-title">Agendamento Confirmado!</h2>
+                    
+                    <div class="text-left space-y-5 text-secondary mb-8 text-base">
+                        <div>
+                            <p><strong class="text-white">Unidade:</strong> ${selection.unidade.nome}</p>
+                            <a href="${selection.unidade.mapsUrl}" target="_blank" class="block w-full text-white font-semibold py-2 px-4 rounded-xl transition text-center mt-3 text-sm" style="background-color: #0b0b0a;">Ver localização</a>
+                        </div>
+                        <p><strong class="text-white">Barbeiro:</strong> ${selection.barbeiro.nome}</p>
+                        <p><strong class="text-white">Serviços:</strong> ${selection.servico.nome}</p>
+                        <p><strong class="text-white">Data:</strong> ${dataFormatada}</p>
+                        <p><strong class="text-white">Horário:</strong> Às ${selection.hora}</p>
+                    </div>
 
-                <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="closeModal(); renderView('historico');">Ver Meus Agendamentos</button>
-            </div>
-        `;
-        openModal(successMessage);
-        resetSelections();
-        renderAgendarView(); // Adicionado para resetar a view de agendamento em segundo plano
+                    <button class="w-full py-3 font-bold rounded-lg btn-plan" onclick="closeModal(); renderView('historico');">Ver Meus Agendamentos</button>
+                </div>
+            `;
+            openModal(successMessage);
+            resetSelections();
+            renderAgendarView(); // Adicionado para resetar a view de agendamento em segundo plano
+        }, 1500);
     }
 
     // --- LÓGICA DE LOGIN/CADASTRO E REDEFINIÇÃO DE SENHA ---
@@ -2456,7 +2465,7 @@
                 <h2 class="text-xl font-bold mb-4 modal-title">Resgatar Recompensa</h2>
                 <p class="text-secondary mb-6">Parabéns! Você está prestes a resgatar sua <strong>${serviceName}</strong>. Vamos agendar seu horário?</p>
                 <div class="grid grid-cols-2 gap-4">
-                    <button class="w-full py-2 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Depois</button>
+                    <button class="w-full py-2 font-semibold rounded-lg btn-dark border border-gray-600" onclick="handleCancelResgate()">Depois</button>
                     <button class="w-full py-2 font-semibold rounded-lg btn-plan" onclick="handleResgateDeMeta()">Agendar Agora</button>
                 </div>
             </div>
@@ -2464,6 +2473,12 @@
         openModal(modalHtml, 'border-none', 'center');
     }
     
+    function handleCancelResgate() {
+        resetSelections();
+        saveState();
+        closeModal();
+    }
+
     function handleResgateDeMeta() {
         closeModal(() => {
             renderView('agendar');
@@ -4163,6 +4178,10 @@
 </script>
 </body>
 </html>
+
+
+
+
 
 
 
