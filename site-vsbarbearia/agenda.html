@@ -261,6 +261,27 @@
             filter: blur(4px);
             transition: filter 0.3s ease-in-out;
         }
+        /* Novos estilos para animação fluida */
+        @keyframes slideUpFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                /* A opacidade final será herdada da classe do elemento (.disabled ou não) */
+                transform: translateY(0);
+            }
+        }
+        .animate-slide-up {
+            /* Define a animação e garante que o estado inicial (invisível) seja mantido */
+            animation: slideUpFadeIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+        }
+        .animation-delay-100 { animation-delay: 100ms; }
+        .animation-delay-200 { animation-delay: 200ms; }
+        .animation-delay-300 { animation-delay: 300ms; }
+        .animation-delay-400 { animation-delay: 400ms; }
+        .animation-delay-500 { animation-delay: 500ms; }
+        
         /* Estilos para a tela de histórico */
         .history-card {
             background-color: #222;
@@ -700,35 +721,35 @@
                 </div>
 
                 <div class="relative z-10 p-6 pt-0 space-y-4 bg-gradient-to-t from-[#111111] to-transparent">
-                    <div id="select-unidade" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item">
+                    <div id="select-unidade" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item animate-slide-up animation-delay-100">
                         <div class="flex items-center">
                             <i class="fas fa-store text-primary w-6 text-center"></i>
                             <span id="unidade-text" class="ml-4 selection-item-text">Selecionar unidade</span>
                         </div>
                         <i class="fas fa-chevron-right text-gray-500"></i>
                     </div>
-                    <div id="select-barbeiro" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item disabled">
+                    <div id="select-barbeiro" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item disabled animate-slide-up animation-delay-200">
                         <div class="flex items-center">
                             <i class="fas fa-user-tie text-primary w-6 text-center"></i>
                             <span id="barbeiro-text" class="ml-4 selection-item-text">Selecionar barbeiro</span>
                         </div>
                         <i class="fas fa-chevron-right text-gray-500"></i>
                     </div>
-                    <div id="select-servico" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item disabled">
+                    <div id="select-servico" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item disabled animate-slide-up animation-delay-300">
                         <div class="flex items-center">
                             <i class="fas fa-cut text-primary w-6 text-center"></i>
                             <span id="servico-text" class="ml-4 selection-item-text">Selecionar serviço</span>
                         </div>
                         <i class="fas fa-chevron-right text-gray-500"></i>
                     </div>
-                    <div id="select-data" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item disabled">
+                    <div id="select-data" class="flex items-center justify-between p-4 rounded-lg cursor-pointer selection-item disabled animate-slide-up animation-delay-400">
                         <div class="flex items-center">
                             <i class="fas fa-calendar-alt text-primary w-6 text-center"></i>
                             <span id="data-text" class="ml-4 selection-item-text">Selecionar data e hora</span>
                         </div>
                         <i class="fas fa-chevron-right text-gray-500"></i>
                     </div>
-                    <button id="agendar-btn" class="w-full py-3 mt-6 rounded-lg btn-primary" disabled>Agendar</button>
+                    <button id="agendar-btn" class="w-full py-3 mt-6 rounded-lg btn-primary animate-slide-up animation-delay-500" disabled>Agendar</button>
                 </div>
             </div>
         `;
@@ -879,7 +900,7 @@
             
             let tagHtml = '';
             if (ag.usedInPlan) {
-                tagHtml = `<span class="bg-primary/20 text-primary text-xs font-semibold px-2 py-0.5 rounded-full ml-auto">Plano</span>`;
+                tagHtml = `<span class="bg-blue-500/20 text-blue-400 text-xs font-semibold px-2 py-0.5 rounded-full ml-auto">Plano</span>`;
             } else if (ag.usedReferralCredit) {
                 tagHtml = `<span class="bg-green-500/20 text-green-400 text-xs font-semibold px-2 py-0.5 rounded-full ml-auto">Crédito</span>`;
             }
@@ -921,7 +942,7 @@
              
              let tagHtml = '';
              if (ag.usedInPlan) {
-                tagHtml = `<span class="bg-primary/20 text-primary text-xs font-semibold px-2 py-0.5 rounded-full">Plano</span>`;
+                tagHtml = `<span class="bg-blue-500/20 text-blue-400 text-xs font-semibold px-2 py-0.5 rounded-full">Plano</span>`;
              } else if (ag.usedReferralCredit) {
                 tagHtml = `<span class="bg-green-500/20 text-green-400 text-xs font-semibold px-2 py-0.5 rounded-full">Crédito</span>`;
              }
@@ -4321,6 +4342,22 @@
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
