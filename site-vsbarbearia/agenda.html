@@ -992,8 +992,8 @@
 
                 return `
                     <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 rounded-full flex items-center justify-center ${achieved ? 'bg-primary text-black shadow-lg' : 'bg-gray-700/50 border-2 border-gray-600'}">
-                            <i class="${goal.icon} text-xl ${achieved ? '' : 'text-primary'}"></i>
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center ${achieved ? 'bg-primary shadow-lg' : 'bg-gray-700/50 border-2 border-gray-600'}">
+                            <i class="${goal.icon} text-xl ${achieved ? 'text-black' : 'text-primary'}"></i>
                         </div>
                         <div class="flex-grow">
                             <div class="flex justify-between items-baseline mb-1">
@@ -1471,7 +1471,15 @@
                 if (agendamentoParaCancelar.usedInPlan && userSubscription.usedServices > 0) {
                     userSubscription.usedServices--;
                 }
-                if (agendamentoParaCancelar.usedReferralCredit) {
+                
+                // CORREÇÃO: Verifica se o cancelamento é de um resgate de meta
+                const redeemedGoal = goals.find(g => g.serviceId === agendamentoParaCancelar.servico?.id);
+                if (agendamentoParaCancelar.usedReferralCredit && redeemedGoal) {
+                     // Remove o ID da meta da lista de resgatados, tornando-a disponível novamente
+                    userInfo.redeemedGoals = userInfo.redeemedGoals.filter(goalId => goalId !== redeemedGoal.id);
+                } 
+                // Apenas adiciona R$50 de volta se foi um resgate de crédito por valor (que não é uma meta)
+                else if (agendamentoParaCancelar.usedReferralCredit) { 
                     userInfo.referralCredits += 50;
                 }
             }
@@ -1603,34 +1611,30 @@
         selection.barbeiro = barbeiros.find(b => b.id === id);
         if(!selection.barbeiro) return;
 
-        // Reseta as seleções seguintes, mas preserva o serviço se for resgate
-        if (!selection.isFromCreditRedemption) {
-            selection.servico = null;
-        }
+        // Reseta as seleções seguintes
         selection.data = null;
         selection.hora = null;
         
-        // Pula para a seleção de data se o serviço já estiver definido (resgate)
-        if (selection.isFromCreditRedemption && selection.servico) {
-            updateAgendarViewFromState();
-            saveState(); 
-            // Passa a função showCalendario como callback para ser executada após o modal fechar
-            closeModal(showCalendario);
-        } else {
-            updateAgendarViewFromState();
-            closeModal();
-            saveState();
-        }
+        saveState();
+
+        // Fecha o modal de seleção de barbeiro e, no callback, decide o próximo passo
+        closeModal(() => {
+            updateAgendarViewFromState(); // Atualiza a tela principal visível
+            
+            // Se for resgate, avança automaticamente para o calendário
+            if (selection.isFromCreditRedemption && selection.servico) {
+                setTimeout(showCalendario, 50); // Um pequeno delay para garantir que a UI respire
+            }
+        });
     }
     
     function showServicos() {
-        if (!selection.unidade || !selection.barbeiro) return;
-        
-        // Bloqueia a seleção de serviço se for um resgate de meta
-        if (selection.isFromCreditRedemption && servicos.some(s => s.id === selection.servico?.id)) {
+        // Bloqueia a seleção de serviço se for um resgate de meta (guarda de segurança)
+        if (selection.isFromCreditRedemption) {
             return;
         }
-
+        if (!selection.unidade || !selection.barbeiro) return;
+        
         const diaDaSemana = selection.data ? new Date(selection.data).getDay() : -1;
         const temPromocao = diaDaSemana >= 1 && diaDaSemana <= 3;
 
@@ -4217,6 +4221,10 @@
 </script>
 </body>
 </html>
+
+
+
+
 
 
 
