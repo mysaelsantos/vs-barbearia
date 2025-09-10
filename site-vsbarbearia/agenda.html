@@ -46,7 +46,7 @@
         }
         #loading-screen.fade-out {
             opacity: 0;
-            transition: opacity 0.5s ease-out;
+            transition: opacity 0.7s ease-in-out;
         }
         /* --- REMOVER E ESTILIZAR BARRA DE SCROLL --- */
         #main-content::-webkit-scrollbar {
@@ -334,6 +334,32 @@
         .progress-bar-animated {
             transition: width 1s ease-out;
         }
+        /* Animações do card de parabéns */
+        .congrats-card-animation {
+            animation: zoomIn 0.6s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+        }
+        .congrats-icon-animation {
+            animation: tada 1.2s cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.5s both;
+        }
+
+        @keyframes zoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        @keyframes tada {
+            0% { transform: scale(1); }
+            10%, 20% { transform: scale(0.9) rotate(-5deg); }
+            30%, 50%, 70%, 90% { transform: scale(1.1) rotate(5deg); }
+            40%, 60%, 80% { transform: scale(1.1) rotate(-5deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
     </style>
 </head>
 <body>
@@ -469,7 +495,7 @@
         referralCode: 'VANILTONS10',
         profilePic: 'https://i.postimg.cc/pT3ScnBb/482320646-1375134203841648-765763137701876086-n.jpg',
         birthdate: '',
-        referralCredits: 20.00, // Créditos de indicação
+        referralCredits: 0, // Créditos de indicação
         referralsMade: 6, // Número de indicações bem-sucedidas
         redeemedGoals: [] // IDs das metas já resgatadas
     };
@@ -489,6 +515,7 @@
     let userLoggedIn = true; // Mantendo logado para testes
     let isAuthModalOpen = false;
     let remarcarSelection = {}; // Estado para remarcação
+    let hasShownCongratsAnimation = false; // Flag para a animação de parabéns
 
     // --- ELEMENTOS DO DOM ---
     const modalContainer = document.getElementById('modal-container');
@@ -592,6 +619,25 @@
         }
     });
 
+    // Lógica de Animação Refeita para a barra do título
+    const animateUnderline = (elementId) => {
+        const element = document.getElementById(elementId);
+        if (!element) return;
+
+        // 1. Garante que a barra comece no estado "encolhido" e sem transição.
+        element.style.transition = 'none';
+        element.style.transform = 'scaleX(0)';
+
+        // 2. Força o navegador a aplicar os estilos acima antes de continuar.
+        // Ler a propriedade offsetHeight é um truque para forçar a renderização (reflow).
+        void element.offsetHeight;
+
+        // 3. Agora, aplica as propriedades de transição e o estado final (esticado).
+        // O navegador irá animar corretamente do estado inicial para o final.
+        element.style.transition = 'transform 0.7s ease-out';
+        element.style.transform = 'scaleX(1)';
+    };
+
     // --- LÓGICA DE RENDERIZAÇÃO DE VIEWS ---
     function renderView(viewName) {
         document.querySelectorAll('.footer-nav-item').forEach(item => {
@@ -648,7 +694,7 @@
                     <div class="text-center mb-8">
                         <img src="https://i.postimg.cc/5yBSjg1F/Bigode-3.png" alt="Logo VS Barbearia" class="w-20 h-20 mb-4 mx-auto">
                         <h1 class="text-3xl font-bold">Agende seu horário</h1>
-                        <div class="w-24 h-1 bg-[#fbb62c] mx-auto my-3 rounded"></div>
+                        <div id="agendar-title-underline" class="w-24 h-1 bg-[#fbb62c] mx-auto my-3 rounded"></div>
                         <p class="text-gray-200">Escolha os serviços e agende com facilidade.</p>
                     </div>
                 </div>
@@ -686,6 +732,7 @@
                 </div>
             </div>
         `;
+        animateUnderline('agendar-title-underline');
         updateAgendarViewFromState();
         attachAgendarEventListeners();
     }
@@ -711,7 +758,7 @@
                 <div class="px-6 pt-10">
                     <div class="text-center mb-8">
                         <h2 class="text-3xl font-bold text-white">Plano <span class="text-primary">Atual</span></h2>
-                        <div class="w-20 h-1 bg-primary mx-auto mt-2 rounded-full transform scale-x-0 transition-transform duration-700 ease-out" id="plan-title-underline"></div>
+                        <div class="w-20 h-1 bg-primary mx-auto mt-2 rounded-full" id="plan-title-underline"></div>
                     </div>
 
                     <div class="bg-[#1e1e1e] p-5 rounded-2xl border border-gray-800 shadow-lg">
@@ -787,8 +834,8 @@
                 
                 <div class="px-6 ${planStatusHtml ? 'mt-12 border-t border-gray-800 pt-12' : 'pt-10'}">
                     <div class="text-center mb-8">
-                        <h2 class="text-3xl font-bold mb-2 text-white">Nossos <span class="text-primary">Planos</span></h2>
-                        <div class="w-20 h-1 bg-primary mx-auto"></div>
+                        <h2 class="text-3xl font-bold text-white">Nossos <span class="text-primary">Planos</span></h2>
+                        <div class="w-20 h-1 bg-primary mx-auto mt-2 rounded-full" id="plan-title-underline-inactive"></div>
                         <p class="text-gray-300 mt-4 text-sm max-w-md mx-auto">Economize com nossos planos e aproveite serviços de qualidade.</p>
                     </div>
                     <div class="space-y-6 flex-grow">
@@ -810,18 +857,17 @@
 
         if (userSubscription.active) {
             const progressBar = document.getElementById('plan-progress-bar');
-            const titleUnderline = document.getElementById('plan-title-underline');
-
-            if (progressBar && titleUnderline) {
-                requestAnimationFrame(() => {
+            if (progressBar) {
+                 setTimeout(() => {
                     const used = userSubscription.usedServices;
                     const total = userSubscription.totalServices;
                     const progressPercentage = (used / total) * 100;
-                    
                     progressBar.style.width = `${progressPercentage}%`;
-                    titleUnderline.style.transform = 'scaleX(1)';
-                });
+                }, 100);
             }
+            animateUnderline('plan-title-underline');
+        } else {
+            animateUnderline('plan-title-underline-inactive');
         }
     }
     
@@ -955,24 +1001,53 @@
             return;
         }
 
+        const creditControllerHtml = `
+            <div class="absolute top-14 right-4 z-20 flex flex-col gap-2 items-start bg-gray-800/80 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-primary/50 text-xs">
+                <!-- Credit Controller -->
+                <div class="flex items-center w-full">
+                    <span class="font-bold text-white whitespace-nowrap w-20">Crédito:</span>
+                    <button class="w-7 h-7 rounded-full bg-red-500 text-white font-bold text-base flex items-center justify-center shrink-0" onclick="changeCredit(-10)">-</button>
+                    <span class="px-1 text-sm font-bold text-white flex-grow text-center">R$${userInfo.referralCredits.toFixed(0)}</span>
+                    <button class="w-7 h-7 rounded-full bg-green-500 text-white font-bold text-base flex items-center justify-center shrink-0" onclick="changeCredit(10)">+</button>
+                </div>
+                <!-- Referral Controller -->
+                <div class="flex items-center w-full">
+                    <span class="font-bold text-white whitespace-nowrap w-20">Indicações:</span>
+                    <button class="w-7 h-7 rounded-full bg-red-500 text-white font-bold text-base flex items-center justify-center shrink-0" onclick="changeReferrals(-1)">-</button>
+                    <span class="px-1 text-sm font-bold text-white flex-grow text-center">${userInfo.referralsMade}</span>
+                    <button class="w-7 h-7 rounded-full bg-green-500 text-white font-bold text-base flex items-center justify-center shrink-0" onclick="changeReferrals(1)">+</button>
+                </div>
+                <!-- Referral Goals Shortcuts -->
+                <div class="flex items-center justify-start gap-2 pt-2 border-t border-gray-600/50 w-full mt-1">
+                     <span class="font-bold text-white whitespace-nowrap">Metas:</span>
+                     ${goals.map(g => `<button class="w-7 h-7 rounded-full bg-blue-500 text-white font-bold text-xs flex items-center justify-center shrink-0" onclick="setReferrals(${g.target})">${g.target}</button>`).join('')}
+                </div>
+            </div>
+        `;
+
         let creditCardHtml = '';
         const referrals = userInfo.referralsMade;
         
         if (userInfo.referralCredits >= 50) {
+            const animationClasses = !hasShownCongratsAnimation 
+                ? { card: 'congrats-card-animation', icon: 'congrats-icon-animation' } 
+                : { card: '', icon: '' };
+
             creditCardHtml = `
-                <div class="bg-gradient-to-br from-primary to-[#dca52c] p-5 rounded-2xl border-2 border-primary/50 shadow-lg text-center text-black relative overflow-hidden">
-                    <div class="absolute -top-4 -right-4 w-20 h-20 bg-white/20 rounded-full z-0"></div>
-                    <div class="absolute -bottom-8 -left-2 w-24 h-24 bg-white/10 rounded-full z-0"></div>
-                    
+                <div class="${animationClasses.card} bg-gradient-to-br from-[#2a2a2a] to-[#111111] p-5 rounded-2xl shadow-lg text-center relative overflow-hidden border-2 border-primary">
                     <div class="relative z-10">
-                        <i class="fas fa-gift text-4xl mb-3 text-black"></i>
-                        <p class="font-bold text-xl drop-shadow text-black">Parabéns! Você conseguiu!</p>
-                        <p class="text-4xl font-extrabold my-2 drop-shadow-md text-black">R$ ${userInfo.referralCredits.toFixed(2).replace('.', ',')}</p>
-                        <p class="text-sm font-medium mb-4 drop-shadow text-black">em créditos para usar</p>
-                        <button class="w-full py-3 font-bold rounded-lg bg-black text-primary transition-transform duration-200 hover:scale-105 shadow-xl" onclick="showResgatarCreditoModal()">Resgatar Corte Grátis</button>
+                        <i class="${animationClasses.icon} fas fa-gift text-5xl mb-3 text-primary inline-block"></i>
+                        <p class="font-bold text-xl text-white">Parabéns! Você conseguiu!</p>
+                        <p class="text-5xl font-black my-2 text-primary">R$ ${userInfo.referralCredits.toFixed(2).replace('.', ',')}</p>
+                        <p class="text-base font-semibold mb-5 text-gray-300">em créditos para usar</p>
+                        <button class="w-full py-3 font-bold rounded-lg bg-primary text-black transition-all duration-300 hover:bg-[#e0a828] shadow-xl" onclick="showResgatarCreditoModal()">Resgatar Corte Grátis</button>
                     </div>
                 </div>
             `;
+
+            if (!hasShownCongratsAnimation) {
+                hasShownCongratsAnimation = true;
+            }
         } else {
              const goalsHtml = goals.map(goal => {
                 const progress = Math.min((referrals / goal.target) * 100, 100);
@@ -1036,7 +1111,8 @@
         }
 
         mainContent.innerHTML = `
-            <div class="p-6 pt-12">
+            <div class="p-6 pt-12 relative">
+                ${creditControllerHtml}
                 <div class="flex flex-col items-center text-center mb-8">
                     <div class="relative mb-4">
                         <img id="profile-view-pic" src="${userInfo.profilePic}" class="w-24 h-24 rounded-full object-cover border-4 border-primary">
@@ -1501,6 +1577,30 @@
                 <p class="text-secondary mt-2">Esta funcionalidade está em desenvolvimento.</p>
             </div>
         `;
+    }
+
+    function changeCredit(amount) {
+        userInfo.referralCredits += amount;
+        if (userInfo.referralCredits < 0) {
+            userInfo.referralCredits = 0;
+        }
+        saveState();
+        renderView('perfil');
+    }
+
+    function changeReferrals(amount) {
+        userInfo.referralsMade += amount;
+        if (userInfo.referralsMade < 0) {
+            userInfo.referralsMade = 0;
+        }
+        saveState();
+        renderView('perfil');
+    }
+
+    function setReferrals(count) {
+        userInfo.referralsMade = count;
+        saveState();
+        renderView('perfil');
     }
 
     // --- LÓGICA DE AGENDAMENTO ---
@@ -4206,7 +4306,7 @@
             return Promise.all(promises);
         }
 
-        const minTimePromise = new Promise(resolve => setTimeout(resolve, 2000));
+        const minTimePromise = new Promise(resolve => setTimeout(resolve, 1500));
         const loadAssetsPromise = preloadAssets(assetsToPreload);
 
         Promise.all([minTimePromise, loadAssetsPromise]).then(() => {
@@ -4214,42 +4314,13 @@
             setTimeout(() => {
                 loadingScreen.style.display = 'none';
                 initializeApp(); // <--- [NOVO] Chamada da função de inicialização
-            }, 500); // Corresponde à duração da animação de fade-out
+            }, 700); // Corresponde à duração da animação de fade-out
         });
     });
 
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
