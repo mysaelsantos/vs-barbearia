@@ -2890,15 +2890,38 @@
         const birthdateInput = document.getElementById('edit-birthdate');
         const saveBtn = document.getElementById('save-profile-btn');
 
-        const nameChanged = nameInput.value !== userInfo.name;
-        const phoneChanged = phoneInput.value !== userInfo.phone;
-        const emailChanged = emailInput.value !== userInfo.email;
-        const birthdateChanged = birthdateInput.value !== (userInfo.birthdate || '');
+        // 1. Verifica se algum valor foi alterado em relação ao original
+        const hasChanged =
+            nameInput.value !== userInfo.name ||
+            phoneInput.value !== userInfo.phone ||
+            emailInput.value !== userInfo.email ||
+            birthdateInput.value !== (userInfo.birthdate || '');
 
-        // A mudança na data de aniversário só é considerada válida para salvar se o campo estiver vazio ou completo (10 chars).
-        const isBirthdateChangeValid = birthdateChanged && (birthdateInput.value.length === 0 || birthdateInput.value.length === 10);
+        // 2. Define as regras de validação para cada campo
+        let allTouchedFieldsAreValid = true;
 
-        const enableButton = nameChanged || phoneChanged || emailChanged || isBirthdateChangeValid;
+        // O campo nome não pode estar vazio
+        if (nameInput.value.trim().length === 0) {
+            allTouchedFieldsAreValid = false;
+        }
+
+        // Se o campo telefone foi iniciado, deve estar completo
+        if (phoneInput.value.length > 0 && phoneInput.value.replace(/\D/g, '').length !== 11) {
+            allTouchedFieldsAreValid = false;
+        }
+
+        // Se o campo email foi iniciado, deve ser um e-mail válido
+        if (emailInput.value.length > 0 && (!emailInput.value.includes('@') || !emailInput.value.includes('.'))) {
+            allTouchedFieldsAreValid = false;
+        }
+
+        // Se a data de aniversário foi iniciada, deve estar completa
+        if (birthdateInput.value.length > 0 && birthdateInput.value.length !== 10) {
+            allTouchedFieldsAreValid = false;
+        }
+
+        // 3. O botão só é ativado se algo mudou E todos os campos iniciados estão válidos.
+        const enableButton = hasChanged && allTouchedFieldsAreValid;
 
         if (enableButton) {
             saveBtn.disabled = false;
@@ -3847,7 +3870,9 @@
             return '<i class="fas fa-credit-card text-3xl text-gray-400"></i>';
         }
 
-        let primaryMethodHtml = `
+        let primaryMethodHtml = '';
+        if (primaryMethod) {
+            primaryMethodHtml = `
             <div class="bg-[#2a2a2a] p-4 rounded-lg">
                 <h3 class="font-semibold text-sm text-gray-300 mb-3">Pagamento Principal</h3>
                 <div class="flex justify-between items-center">
@@ -3862,6 +3887,15 @@
                 </div>
             </div>
         `;
+        } else {
+             primaryMethodHtml = `
+            <div class="bg-[#2a2a2a] p-4 rounded-lg">
+                <h3 class="font-semibold text-sm text-gray-300 mb-3">Pagamento Principal</h3>
+                <p class="text-secondary text-sm text-center py-4">Nenhum método de pagamento principal definido.</p>
+            </div>
+            `;
+        }
+
 
         let otherMethodsHtml = otherMethods.map(p => `
             <div class="flex justify-between items-center p-3 bg-[#2a2a2a] rounded-lg">
@@ -4467,6 +4501,8 @@
 </script>
 </body>
 </html>
+
+
 
 
 
