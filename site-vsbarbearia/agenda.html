@@ -482,7 +482,10 @@
     ];
 
     const agendamentos = {
-        abertos: [],
+        abertos: [
+             // Agendamento no passado para simular um serviço concluído e adicionar R$2 de crédito no carregamento
+            { id: 201, data: '2025-09-10T14:00:00', unidade: unidades[0], barbeiro: barbeiros[1], servico: servicos[2], avaliacao: null, usedInPlan: false, usedReferralCredit: false }
+        ],
         historico: [
             { id: 100, data: '2025-07-20T10:00:00', unidade: unidades[1], barbeiro: barbeiros[2], servico: servicos[0], avaliacao: 5, usedInPlan: true },
             { id: 99, data: '2025-06-15T16:20:00', unidade: unidades[0], barbeiro: barbeiros[1], servico: servicos[1], avaliacao: null, usedInPlan: false }
@@ -504,10 +507,7 @@
         { id: 'pay_3', date: '10/06/2025', amount: '189,90', status: 'Pago', method: 'Pix' }
     ];
 
-    let paymentMethods = [
-        { id: 1, type: 'card', last4: '1234', brand: 'visa', primary: true },
-        { id: 2, type: 'card', last4: '5678', brand: 'mastercard', primary: false }
-    ];
+    let paymentMethods = [];
 
     let userInfo = {
         name: 'Vanilton Santos',
@@ -565,7 +565,7 @@
             selection = state.selection || {};
             userLoggedIn = state.userLoggedIn !== undefined ? state.userLoggedIn : true;
             userSubscription = state.userSubscription || { active: false, plan: null, usedServices: 0, totalServices: 4 };
-            paymentMethods = state.paymentMethods || [ { id: 1, type: 'card', last4: '1234', brand: 'visa', primary: true } ];
+            paymentMethods = state.paymentMethods || [];
             userInfo = state.userInfo || {
                 name: 'Vanilton Santos',
                 phone: '(37) 99999-9999',
@@ -831,6 +831,7 @@
 
         const plansHtml = planos.map(plan => {
             const isCurrentPlan = userSubscription.active && userSubscription.plan && userSubscription.plan.title === plan.title;
+            const buttonAction = userLoggedIn ? `showSubscriptionModal('${plan.title}')` : `showLogin()`;
             return `
                 <div class="plan-card ${plan.popular ? 'popular' : ''} ${isCurrentPlan ? 'border-2 border-primary' : ''} rounded-xl overflow-hidden flex flex-col">
                     ${plan.popular ? '<div class="bg-[#fbb62c] text-black text-center py-1 font-bold text-sm">MAIS POPULAR</div>' : ''}
@@ -843,7 +844,7 @@
                         <ul class="space-y-3 mb-8 flex-grow text-secondary text-sm">
                             ${plan.features.map(f => `<li class="flex items-start"><i class="fas fa-check text-primary mr-3 mt-1"></i><span>${f}</span></li>`).join('')}
                         </ul>
-                        <button class="btn-plan mt-auto" onclick="showSubscriptionModal('${plan.title}')" ${isCurrentPlan ? 'disabled' : ''}>${isCurrentPlan ? 'Seu Plano Atual' : 'Assinar Plano'}</button>
+                        <button class="btn-plan mt-auto" onclick="${buttonAction}" ${isCurrentPlan ? 'disabled' : ''}>${isCurrentPlan ? 'Seu Plano Atual' : 'Assinar Plano'}</button>
                     </div>
                 </div>
             `
@@ -893,6 +894,18 @@
     }
     
     function renderHistoricoView() {
+        if (!userLoggedIn) {
+            mainContent.innerHTML = `
+                <div class="p-6 h-full flex flex-col items-center justify-center text-center">
+                    <i class="fas fa-history text-6xl text-gray-600 mb-4"></i>
+                    <h1 class="text-2xl font-bold text-primary">Histórico de Serviços</h1>
+                    <p class="text-secondary mt-2 mb-6">Crie uma conta ou faça login para ver seus agendamentos passados e futuros.</p>
+                    <button class="btn-plan" onclick="showLogin()">Entrar ou Cadastrar</button>
+                </div>
+            `;
+            return;
+        }
+
         const agendamentosAbertosHtml = agendamentos.abertos.map(ag => {
             const data = new Date(ag.data);
             const dataFormatada = data.toLocaleDateString('pt-BR');
@@ -2333,9 +2346,13 @@
             
             const activeView = document.querySelector('.footer-nav-item.active')?.dataset.view || 'agendar';
             
-            // Se o login foi iniciado a partir da aba de perfil, recarrega a view do perfil.
+            // CORREÇÃO: Verifica a aba ativa e renderiza a view correta após o login.
             if (activeView === 'perfil') {
                 closeModal(renderPerfilView); 
+            } else if (activeView === 'historico') {
+                closeModal(renderHistoricoView);
+            } else if (activeView === 'planos') {
+                closeModal(renderPlanosView);
             } else {
                 // Se o login foi iniciado a partir do fluxo de agendamento, continua para o resumo.
                 closeModal();
@@ -2587,9 +2604,13 @@
         
         const activeView = document.querySelector('.footer-nav-item.active')?.dataset.view || 'agendar';
 
-        // Se o cadastro foi iniciado a partir da aba de perfil, recarrega a view do perfil.
+        // CORREÇÃO: Verifica a aba ativa e renderiza a view correta após o cadastro.
         if (activeView === 'perfil') {
             closeModal(renderPerfilView);
+        } else if (activeView === 'historico') {
+            closeModal(renderHistoricoView);
+        } else if (activeView === 'planos') {
+            closeModal(renderPlanosView);
         } else {
              // Se o cadastro foi iniciado a partir do fluxo de agendamento, continua para o resumo.
             closeModal(showResumoAgendamentoModal);
@@ -2740,21 +2761,42 @@
     function copyReferralCode() {
         const codeElement = document.getElementById('referral-code');
         if (!codeElement) return;
-
+    
         const code = codeElement.innerText;
-        navigator.clipboard.writeText(code).then(() => {
-            const button = document.querySelector('#referral-code-box button');
-            if(button) {
-                button.textContent = 'COPIADO!';
-                button.disabled = true;
-                setTimeout(() => {
-                    button.textContent = 'COPIAR';
-                    button.disabled = false;
-                }, 2000);
+    
+        // Cria um elemento de texto temporário para a cópia
+        const textArea = document.createElement("textarea");
+        textArea.value = code;
+    
+        // Deixa o elemento invisível e fora da tela
+        textArea.style.position = "fixed";
+        textArea.style.top = "-9999px";
+        textArea.style.left = "-9999px";
+    
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+    
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                const button = document.querySelector('#referral-code-box button');
+                if(button) {
+                    button.textContent = 'COPIADO!';
+                    button.disabled = true;
+                    setTimeout(() => {
+                        button.textContent = 'COPIAR';
+                        button.disabled = false;
+                    }, 2000);
+                }
+            } else {
+                 console.error('Falha ao copiar o código usando execCommand.');
             }
-        }).catch(err => {
+        } catch (err) {
             console.error('Falha ao copiar o código: ', err);
-        });
+        }
+    
+        document.body.removeChild(textArea);
     }
 
     function showIndiqueAmigoModal() {
@@ -2770,33 +2812,25 @@
                     <p class="text-secondary text-sm">Convide seus amigos e ganhem benefícios juntos.</p>
                 </div>
                 
-                <div class="flex-grow overflow-y-auto pr-2 modal-scroll-hidden space-y-4">
-                    <div class="bg-[#2a2a2a] p-4 rounded-lg flex items-start">
-                        <i class="fas fa-percent text-primary text-xl w-8 text-center mr-4 mt-1"></i>
-                        <div>
-                            <h3 class="font-bold text-white">Seu amigo ganha 20% OFF</h3>
-                            <p class="text-sm text-secondary">Ele aproveita um desconto especial no primeiro serviço ao usar seu código.</p>
-                        </div>
-                    </div>
-                     <div class="bg-[#2a2a2a] p-4 rounded-lg flex items-start">
-                        <i class="fas fa-hand-holding-usd text-primary text-xl w-8 text-center mr-4 mt-1"></i>
-                        <div>
-                            <h3 class="font-bold text-white">Você ganha R$10 de crédito</h3>
-                            <p class="text-sm text-secondary">Após o primeiro serviço do seu amigo, você recebe R$10 de crédito.</p>
-                        </div>
-                    </div>
-
-                    <div class="bg-[#2a2a2a] p-4 rounded-lg">
-                        <h3 class="font-bold text-primary text-center mb-3">Metas de Indicação</h3>
-                        <div class="space-y-3 text-sm">
-                            <p><i class="fas fa-star text-yellow-400 mr-2"></i><strong>5 amigos:</strong> Ganhe uma Hidratação Grátis.</p>
-                            <p><i class="fas fa-star text-yellow-400 mr-2"></i><strong>8 amigos:</strong> Ganhe um Brinde Exclusivo.</p>
-                            <p><i class="fas fa-star text-yellow-400 mr-2"></i><strong>12 amigos:</strong> Ganhe um Shampoo Jaboque.</p>
+                <div class="flex-grow overflow-y-auto pr-2 modal-scroll-hidden space-y-6">
+                    <!-- Como funciona -->
+                    <div class="bg-[#2a2a2a] p-4 rounded-lg text-left">
+                        <h3 class="font-bold text-primary mb-3 text-center">Como funciona?</h3>
+                        <div class="space-y-4 text-sm">
+                            <div class="flex items-start">
+                                <span class="bg-primary text-black font-bold w-6 h-6 flex items-center justify-center rounded-full mr-3 shrink-0">1</span>
+                                <p class="text-secondary">Seu amigo usa seu código e ganha <strong class="text-white">20% OFF</strong> no primeiro serviço.</p>
+                            </div>
+                            <div class="flex items-start">
+                                <span class="bg-primary text-black font-bold w-6 h-6 flex items-center justify-center rounded-full mr-3 shrink-0">2</span>
+                                <p class="text-secondary">Após o primeiro serviço dele, você ganha <strong class="text-white">R$10 de crédito</strong>.</p>
+                            </div>
                         </div>
                     </div>
 
+                    <!-- Código de Indicação -->
                     <div class="text-center pt-4">
-                        <p class="text-sm text-gray-400 mb-2">Seu código de indicação</p>
+                        <p class="text-sm text-gray-400 mb-2">Compartilhe seu código de indicação</p>
                         <div id="referral-code-box" class="flex items-center justify-between p-3 bg-[#111] border-2 border-dashed border-gray-600 rounded-lg">
                             <span id="referral-code" class="text-2xl font-bold tracking-widest text-white">${referralCode}</span>
                             <button onclick="copyReferralCode()" class="bg-primary text-black font-bold py-2 px-4 rounded-md text-sm transition-transform duration-200 hover:scale-105">COPIAR</button>
@@ -3162,8 +3196,7 @@
                     <p id="comment-label" class="font-semibold mb-2 comment-label">Deixar um comentário (opcional)</p>
                     <textarea id="comment" rows="3" placeholder="Deixe seu comentário aqui..." class="w-full p-3 rounded-lg"></textarea>
                 </div>
-                <div class="mt-6 grid grid-cols-2 gap-4">
-                     <button class="w-full py-3 font-semibold rounded-lg btn-dark border border-gray-600" onclick="closeModal()">Voltar</button>
+                <div class="mt-6">
                      <button id="submit-avaliacao-btn" class="w-full py-3 btn-plan font-bold rounded-lg opacity-50" onclick="handleAvaliacaoSubmit(${id})" disabled>Avaliar</button>
                 </div>
             </div>
@@ -3891,24 +3924,30 @@
                 <div class="space-y-4 flex-grow">
                     <div>
                         <label class="text-sm font-semibold text-gray-400 mb-1 block">Número do Cartão</label>
-                        <input id="card-number" type="tel" placeholder="0000 0000 0000 0000" class="w-full p-3 rounded-lg" oninput="validateCardForm()">
+                        <div class="relative">
+                            <input id="card-number" type="tel" placeholder="0000 0000 0000 0000" class="w-full p-3 pr-12 rounded-lg">
+                            <span id="card-brand-icon" class="absolute inset-y-0 right-0 flex items-center pr-4 text-2xl opacity-0 transition-opacity">
+                                <!-- O ícone da bandeira aparecerá aqui -->
+                            </span>
+                        </div>
                     </div>
                      <div>
                         <label class="text-sm font-semibold text-gray-400 mb-1 block">Nome do Titular</label>
-                        <input id="card-holder" type="text" placeholder="Nome como no cartão" class="w-full p-3 rounded-lg" oninput="this.value = this.value.toUpperCase(); validateCardForm();">
+                        <input id="card-holder" type="text" placeholder="Nome como no cartão" class="w-full p-3 rounded-lg">
                     </div>
                     <div>
                         <label class="text-sm font-semibold text-gray-400 mb-1 block">CPF do Titular</label>
-                        <input id="card-cpf" type="tel" placeholder="000.000.000-00" class="w-full p-3 rounded-lg" oninput="validateCardForm()">
+                        <input id="card-cpf" type="tel" placeholder="000.000.000-00" class="w-full p-3 rounded-lg">
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-semibold text-gray-400 mb-1 block">Validade</label>
-                            <input id="card-expiry" type="tel" placeholder="MM/AA" class="w-full p-3 rounded-lg" oninput="validateCardForm()">
+                            <input id="card-expiry" type="tel" placeholder="MM/AA" class="w-full p-3 rounded-lg">
+                            <div id="card-expiry-error" class="text-red-500 text-sm mt-2"></div>
                         </div>
                         <div>
                             <label class="text-sm font-semibold text-gray-400 mb-1 block">CVV</label>
-                            <input id="card-cvv" type="tel" placeholder="123" class="w-full p-3 rounded-lg" oninput="this.value = this.value.replace(/\\D/g, ''); validateCardForm();" maxlength="4">
+                            <input id="card-cvv" type="tel" placeholder="123" class="w-full p-3 rounded-lg" maxlength="4">
                         </div>
                     </div>
                 </div>
@@ -3926,11 +3965,14 @@
     }
     
     function handleCardSave(onSuccessCallback) {
+        const cardNumber = document.getElementById('card-number').value.replace(/\D/g, '');
+        const brand = getCardBrand(cardNumber) || 'unknown';
+
         const newCard = {
             id: Date.now(),
             type: 'card',
             last4: document.getElementById('card-number').value.slice(-4),
-            brand: 'visa',
+            brand: brand,
             primary: false
         };
         paymentMethods.push(newCard);
@@ -3938,11 +3980,42 @@
         showCartaoSalvoModal(onSuccessCallback);
     }
 
+    function getCardBrand(number) {
+        if (/^4/.test(number)) {
+            return 'visa';
+        }
+        if (/^5[1-5]/.test(number)) {
+            return 'mastercard';
+        }
+        return null;
+    }
 
     function setupCardInputMasks() {
         document.getElementById('card-number').addEventListener('input', (e) => {
             let value = e.target.value.replace(/\D/g, '').substring(0, 16);
             e.target.value = value.replace(/(\d{4})/g, '$1 ').trim();
+            
+            // Lógica para identificar e exibir a bandeira do cartão
+            const brandIconContainer = document.getElementById('card-brand-icon');
+            if (brandIconContainer) {
+                const brand = getCardBrand(value);
+                let iconHtml = '';
+
+                if (brand === 'visa') {
+                    iconHtml = '<i class="fab fa-cc-visa text-blue-400"></i>';
+                } else if (brand === 'mastercard') {
+                    iconHtml = '<i class="fab fa-cc-mastercard text-red-500"></i>';
+                }
+
+                if (iconHtml) {
+                    brandIconContainer.innerHTML = iconHtml;
+                    brandIconContainer.classList.remove('opacity-0');
+                } else {
+                    brandIconContainer.classList.add('opacity-0');
+                }
+            }
+
+            validateCardForm();
         });
 
         document.getElementById('card-expiry').addEventListener('input', (e) => {
@@ -3952,6 +4025,7 @@
             } else {
                 e.target.value = value;
             }
+            validateCardForm();
         });
         
         document.getElementById('card-cpf').addEventListener('input', (e) => {
@@ -3960,6 +4034,16 @@
             value = value.replace(/(\d{3})(\d)/, '$1.$2');
             value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
             e.target.value = value;
+            validateCardForm();
+        });
+
+        document.getElementById('card-holder').addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase();
+            validateCardForm();
+        });
+        document.getElementById('card-cvv').addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/\D/g, '');
+            validateCardForm();
         });
     }
 
@@ -3967,17 +4051,34 @@
         const cardNumber = document.getElementById('card-number').value.replace(/\D/g, '');
         const cardHolder = document.getElementById('card-holder').value.trim();
         const cardCpf = document.getElementById('card-cpf').value.replace(/\D/g, '');
-        const cardExpiry = document.getElementById('card-expiry').value.replace(/\D/g, '');
+        const cardExpiry = document.getElementById('card-expiry').value;
         const cardCvv = document.getElementById('card-cvv').value.replace(/\D/g, '');
         const saveBtn = document.getElementById('save-card-btn');
+        const expiryErrorDiv = document.getElementById('card-expiry-error');
+
+        // Validação da Data de Validade
+        let isExpiryDateValid = false;
+        expiryErrorDiv.textContent = ''; // Limpa o erro a cada validação
+        if (cardExpiry.length === 5) { // Valida apenas quando o formato for MM/AA
+            const [expMonth, expYear] = cardExpiry.split('/').map(Number);
+            const now = new Date();
+            const currentYear = now.getFullYear() % 100; // ex: 25 para 2025
+            const currentMonth = now.getMonth() + 1; // getMonth é 0-indexado, então adiciona 1
+
+            if (expYear < currentYear || (expYear === currentYear && expMonth < currentMonth)) {
+                expiryErrorDiv.textContent = 'Cartão vencido.';
+                isExpiryDateValid = false;
+            } else {
+                isExpiryDateValid = true;
+            }
+        }
 
         const isCardNumberValid = cardNumber.length === 16;
         const isCardHolderValid = cardHolder.length > 2 && cardHolder.includes(' ');
         const isCpfValid = cardCpf.length === 11;
-        const isExpiryValid = cardExpiry.length === 4;
         const isCvvValid = cardCvv.length >= 3 && cardCvv.length <= 4;
 
-        if (isCardNumberValid && isCardHolderValid && isCpfValid && isExpiryValid && isCvvValid) {
+        if (isCardNumberValid && isCardHolderValid && isCpfValid && isExpiryDateValid && isCvvValid) {
             saveBtn.disabled = false;
             saveBtn.classList.remove('opacity-50');
         } else {
@@ -4126,6 +4227,39 @@
         });
 
         if (expiredAppointments.length > 0) {
+            agendamentos.abertos = openAppointments;
+            agendamentos.historico.unshift(...expiredAppointments);
+            saveState();
+
+            const firstToReview = expiredAppointments.find(ag => ag.avaliacao === null);
+            if (userLoggedIn && firstToReview) {
+                setTimeout(() => showAvaliacaoModal(firstToReview.id), 1000);
+            }
+        }
+    }
+
+    function checkAppointments() {
+        const now = new Date();
+        const expiredAppointments = [];
+        const openAppointments = [];
+
+        agendamentos.abertos.forEach(ag => {
+            if (new Date(ag.data) < now) {
+                expiredAppointments.push(ag);
+            } else {
+                openAppointments.push(ag);
+            }
+        });
+
+        if (expiredAppointments.length > 0) {
+            // Adiciona R$2 de crédito para cada serviço concluído
+            expiredAppointments.forEach(ag => {
+                // Não adiciona crédito para serviços gratuitos (plano ou resgate)
+                if (!ag.usedInPlan && !ag.usedReferralCredit) {
+                    userInfo.referralCredits += 2;
+                }
+            });
+
             agendamentos.abertos = openAppointments;
             agendamentos.historico.unshift(...expiredAppointments);
             saveState();
@@ -4342,6 +4476,16 @@
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
 
 
 
