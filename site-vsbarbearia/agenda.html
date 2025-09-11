@@ -482,14 +482,8 @@
     ];
 
     const agendamentos = {
-        abertos: [
-             // Agendamento no passado para simular um serviço concluído e adicionar R$2 de crédito no carregamento
-            { id: 201, data: '2025-09-10T14:00:00', unidade: unidades[0], barbeiro: barbeiros[1], servico: servicos[2], avaliacao: null, usedInPlan: false, usedReferralCredit: false }
-        ],
-        historico: [
-            { id: 100, data: '2025-07-20T10:00:00', unidade: unidades[1], barbeiro: barbeiros[2], servico: servicos[0], avaliacao: 5, usedInPlan: true },
-            { id: 99, data: '2025-06-15T16:20:00', unidade: unidades[0], barbeiro: barbeiros[1], servico: servicos[1], avaliacao: null, usedInPlan: false }
-        ]
+        abertos: [],
+        historico: []
     };
 
     let userSubscription = {
@@ -510,15 +504,15 @@
     let paymentMethods = [];
 
     let userInfo = {
-        name: 'Vanilton Santos',
-        phone: '(37) 99999-9999',
-        email: 'vanilton.santos@exemplo.com',
-        referralCode: 'VANILTONS10',
-        profilePic: 'https://i.postimg.cc/pT3ScnBb/482320646-1375134203841648-765763137701876086-n.jpg',
+        name: 'Visitante',
+        phone: '',
+        email: '',
+        referralCode: '',
+        profilePic: 'https://placehold.co/100x100/333333/FFFFFF?text=VS',
         birthdate: '',
-        referralCredits: 0, // Créditos de indicação
-        referralsMade: 6, // Número de indicações bem-sucedidas
-        redeemedGoals: [] // IDs das metas já resgatadas
+        referralCredits: 0,
+        referralsMade: 0,
+        redeemedGoals: []
     };
     
     const registeredPhone = '3799745723';
@@ -533,7 +527,7 @@
 
     // --- ESTADO DA APLICAÇÃO ---
     let selection = {};
-    let userLoggedIn = true; // Mantendo logado para testes
+    let userLoggedIn = false;
     let isAuthModalOpen = false;
     let remarcarSelection = {}; // Estado para remarcação
     let hasShownCongratsAnimation = false; // Flag para a animação de parabéns
@@ -563,26 +557,23 @@
         if (savedState) {
             const state = JSON.parse(savedState);
             selection = state.selection || {};
-            userLoggedIn = state.userLoggedIn !== undefined ? state.userLoggedIn : true;
+            userLoggedIn = state.userLoggedIn !== undefined ? state.userLoggedIn : false;
             userSubscription = state.userSubscription || { active: false, plan: null, usedServices: 0, totalServices: 4 };
             paymentMethods = state.paymentMethods || [];
             userInfo = state.userInfo || {
-                name: 'Vanilton Santos',
-                phone: '(37) 99999-9999',
-                email: 'vanilton.santos@exemplo.com',
-                referralCode: 'VANILTONS10',
-                profilePic: 'https://i.postimg.cc/pT3ScnBb/482320646-1375134203841648-765763137701876086-n.jpg',
+                name: 'Visitante',
+                phone: '',
+                email: '',
+                referralCode: '',
+                profilePic: 'https://placehold.co/100x100/333333/FFFFFF?text=VS',
                 birthdate: '',
-                referralCredits: 20.00,
-                referralsMade: 6,
+                referralCredits: 0,
+                referralsMade: 0,
                 redeemedGoals: []
             };
             if (state.agendamentos) {
                 agendamentos.abertos = state.agendamentos.abertos || [];
-                agendamentos.historico = state.agendamentos.historico || [
-                    { id: 100, data: '2025-07-20T10:00:00', unidade: unidades[1], barbeiro: barbeiros[2], servico: servicos[0], avaliacao: 5, usedInPlan: true },
-                    { id: 99, data: '2025-06-15T16:20:00', unidade: unidades[0], barbeiro: barbeiros[1], servico: servicos[1], avaliacao: null, usedInPlan: false }
-                ];
+                agendamentos.historico = state.agendamentos.historico || [];
             }
         } else {
             resetSelections();
@@ -4476,6 +4467,7 @@
 </script>
 </body>
 </html>
+
 
 
 
