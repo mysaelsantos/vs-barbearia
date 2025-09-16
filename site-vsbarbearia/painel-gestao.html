@@ -144,6 +144,7 @@
                     <button id="tab-profissionais" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Profissionais</button>
                     <button id="tab-unidades" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Unidades</button>
                     <button id="tab-agenda" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Agenda</button>
+                    <button id="tab-clientes" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Clientes</button>
                 </nav>
             </div>
 
@@ -230,6 +231,16 @@
                         <h3 class="text-lg font-bold text-primary mb-4">Próximos Agendamentos</h3>
                         <div id="appointments-list" class="space-y-4">
                             <p id="loading-appointments" class="text-gray-400">Carregando agendamentos...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conteúdo da Aba Clientes (inicialmente escondido) -->
+                <div id="content-clientes" class="hidden">
+                    <div class="bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                        <h3 class="text-lg font-bold text-primary mb-4">Clientes Cadastrados</h3>
+                        <div id="clients-list" class="space-y-4">
+                            <p id="loading-clients" class="text-gray-400">Carregando clientes...</p>
                         </div>
                     </div>
                 </div>
@@ -362,7 +373,8 @@
             'tab-servicos': document.getElementById('content-servicos'), 
             'tab-profissionais': document.getElementById('content-profissionais'), 
             'tab-unidades': document.getElementById('content-unidades'),
-            'tab-agenda': document.getElementById('content-agenda')
+            'tab-agenda': document.getElementById('content-agenda'),
+            'tab-clientes': document.getElementById('content-clientes')
         };
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -380,6 +392,7 @@
                 if (tab.id === 'tab-profissionais') loadProfessionals(user.uid);
                 if (tab.id === 'tab-unidades') loadUnits(user.uid);
                 if (tab.id === 'tab-agenda') loadAppointments(user.uid);
+                if (tab.id === 'tab-clientes') loadClients(user.uid);
             });
         });
 
@@ -733,7 +746,6 @@
                 const appointmentPromises = snapshot.docs.map(async (appointmentDoc) => {
                     const appointment = appointmentDoc.data();
                     
-                    // Os dados já estão no documento, não precisa buscar novamente
                     const serviceName = appointment.servico?.nome || 'Serviço não encontrado';
                     const professionalName = appointment.barbeiro?.nome || 'Profissional não encontrado';
                     const unitName = appointment.unidade?.nome || 'Unidade não encontrada';
@@ -761,6 +773,44 @@
                 
                 const appointmentCards = await Promise.all(appointmentPromises);
                 appointmentCards.forEach(card => appointmentsListDiv.appendChild(card));
+            });
+        }
+        
+        // --- CRUD DE CLIENTES ---
+        const clientsListDiv = document.getElementById('clients-list');
+        const loadingClientsP = document.getElementById('loading-clients');
+        let unsubscribeClients = null;
+
+        function loadClients(userId) {
+            if (unsubscribeClients) unsubscribeClients();
+            // Assumindo que os dados dos clientes estarão na coleção 'users'
+            const clientsCollection = collection(db, "users");
+            unsubscribeClients = onSnapshot(clientsCollection, (snapshot) => {
+                loadingClientsP.classList.add('hidden');
+                clientsListDiv.innerHTML = '';
+                if (snapshot.empty) {
+                    clientsListDiv.innerHTML = '<p class="text-gray-400">Nenhum cliente cadastrado.</p>';
+                    return;
+                }
+                snapshot.forEach(doc => {
+                    const client = doc.data();
+                    const placeholderImg = `https://placehold.co/100x100/333333/FFFFFF?text=${client.name ? client.name.charAt(0) : 'C'}`;
+                    const card = document.createElement('div');
+                    card.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex items-center';
+                    card.innerHTML = `
+                        <img src="${client.profilePic || placeholderImg}" alt="${client.name}" class="w-16 h-16 rounded-full mr-4 object-cover border-2 border-gray-600" onerror="this.onerror=null;this.src='${placeholderImg}';">
+                        <div class="flex-grow">
+                            <p class="font-bold text-white">${client.name || 'Nome não informado'}</p>
+                            <p class="text-sm text-gray-400">${client.phone || 'Telefone não informado'}</p>
+                            <p class="text-xs text-gray-500">${client.email || 'Email não informado'}</p>
+                        </div>
+                        <div class="text-right">
+                             <p class="text-sm text-gray-400">Créditos</p>
+                             <p class="font-bold text-primary text-lg">R$ ${(client.referralCredits || 0).toFixed(2)}</p>
+                        </div>
+                    `;
+                    clientsListDiv.appendChild(card);
+                });
             });
         }
 
