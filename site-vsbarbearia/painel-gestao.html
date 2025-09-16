@@ -206,7 +206,12 @@
                             <form id="add-unit-form" class="space-y-4">
                                 <input type="text" id="unit-name" required placeholder="Nome da Unidade" class="form-input w-full">
                                 <input type="text" id="unit-address" required placeholder="Endereço" class="form-input w-full">
-                                <button type="submit" class="w-full justify-center btn-primary">Salvar Unidade</button>
+                                <input type="url" id="unit-photo" placeholder="URL da Foto (Opcional)" class="form-input w-full">
+                                <input type="url" id="unit-maps" placeholder="Link do Google Maps (Opcional)" class="form-input w-full">
+                                <button type="submit" class="w-full justify-center btn-primary">
+                                    <span class="btn-text">Salvar Unidade</span>
+                                    <div class="loader hidden"></div>
+                                </button>
                             </form>
                         </div>
                         <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
@@ -260,6 +265,29 @@
                 <div class="mt-8 flex justify-end space-x-4">
                     <button id="cancel-edit-professional-button" class="btn-secondary">Cancelar</button>
                     <button id="save-edit-professional-button" class="btn-primary">
+                        <span class="btn-text">Salvar Alterações</span>
+                        <div class="loader hidden"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Edição de Unidade -->
+    <div id="edit-unit-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4">
+        <div class="relative w-full max-w-md">
+             <div class="modal-content rounded-lg shadow-xl p-6">
+                <h3 class="text-xl font-bold text-primary text-center mb-6">Editar Unidade</h3>
+                <form id="edit-unit-form" class="space-y-4 text-left">
+                    <input type="hidden" id="edit-unit-id">
+                    <input type="text" id="edit-unit-name" required placeholder="Nome da Unidade" class="form-input w-full">
+                    <input type="text" id="edit-unit-address" required placeholder="Endereço" class="form-input w-full">
+                    <input type="url" id="edit-unit-photo" placeholder="URL da Foto (Opcional)" class="form-input w-full">
+                    <input type="url" id="edit-unit-maps" placeholder="Link do Google Maps (Opcional)" class="form-input w-full">
+                </form>
+                <div class="mt-8 flex justify-end space-x-4">
+                    <button id="cancel-edit-unit-button" class="btn-secondary">Cancelar</button>
+                    <button id="save-edit-unit-button" class="btn-primary">
                         <span class="btn-text">Salvar Alterações</span>
                         <div class="loader hidden"></div>
                     </button>
@@ -334,7 +362,7 @@
             });
         });
 
-        // --- CRUD DE SERVIÇOS (Lógica de exibição atualizada) ---
+        // --- CRUD DE SERVIÇOS (sem alterações) ---
         const addServiceForm = document.getElementById('add-service-form');
         const servicesListDiv = document.getElementById('services-list');
         const loadingServicesP = document.getElementById('loading-services');
@@ -439,7 +467,7 @@
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditButton.disabled = false; cancelEditButton.disabled = false; }
         });
 
-        // --- CRUD DE PROFISSIONAIS (Lógica de exibição atualizada) ---
+        // --- CRUD DE PROFISSIONAIS (sem alterações) ---
         const addProfessionalForm = document.getElementById('add-professional-form');
         const professionalsListDiv = document.getElementById('professionals-list');
         const editProfessionalModal = document.getElementById('edit-professional-modal');
@@ -556,16 +584,31 @@
         });
 
 
-        // --- CRUD DE UNIDADES (Lógica de exibição atualizada) ---
+        // --- CRUD DE UNIDADES ---
         const addUnitForm = document.getElementById('add-unit-form');
         const unitsListDiv = document.getElementById('units-list');
+        const editUnitModal = document.getElementById('edit-unit-modal');
+        const cancelEditUnitButton = document.getElementById('cancel-edit-unit-button');
+        const saveEditUnitButton = document.getElementById('save-edit-unit-button');
         let unsubscribeUnits = null;
 
         addUnitForm.addEventListener('submit', async (e) => {
             e.preventDefault(); const user = auth.currentUser; if (!user) return;
+            const submitBtn = addUnitForm.querySelector('button[type="submit"]');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const loader = submitBtn.querySelector('.loader');
+            btnText.classList.add('hidden'); loader.classList.remove('hidden'); submitBtn.disabled = true;
+            
             const name = document.getElementById('unit-name').value;
             const address = document.getElementById('unit-address').value;
-            try { await addDoc(collection(db, "unidades"), { nome: name, endereco: address, gestorId: user.uid }); addUnitForm.reset(); } catch (error) { console.error("Erro ao adicionar unidade:", error); }
+            const photoUrl = document.getElementById('unit-photo').value;
+            const mapsUrl = document.getElementById('unit-maps').value;
+            
+            const data = { nome: name, endereco: address, imgUrl: photoUrl, mapsUrl: mapsUrl, gestorId: user.uid };
+
+            try { await addDoc(collection(db, "unidades"), data); addUnitForm.reset(); } 
+            catch (error) { console.error("Erro ao adicionar unidade:", error); }
+            finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false; }
         });
 
         function loadUnits(userId) {
@@ -576,13 +619,78 @@
                 if (snapshot.empty) { unitsListDiv.innerHTML = '<p class="text-gray-400">Nenhuma unidade cadastrada.</p>'; return; }
                 snapshot.forEach(doc => {
                     const unit = doc.data();
+                    const placeholderImg = `https://placehold.co/100x100/333333/FFFFFF?text=${unit.nome.slice(0, 2).toUpperCase()}`;
                     const card = document.createElement('div');
-                    card.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex justify-between items-center';
-                    card.innerHTML = `<div><p class="font-bold text-white">${unit.nome}</p><p class="text-sm text-gray-400">${unit.endereco}</p></div><button class="text-sm text-red-500 hover:text-red-400 font-semibold" onclick="deleteDocument('unidades', '${doc.id}')"><i class="fas fa-trash-alt mr-1"></i>Excluir</button>`;
+                    card.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex items-center';
+                    
+                    const addressHtml = unit.mapsUrl 
+                        ? `<a href="${unit.mapsUrl}" target="_blank" class="hover:text-primary transition-colors">${unit.endereco} <i class="fas fa-external-link-alt text-xs ml-1"></i></a>` 
+                        : unit.endereco;
+
+                    card.innerHTML = `
+                        <img src="${unit.imgUrl || placeholderImg}" alt="${unit.nome}" class="w-20 h-20 rounded-lg mr-4 object-cover border-2 border-gray-600" onerror="this.onerror=null;this.src='${placeholderImg}';">
+                        <div class="flex-grow">
+                            <p class="font-bold text-white">${unit.nome}</p>
+                            <p class="text-sm text-gray-400">${addressHtml}</p>
+                        </div>
+                        <div class="space-x-2 sm:space-x-4">
+                            <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${doc.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
+                            <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${doc.id}" data-action="delete">
+                                <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
+                                <div class="loader hidden"></div>
+                            </button>
+                        </div>`;
                     unitsListDiv.appendChild(card);
                 });
             });
         }
+        
+        unitsListDiv.addEventListener('click', async (e) => {
+            const button = e.target.closest('button');
+            if (!button || !button.dataset.id) return;
+            const id = button.dataset.id;
+            const action = button.dataset.action;
+
+            if (action === 'delete') {
+                const btnText = button.querySelector('.btn-text'); const loader = button.querySelector('.loader');
+                btnText.classList.add('hidden'); loader.classList.remove('hidden'); button.disabled = true;
+                try { await deleteDoc(doc(db, "unidades", id)); }
+                catch(error) { console.error("Erro ao excluir unidade:", error); btnText.classList.remove('hidden'); loader.classList.add('hidden'); button.disabled = false;}
+            }
+            if (action === 'edit') {
+                const unitDoc = await getDoc(doc(db, "unidades", id));
+                if (unitDoc.exists()) {
+                    const data = unitDoc.data();
+                    document.getElementById('edit-unit-id').value = id;
+                    document.getElementById('edit-unit-name').value = data.nome;
+                    document.getElementById('edit-unit-address').value = data.endereco || '';
+                    document.getElementById('edit-unit-photo').value = data.imgUrl || '';
+                    document.getElementById('edit-unit-maps').value = data.mapsUrl || '';
+                    editUnitModal.classList.remove('hidden');
+                }
+            }
+        });
+        
+        cancelEditUnitButton.addEventListener('click', () => editUnitModal.classList.add('hidden'));
+
+        saveEditUnitButton.addEventListener('click', async () => {
+            const btnText = saveEditUnitButton.querySelector('.btn-text'); const loader = saveEditUnitButton.querySelector('.loader');
+            btnText.classList.add('hidden'); loader.classList.remove('hidden'); saveEditUnitButton.disabled = true; cancelEditUnitButton.disabled = true;
+            
+            const id = document.getElementById('edit-unit-id').value;
+            const unitRef = doc(db, "unidades", id);
+            const dataToUpdate = {
+                nome: document.getElementById('edit-unit-name').value,
+                endereco: document.getElementById('edit-unit-address').value,
+                imgUrl: document.getElementById('edit-unit-photo').value,
+                mapsUrl: document.getElementById('edit-unit-maps').value,
+            };
+
+            try { await updateDoc(unitRef, dataToUpdate); editUnitModal.classList.add('hidden'); }
+            catch(error) { console.error("Erro ao atualizar unidade:", error); }
+            finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditUnitButton.disabled = false; cancelEditUnitButton.disabled = false; }
+        });
+
 
         // --- FUNÇÃO GLOBAL DE EXCLUSÃO (sem alterações) ---
         window.deleteDocument = async (collectionName, docId) => {
