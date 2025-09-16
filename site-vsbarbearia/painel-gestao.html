@@ -143,6 +143,7 @@
                     <button id="tab-servicos" class="tab-button active whitespace-nowrap py-4 px-1 text-sm font-medium">Serviços</button>
                     <button id="tab-profissionais" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Profissionais</button>
                     <button id="tab-unidades" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Unidades</button>
+                    <button id="tab-agenda" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Agenda</button>
                 </nav>
             </div>
 
@@ -219,6 +220,16 @@
                             <div id="units-list" class="space-y-4">
                                 <p id="loading-units" class="text-gray-400">Carregando...</p>
                             </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Conteúdo da Aba Agenda (inicialmente escondido) -->
+                <div id="content-agenda" class="hidden">
+                    <div class="bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                        <h3 class="text-lg font-bold text-primary mb-4">Próximos Agendamentos</h3>
+                        <div id="appointments-list" class="space-y-4">
+                            <p id="loading-appointments" class="text-gray-400">Carregando agendamentos...</p>
                         </div>
                     </div>
                 </div>
@@ -345,20 +356,30 @@
         loginButton.addEventListener('click', async () => { /* ... */ const email = emailInput.value; const password = passwordInput.value; authError.textContent = ''; try { await signInWithEmailAndPassword(auth, email, password); } catch (error) { console.error("Erro no login:", error); authError.textContent = "Email ou senha inválidos."; } });
         logoutButton.addEventListener('click', async () => { /* ... */ try { await signOut(auth); } catch (error) { console.error("Erro no logout:", error); } });
 
-        // --- Lógica de Navegação por Abas (sem alterações) ---
+        // --- Lógica de Navegação por Abas ---
         const tabs = document.querySelectorAll('.tab-button');
-        const contents = { 'tab-servicos': document.getElementById('content-servicos'), 'tab-profissionais': document.getElementById('content-profissionais'), 'tab-unidades': document.getElementById('content-unidades') };
+        const contents = { 
+            'tab-servicos': document.getElementById('content-servicos'), 
+            'tab-profissionais': document.getElementById('content-profissionais'), 
+            'tab-unidades': document.getElementById('content-unidades'),
+            'tab-agenda': document.getElementById('content-agenda')
+        };
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
-                tabs.forEach(item => item.classList.remove('active'));
-                tab.classList.add('active');
+                tabs.forEach(item => item.classList.remove('active', 'text-white'));
+                tab.classList.add('active', 'text-white');
+                
                 Object.values(contents).forEach(content => content.classList.add('hidden'));
                 const activeContent = contents[tab.id];
                 activeContent.classList.remove('hidden');
-                const user = auth.currentUser; if (!user) return;
+
+                const user = auth.currentUser;
+                if (!user) return;
+
                 if (tab.id === 'tab-servicos') loadServices(user.uid);
                 if (tab.id === 'tab-profissionais') loadProfessionals(user.uid);
                 if (tab.id === 'tab-unidades') loadUnits(user.uid);
+                if (tab.id === 'tab-agenda') loadAppointments(user.uid);
             });
         });
 
@@ -584,7 +605,7 @@
         });
 
 
-        // --- CRUD DE UNIDADES ---
+        // --- CRUD DE UNIDADES (sem alterações) ---
         const addUnitForm = document.getElementById('add-unit-form');
         const unitsListDiv = document.getElementById('units-list');
         const editUnitModal = document.getElementById('edit-unit-modal');
@@ -690,6 +711,58 @@
             catch(error) { console.error("Erro ao atualizar unidade:", error); }
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditUnitButton.disabled = false; cancelEditUnitButton.disabled = false; }
         });
+
+
+        // --- CRUD DE AGENDAMENTOS ---
+        const appointmentsListDiv = document.getElementById('appointments-list');
+        const loadingAppointmentsP = document.getElementById('loading-appointments');
+        let unsubscribeAppointments = null;
+
+        async function loadAppointments(userId) {
+            if (unsubscribeAppointments) unsubscribeAppointments();
+            
+            const appointmentsCollection = collection(db, "agendamentos");
+            unsubscribeAppointments = onSnapshot(appointmentsCollection, async (snapshot) => {
+                loadingAppointmentsP.classList.add('hidden');
+                appointmentsListDiv.innerHTML = '';
+                if (snapshot.empty) {
+                    appointmentsListDiv.innerHTML = '<p class="text-gray-400">Nenhum agendamento encontrado.</p>';
+                    return;
+                }
+
+                const appointmentPromises = snapshot.docs.map(async (appointmentDoc) => {
+                    const appointment = appointmentDoc.data();
+                    
+                    // Os dados já estão no documento, não precisa buscar novamente
+                    const serviceName = appointment.servico?.nome || 'Serviço não encontrado';
+                    const professionalName = appointment.barbeiro?.nome || 'Profissional não encontrado';
+                    const unitName = appointment.unidade?.nome || 'Unidade não encontrada';
+                    const clientName = appointment.cliente?.nome || 'Cliente não identificado';
+
+                    const appointmentDate = new Date(appointment.data);
+                    const formattedDate = appointmentDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+                    const formattedTime = appointmentDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                    const card = document.createElement('div');
+                    card.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4';
+                    card.innerHTML = `
+                        <div class="flex-grow">
+                            <p class="font-bold text-white text-lg">${serviceName}</p>
+                            <p class="text-sm text-gray-400">com <span class="font-semibold text-gray-300">${professionalName}</span></p>
+                            <p class="text-xs text-gray-500 mt-1">em <span class="font-semibold">${unitName}</span></p>
+                        </div>
+                        <div class="text-left sm:text-right w-full sm:w-auto">
+                             <p class="font-bold text-primary">${formattedDate} às ${formattedTime}</p>
+                             <p class="text-sm text-gray-300">Cliente: ${clientName}</p>
+                        </div>
+                    `;
+                    return card;
+                });
+                
+                const appointmentCards = await Promise.all(appointmentPromises);
+                appointmentCards.forEach(card => appointmentsListDiv.appendChild(card));
+            });
+        }
 
 
         // --- FUNÇÃO GLOBAL DE EXCLUSÃO (sem alterações) ---
