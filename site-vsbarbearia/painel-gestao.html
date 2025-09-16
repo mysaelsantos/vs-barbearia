@@ -781,8 +781,8 @@
         let unsubscribeServices = null;
         function loadServices(userId) {
             if (unsubscribeServices) unsubscribeServices();
-            const servicosCollection = collection(db, "servicos");
-            unsubscribeServices = onSnapshot(servicosCollection, (snapshot) => {
+            const q = query(collection(db, "servicos"), where("gestorId", "==", userId));
+            unsubscribeServices = onSnapshot(q, (snapshot) => {
                 loadingServicesP.classList.add('hidden');
                 servicesListDiv.innerHTML = '';
                 localServicesCache = [];
@@ -1074,7 +1074,7 @@
         });
 
 
-        // --- LÓGICA DA AGENDA ---
+        // --- LÓGICA DA AGENDA (CORRIGIDA) ---
         const datePicker = document.getElementById('date-picker');
         const prevDayBtn = document.getElementById('prev-day-btn');
         const nextDayBtn = document.getElementById('next-day-btn');
@@ -1151,19 +1151,22 @@
                 agendaState.professionals = professionalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 populateProfessionalFilter();
 
-                const startOfDay = new Date(agendaState.currentDate);
-                startOfDay.setHours(0, 0, 0, 0);
-                const endOfDay = new Date(agendaState.currentDate);
-                endOfDay.setHours(23, 59, 59, 999);
+                // Workaround: Query all appointments for the manager and filter by date on the client side
+                // This avoids the "missing index" error in Firestore for compound queries.
+                const allAppointmentsQuery = query(collection(db, "agendamentos"), where("gestorId", "==", userId));
 
-                const appointmentsQuery = query(collection(db, "agendamentos"), 
-                    where("gestorId", "==", userId),
-                    where("data", ">=", startOfDay),
-                    where("data", "<=", endOfDay)
-                );
+                unsubscribeAgenda = onSnapshot(allAppointmentsQuery, (snapshot) => {
+                    const startOfDay = new Date(agendaState.currentDate);
+                    startOfDay.setHours(0, 0, 0, 0);
+                    const endOfDay = new Date(agendaState.currentDate);
+                    endOfDay.setHours(23, 59, 59, 999);
+                    
+                    const appointmentsForDay = snapshot.docs.filter(doc => {
+                        const apptDate = doc.data().data.toDate();
+                        return apptDate >= startOfDay && apptDate <= endOfDay;
+                    });
 
-                unsubscribeAgenda = onSnapshot(appointmentsQuery, (snapshot) => {
-                    agendaState.appointments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    agendaState.appointments = appointmentsForDay.map(doc => ({ id: doc.id, ...doc.data() }));
                     renderAgendaGrid();
                 }, (error) => {
                     console.error("Erro no listener de agendamentos:", error);
@@ -1271,7 +1274,7 @@
                 card.style.top = `${topPosition}px`;
                 card.style.height = `${height}px`;
                 card.innerHTML = `
-                    <p class="font-bold">${appt.cliente?.name || 'Cliente'}</p>
+                    <p class="font-bold">${appt.cliente?.nome || 'Cliente'}</p>
                     <p class="text-xs">${appt.servico?.nome || 'Serviço'}</p>
                 `;
                 
@@ -1314,8 +1317,8 @@
 
         function loadClients(userId) {
             if (unsubscribeClients) unsubscribeClients();
-            const clientsCollection = collection(db, "users");
-            unsubscribeClients = onSnapshot(clientsCollection, (snapshot) => {
+            const q = query(collection(db, "users"), where("gestorId", "==", userId));
+            unsubscribeClients = onSnapshot(q, (snapshot) => {
                 loadingClientsP.classList.add('hidden');
                 clientsListDiv.innerHTML = '';
                 localClientsCache = [];
@@ -1823,7 +1826,7 @@
             try {
                 // Carrega clientes, profissionais e serviços em paralelo
                 const [clientsSnapshot, profsSnapshot] = await Promise.all([
-                    getDocs(query(collection(db, "users"))),
+                    getDocs(query(collection(db, "users"), where("gestorId", "==", auth.currentUser.uid))),
                     getDocs(query(collection(db, "profissionais"), where("gestorId", "==", auth.currentUser.uid)))
                 ]);
 
@@ -1893,7 +1896,7 @@
 
                 const appointmentData = {
                     barbeiro: { id: profData.id, nome: profData.nome },
-                    cliente: { id: clientData.id, name: clientData.name },
+                    cliente: { id: clientData.id, nome: clientData.name },
                     data: new Date(datetime),
                     gestorId: auth.currentUser.uid,
                     servico: { id: serviceData.id, nome: serviceData.nome, valor: serviceData.valor, duracaoMinutos: serviceData.duracaoMinutos },
