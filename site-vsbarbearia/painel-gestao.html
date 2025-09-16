@@ -139,7 +139,7 @@
         <main>
             <!-- Abas de Navegação -->
             <div class="border-b border-gray-800 bg-[#1e1e1e]">
-                <nav class="-mb-px flex space-x-8 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Tabs">
+                <nav class="-mb-px flex space-x-8 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 overflow-x-auto" aria-label="Tabs">
                     <button id="tab-servicos" class="tab-button active whitespace-nowrap py-4 px-1 text-sm font-medium">Serviços</button>
                     <button id="tab-profissionais" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Profissionais</button>
                     <button id="tab-unidades" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Unidades</button>
@@ -147,6 +147,7 @@
                     <button id="tab-clientes" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Clientes</button>
                     <button id="tab-planos" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Planos</button>
                     <button id="tab-metas" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Metas</button>
+                    <button id="tab-configuracoes" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Configurações</button>
                 </nav>
             </div>
 
@@ -239,10 +240,24 @@
 
                 <!-- Conteúdo da Aba Clientes (inicialmente escondido) -->
                 <div id="content-clientes" class="hidden">
-                    <div class="bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                        <h3 class="text-lg font-bold text-primary mb-4">Clientes Cadastrados</h3>
-                        <div id="clients-list" class="space-y-4">
-                            <p id="loading-clients" class="text-gray-400">Carregando clientes...</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                            <h3 class="text-lg font-bold text-primary mb-4">Adicionar Novo Cliente</h3>
+                            <form id="add-client-form" class="space-y-4">
+                                <input type="text" id="client-name" required placeholder="Nome do Cliente" class="form-input w-full">
+                                <input type="tel" id="client-phone" required placeholder="Telefone" class="form-input w-full">
+                                <input type="email" id="client-email" placeholder="E-mail (Opcional)" class="form-input w-full">
+                                <button type="submit" class="w-full justify-center btn-primary">
+                                    <span class="btn-text">Salvar Cliente</span>
+                                    <div class="loader hidden"></div>
+                                </button>
+                            </form>
+                        </div>
+                        <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                            <h3 class="text-lg font-bold text-primary mb-4">Clientes Cadastrados</h3>
+                            <div id="clients-list" class="space-y-4">
+                                <p id="loading-clients" class="text-gray-400">Carregando clientes...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -305,11 +320,55 @@
                         </div>
                     </div>
                 </div>
+
+                 <!-- Conteúdo da Aba Configurações (inicialmente escondido) -->
+                <div id="content-configuracoes" class="hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Seção Minha Conta -->
+                        <div class="bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                            <h3 class="text-lg font-bold text-primary mb-4">Minha Conta</h3>
+                            <form id="change-password-form" class="space-y-4">
+                                <p class="text-sm text-gray-400">Altere sua senha de acesso ao painel.</p>
+                                <input type="password" id="current-password" required placeholder="Senha Atual" class="form-input w-full">
+                                <input type="password" id="new-password" required placeholder="Nova Senha" class="form-input w-full">
+                                <p id="change-password-feedback" class="text-sm h-4"></p>
+                                <button type="submit" class="w-full justify-center btn-primary">
+                                    <span class="btn-text">Alterar Senha</span>
+                                    <div class="loader hidden"></div>
+                                </button>
+                            </form>
+                        </div>
+                        <!-- Seção Usuários do Painel -->
+                        <div class="bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                            <h3 class="text-lg font-bold text-primary mb-4">Usuários do Painel</h3>
+                            <form id="add-panel-user-form" class="space-y-4">
+                                <input type="email" id="panel-user-email" required placeholder="Email do novo usuário" class="form-input w-full">
+                                <input type="password" id="panel-user-password" required placeholder="Senha provisória" class="form-input w-full">
+                                <select id="panel-user-role" class="form-select w-full">
+                                    <option value="gestor">Gestor</option>
+                                    <option value="profissional">Profissional</option>
+                                </select>
+                                <p class="text-xs text-gray-500">O novo usuário deverá alterar esta senha no primeiro acesso.</p>
+                                <p id="add-user-feedback" class="text-sm h-4"></p>
+                                <button type="submit" class="w-full justify-center btn-primary">
+                                    <span class="btn-text">Criar Usuário</span>
+                                    <div class="loader hidden"></div>
+                                </button>
+                            </form>
+                            <div class="mt-6 pt-4 border-t border-gray-700">
+                                <h4 class="text-md font-bold text-primary mb-4">Usuários Ativos</h4>
+                                <div id="panel-users-list" class="space-y-3">
+                                   <p id="loading-panel-users">Carregando...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
 
-    <!-- Modal de Edição de Serviço -->
+    <!-- Modais de Edição -->
     <div id="edit-service-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4">
         <div class="relative w-full max-w-md">
              <div class="modal-content rounded-lg shadow-xl p-6">
@@ -332,7 +391,6 @@
         </div>
     </div>
     
-    <!-- Modal de Edição de Profissional -->
     <div id="edit-professional-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4">
         <div class="relative w-full max-w-md">
              <div class="modal-content rounded-lg shadow-xl p-6">
@@ -356,7 +414,6 @@
         </div>
     </div>
     
-    <!-- Modal de Edição de Unidade -->
     <div id="edit-unit-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4">
         <div class="relative w-full max-w-md">
              <div class="modal-content rounded-lg shadow-xl p-6">
@@ -379,7 +436,6 @@
         </div>
     </div>
 
-    <!-- Modal de Edição de Plano -->
     <div id="edit-plan-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4">
         <div class="relative w-full max-w-md">
              <div class="modal-content rounded-lg shadow-xl p-6">
@@ -408,7 +464,6 @@
         </div>
     </div>
     
-    <!-- Modal de Edição de Meta -->
     <div id="edit-goal-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4">
         <div class="relative w-full max-w-md">
              <div class="modal-content rounded-lg shadow-xl p-6">
@@ -432,16 +487,38 @@
             </div>
         </div>
     </div>
+    
+    <div id="edit-client-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4">
+        <div class="relative w-full max-w-md">
+             <div class="modal-content rounded-lg shadow-xl p-6">
+                <h3 class="text-xl font-bold text-primary text-center mb-6">Editar Cliente</h3>
+                <form id="edit-client-form" class="space-y-4 text-left">
+                    <input type="hidden" id="edit-client-id">
+                    <input type="text" id="edit-client-name" required placeholder="Nome do Cliente" class="form-input w-full">
+                    <input type="tel" id="edit-client-phone" required placeholder="Telefone" class="form-input w-full">
+                    <input type="email" id="edit-client-email" placeholder="E-mail" class="form-input w-full">
+                    <input type="number" id="edit-client-credits" step="0.01" placeholder="Créditos de Indicação (R$)" class="form-input w-full">
+                </form>
+                <div class="mt-8 flex justify-end space-x-4">
+                    <button id="cancel-edit-client-button" class="btn-secondary">Cancelar</button>
+                    <button id="save-edit-client-button" class="btn-primary">
+                        <span class="btn-text">Salvar Alterações</span>
+                        <div class="loader hidden"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
     <!-- SDK do Firebase -->
     <script type="module">
-        // Importações do Firebase (sem alterações)
+        // Importações do Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, getDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // Configuração do Firebase (sem alterações)
+        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBSB03qbus51od3i1ipHJ_Wf6O6rf-1UeY",
             authDomain: "agenda-vs-barbearia.firebaseapp.com",
@@ -455,7 +532,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- Lógica de Autenticação (sem alterações) ---
+        // --- Lógica de Autenticação ---
         const authSection = document.getElementById('auth-section');
         const panelSection = document.getElementById('panel-section');
         const userEmailSpan = document.getElementById('user-email');
@@ -491,7 +568,8 @@
             'tab-agenda': document.getElementById('content-agenda'),
             'tab-clientes': document.getElementById('content-clientes'),
             'tab-planos': document.getElementById('content-planos'),
-            'tab-metas': document.getElementById('content-metas')
+            'tab-metas': document.getElementById('content-metas'),
+            'tab-configuracoes': document.getElementById('content-configuracoes')
         };
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -512,6 +590,7 @@
                 if (tab.id === 'tab-clientes') loadClients(user.uid);
                 if (tab.id === 'tab-planos') loadPlans(user.uid);
                 if (tab.id === 'tab-metas') loadGoals(user.uid);
+                if (tab.id === 'tab-configuracoes') loadPanelUsers(user.uid);
             });
         });
 
@@ -524,7 +603,7 @@
         const saveEditButton = document.getElementById('save-edit-button');
         let localServicesCache = []; // Cache para popular selects
 
-        addServiceForm.addEventListener('submit', async (e) => { /* ... (código sem alterações) ... */ 
+        addServiceForm.addEventListener('submit', async (e) => { 
             e.preventDefault(); 
             const user = auth.currentUser; if (!user) return;
             const submitBtn = addServiceForm.querySelector('button[type="submit"]');
@@ -623,7 +702,7 @@
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditButton.disabled = false; cancelEditButton.disabled = false; }
         });
 
-        // --- CRUD DE PROFISSIONAIS (sem alterações) ---
+        // --- CRUD DE PROFISSIONAIS ---
         const addProfessionalForm = document.getElementById('add-professional-form');
         const professionalsListDiv = document.getElementById('professionals-list');
         const editProfessionalModal = document.getElementById('edit-professional-modal');
@@ -740,7 +819,7 @@
         });
 
 
-        // --- CRUD DE UNIDADES (sem alterações) ---
+        // --- CRUD DE UNIDADES ---
         const addUnitForm = document.getElementById('add-unit-form');
         const unitsListDiv = document.getElementById('units-list');
         const editUnitModal = document.getElementById('edit-unit-modal');
@@ -899,13 +978,38 @@
         }
         
         // --- CRUD DE CLIENTES ---
+        const addClientForm = document.getElementById('add-client-form');
         const clientsListDiv = document.getElementById('clients-list');
         const loadingClientsP = document.getElementById('loading-clients');
+        const editClientModal = document.getElementById('edit-client-modal');
+        const cancelEditClientButton = document.getElementById('cancel-edit-client-button');
+        const saveEditClientButton = document.getElementById('save-edit-client-button');
         let unsubscribeClients = null;
+
+        addClientForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); const user = auth.currentUser; if (!user) return;
+            const submitBtn = addClientForm.querySelector('button[type="submit"]');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const loader = submitBtn.querySelector('.loader');
+            btnText.classList.add('hidden'); loader.classList.remove('hidden'); submitBtn.disabled = true;
+
+            const data = {
+                name: document.getElementById('client-name').value,
+                phone: document.getElementById('client-phone').value,
+                email: document.getElementById('client-email').value,
+                referralCredits: 0,
+                gestorId: user.uid
+            };
+            
+            // A coleção para clientes do app é 'users'
+            try { await addDoc(collection(db, "users"), data); addClientForm.reset(); }
+            catch(error) { console.error("Erro ao adicionar cliente:", error); }
+            finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false; }
+        });
 
         function loadClients(userId) {
             if (unsubscribeClients) unsubscribeClients();
-            // Assumindo que os dados dos clientes estarão na coleção 'users'
+            // A coleção para clientes do app é 'users'
             const clientsCollection = collection(db, "users");
             unsubscribeClients = onSnapshot(clientsCollection, (snapshot) => {
                 loadingClientsP.classList.add('hidden');
@@ -926,17 +1030,69 @@
                             <p class="text-sm text-gray-400">${client.phone || 'Telefone não informado'}</p>
                             <p class="text-xs text-gray-500">${client.email || 'Email não informado'}</p>
                         </div>
-                        <div class="text-right">
+                        <div class="text-right mr-4">
                              <p class="text-sm text-gray-400">Créditos</p>
                              <p class="font-bold text-primary text-lg">R$ ${(client.referralCredits || 0).toFixed(2)}</p>
                         </div>
-                    `;
+                        <div class="space-x-2 sm:space-x-4">
+                             <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${doc.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
+                             <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${doc.id}" data-action="delete">
+                                 <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
+                                 <div class="loader hidden"></div>
+                             </button>
+                        </div>`;
                     clientsListDiv.appendChild(card);
                 });
             });
         }
         
-        // --- CRUD DE PLANOS (sem alterações) ---
+        clientsListDiv.addEventListener('click', async (e) => {
+            const button = e.target.closest('button');
+            if (!button || !button.dataset.id) return;
+            const id = button.dataset.id;
+            const action = button.dataset.action;
+
+            if (action === 'delete') {
+                const btnText = button.querySelector('.btn-text'); const loader = button.querySelector('.loader');
+                btnText.classList.add('hidden'); loader.classList.remove('hidden'); button.disabled = true;
+                try { await deleteDoc(doc(db, "users", id)); }
+                catch(error) { console.error("Erro ao excluir cliente:", error); btnText.classList.remove('hidden'); loader.classList.add('hidden'); button.disabled = false;}
+            }
+            if (action === 'edit') {
+                const clientDoc = await getDoc(doc(db, "users", id));
+                if (clientDoc.exists()) {
+                    const data = clientDoc.data();
+                    document.getElementById('edit-client-id').value = id;
+                    document.getElementById('edit-client-name').value = data.name || '';
+                    document.getElementById('edit-client-phone').value = data.phone || '';
+                    document.getElementById('edit-client-email').value = data.email || '';
+                    document.getElementById('edit-client-credits').value = data.referralCredits || '';
+                    editClientModal.classList.remove('hidden');
+                }
+            }
+        });
+        
+        cancelEditClientButton.addEventListener('click', () => editClientModal.classList.add('hidden'));
+
+        saveEditClientButton.addEventListener('click', async () => {
+            const btnText = saveEditClientButton.querySelector('.btn-text'); const loader = saveEditClientButton.querySelector('.loader');
+            btnText.classList.add('hidden'); loader.classList.remove('hidden'); saveEditClientButton.disabled = true; cancelEditClientButton.disabled = true;
+            
+            const id = document.getElementById('edit-client-id').value;
+            const clientRef = doc(db, "users", id);
+            const dataToUpdate = {
+                name: document.getElementById('edit-client-name').value,
+                phone: document.getElementById('edit-client-phone').value,
+                email: document.getElementById('edit-client-email').value,
+                referralCredits: parseFloat(document.getElementById('edit-client-credits').value) || 0
+            };
+
+            try { await updateDoc(clientRef, dataToUpdate); editClientModal.classList.add('hidden'); }
+            catch(error) { console.error("Erro ao atualizar cliente:", error); }
+            finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditClientButton.disabled = false; cancelEditClientButton.disabled = false; }
+        });
+
+        // --- CRUD DE PLANOS ---
         const addPlanForm = document.getElementById('add-plan-form');
         const plansListDiv = document.getElementById('plans-list');
         const loadingPlansP = document.getElementById('loading-plans');
@@ -1179,6 +1335,99 @@
             catch(error) { console.error("Erro ao atualizar meta:", error); }
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditGoalButton.disabled = false; cancelEditGoalButton.disabled = false; }
         });
+        
+        // --- CONFIGURAÇÕES ---
+        const changePasswordForm = document.getElementById('change-password-form');
+        const changePasswordFeedback = document.getElementById('change-password-feedback');
+        
+        changePasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = changePasswordForm.querySelector('button[type="submit"]');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const loader = submitBtn.querySelector('.loader');
+            btnText.classList.add('hidden'); loader.classList.remove('hidden'); submitBtn.disabled = true;
+            
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const user = auth.currentUser;
+            changePasswordFeedback.textContent = '';
+
+            try {
+                const credential = EmailAuthProvider.credential(user.email, currentPassword);
+                await reauthenticateWithCredential(user, credential);
+                await updatePassword(user, newPassword);
+                changePasswordFeedback.textContent = 'Senha alterada com sucesso!';
+                changePasswordFeedback.className = 'text-sm h-4 text-green-500';
+                changePasswordForm.reset();
+            } catch(error) {
+                console.error("Erro ao alterar senha:", error);
+                changePasswordFeedback.textContent = 'Senha atual incorreta.';
+                changePasswordFeedback.className = 'text-sm h-4 text-red-500';
+            } finally {
+                btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false;
+            }
+        });
+        
+        // --- GESTÃO DE USUÁRIOS DO PAINEL ---
+        // ATENÇÃO: A criação e exclusão de usuários do Auth diretamente do client-side
+        // não é recomendada em produção por motivos de segurança.
+        // O ideal é usar Firebase Cloud Functions. Este é um workaround para fins de prototipagem.
+        const addPanelUserForm = document.getElementById('add-panel-user-form');
+        const addUserFeedback = document.getElementById('add-user-feedback');
+        const panelUsersListDiv = document.getElementById('panel-users-list');
+        const loadingPanelUsersP = document.getElementById('loading-panel-users');
+        
+        addPanelUserForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = addPanelUserForm.querySelector('button[type="submit"]');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const loader = submitBtn.querySelector('.loader');
+            btnText.classList.add('hidden'); loader.classList.remove('hidden'); submitBtn.disabled = true;
+            addUserFeedback.textContent = '';
+            
+            const email = document.getElementById('panel-user-email').value;
+            const password = document.getElementById('panel-user-password').value;
+            const role = document.getElementById('panel-user-role').value;
+            
+            // SIMULAÇÃO: Adiciona a uma coleção `panel_users`. A criação de Auth real
+            // requer Cloud Functions para ser feita de forma segura sem deslogar o admin.
+            try {
+                await addDoc(collection(db, "panel_users"), { email: email, role: role, createdAt: new Date() });
+                addUserFeedback.textContent = `Usuário ${email} convidado com sucesso!`;
+                addUserFeedback.className = 'text-sm h-4 text-green-500';
+                addPanelUserForm.reset();
+            } catch (error) {
+                console.error("Erro ao convidar usuário:", error);
+                addUserFeedback.textContent = 'Erro ao convidar usuário.';
+                addUserFeedback.className = 'text-sm h-4 text-red-500';
+            } finally {
+                btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false;
+            }
+        });
+        
+        function loadPanelUsers() {
+            onSnapshot(collection(db, "panel_users"), (snapshot) => {
+                loadingPanelUsersP.classList.add('hidden');
+                panelUsersListDiv.innerHTML = '';
+                if(snapshot.empty) {
+                    panelUsersListDiv.innerHTML = '<p class="text-sm text-gray-500">Nenhum usuário adicional.</p>';
+                    return;
+                }
+                snapshot.forEach(doc => {
+                    const user = doc.data();
+                    const card = document.createElement('div');
+                    card.className = 'flex justify-between items-center bg-[#2a2a2a] p-3 rounded-lg';
+                    card.innerHTML = `
+                        <div>
+                            <p class="font-semibold text-white">${user.email}</p>
+                            <p class="text-xs text-gray-400 capitalize">${user.role}</p>
+                        </div>
+                        <button class="text-xs text-red-500 hover:text-red-400 font-semibold" onclick="deleteDocument('panel_users', '${doc.id}')">Remover</button>
+                    `;
+                    panelUsersListDiv.appendChild(card);
+                });
+            });
+        }
 
 
         // --- FUNÇÃO GLOBAL DE EXCLUSÃO (sem alterações) ---
