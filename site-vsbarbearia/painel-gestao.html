@@ -289,10 +289,14 @@
                         <!-- Cabeçalho da Agenda -->
                         <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                             <h3 id="agenda-title" class="text-lg font-bold text-primary">Agenda</h3>
-                            <div class="flex items-center gap-2 sm:gap-4">
+                            <div class="flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
+                                <select id="professional-filter" class="form-select !p-2">
+                                    <option value="all">Todos Profissionais</option>
+                                </select>
                                 <button id="prev-day-btn" class="btn-secondary px-3 py-2"><i class="fas fa-chevron-left"></i></button>
                                 <input type="date" id="date-picker" class="form-input !p-2 text-center">
                                 <button id="next-day-btn" class="btn-secondary px-3 py-2"><i class="fas fa-chevron-right"></i></button>
+                                <button id="add-appointment-btn" class="btn-primary"><i class="fas fa-plus mr-2"></i>Agendamento</button>
                             </div>
                         </div>
                         <!-- Container da Grade da Agenda -->
@@ -598,7 +602,7 @@
         </div>
     </div>
 
-    <!-- NOVO Modal de Confirmação -->
+    <!-- Modal de Confirmação -->
     <div id="confirmation-modal" class="hidden fixed inset-0 z-[100] overflow-y-auto modal-backdrop flex items-center justify-center p-4">
         <div class="relative w-full max-w-md">
              <div class="modal-content rounded-lg shadow-xl p-6">
@@ -607,6 +611,43 @@
                 <div class="flex justify-center space-x-4">
                     <button id="cancel-confirmation-button" class="btn-secondary">Cancelar</button>
                     <button id="confirm-action-button" class="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOVO Modal de Adicionar Agendamento -->
+    <div id="add-appointment-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4">
+        <div class="relative w-full max-w-lg">
+             <div class="modal-content rounded-lg shadow-xl p-6">
+                <h3 class="text-xl font-bold text-primary text-center mb-6">Adicionar Agendamento Manual</h3>
+                <form id="add-appointment-form" class="space-y-4 text-left">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="appt-client-select" class="block text-sm font-medium text-gray-300 mb-1">Cliente</label>
+                            <select id="appt-client-select" required class="form-select w-full"></select>
+                        </div>
+                         <div>
+                            <label for="appt-professional-select" class="block text-sm font-medium text-gray-300 mb-1">Profissional</label>
+                            <select id="appt-professional-select" required class="form-select w-full"></select>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="appt-service-select" class="block text-sm font-medium text-gray-300 mb-1">Serviço</label>
+                        <select id="appt-service-select" required class="form-select w-full"></select>
+                    </div>
+                     <div>
+                        <label for="appt-datetime-input" class="block text-sm font-medium text-gray-300 mb-1">Data e Hora</label>
+                        <input type="datetime-local" id="appt-datetime-input" required class="form-input w-full">
+                    </div>
+                    <p id="add-appointment-feedback" class="text-sm h-4 text-center"></p>
+                </form>
+                <div class="mt-8 flex justify-end space-x-4">
+                    <button id="cancel-add-appointment-button" class="btn-secondary">Cancelar</button>
+                    <button id="save-add-appointment-button" class="btn-primary">
+                        <span class="btn-text">Salvar Agendamento</span>
+                        <div class="loader hidden"></div>
+                    </button>
                 </div>
             </div>
         </div>
@@ -634,13 +675,17 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        // Estado global para a agenda
+        // Estado global e caches
         let agendaState = {
             currentDate: new Date(),
-            interval: 30, // Intervalo padrão em minutos
+            interval: 30,
             professionals: [],
             appointments: []
         };
+        let localServicesCache = [];
+        let localProfessionalsCache = [];
+        let localClientsCache = [];
+
 
         // --- Lógica de Autenticação ---
         const authSection = document.getElementById('auth-section');
@@ -658,8 +703,8 @@
                 authSection.classList.add('hidden');
                 panelSection.classList.remove('hidden');
                 userEmailSpan.textContent = user.email;
-                loadServices(user.uid); // Carrega a primeira aba por padrão
-                loadAgendaSettings(user.uid); // Carrega as configurações da agenda
+                loadServices(user.uid);
+                loadAgendaSettings(user.uid);
             } else {
                 authSection.classList.remove('hidden');
                 panelSection.classList.add('hidden');
@@ -694,7 +739,6 @@
                 const user = auth.currentUser;
                 if (!user) return;
 
-                // Carrega os dados da aba selecionada
                 if (tab.id === 'tab-servicos') loadServices(user.uid);
                 if (tab.id === 'tab-profissionais') loadProfessionals(user.uid);
                 if (tab.id === 'tab-unidades') loadUnits(user.uid);
@@ -713,8 +757,7 @@
         const editServiceModal = document.getElementById('edit-service-modal');
         const cancelEditButton = document.getElementById('cancel-edit-button');
         const saveEditButton = document.getElementById('save-edit-button');
-        let localServicesCache = []; // Cache para popular selects
-
+        
         addServiceForm.addEventListener('submit', async (e) => { 
             e.preventDefault(); 
             const user = auth.currentUser; if (!user) return;
@@ -742,11 +785,11 @@
             unsubscribeServices = onSnapshot(servicosCollection, (snapshot) => {
                 loadingServicesP.classList.add('hidden');
                 servicesListDiv.innerHTML = '';
-                localServicesCache = []; // Limpa o cache
+                localServicesCache = [];
                 if (snapshot.empty) { servicesListDiv.innerHTML = '<p class="text-gray-400">Nenhum serviço cadastrado.</p>'; return; }
                 snapshot.forEach((doc) => {
-                    const servico = doc.data(); const servicoId = doc.id;
-                    localServicesCache.push({ id: servicoId, ...servico }); // Adiciona ao cache
+                    const servico = {id: doc.id, ...doc.data()};
+                    localServicesCache.push(servico);
                     let priceHtml = '';
                     if (servico.promocao && typeof servico.promocao === 'number') {
                         priceHtml = `<span class="font-bold text-primary">R$ ${servico.promocao.toFixed(2)}</span> <span class="text-xs line-through text-gray-500">R$ ${servico.valor.toFixed(2)}</span>`;
@@ -759,8 +802,8 @@
                             <p class="text-sm text-gray-400">${priceHtml} - ${servico.duracaoMinutos} min</p>
                         </div>
                         <div class="space-x-2 sm:space-x-4">
-                            <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${servicoId}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
-                            <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${servicoId}" data-action="delete">
+                            <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${servico.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
+                            <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${servico.id}" data-action="delete">
                                 <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
                             </button>
                         </div>`;
@@ -851,9 +894,11 @@
             unsubscribeProfessionals = onSnapshot(q, (snapshot) => {
                 document.getElementById('loading-professionals').classList.add('hidden');
                 professionalsListDiv.innerHTML = '';
+                localProfessionalsCache = [];
                 if (snapshot.empty) { professionalsListDiv.innerHTML = '<p class="text-gray-400">Nenhum profissional cadastrado.</p>'; return; }
                 snapshot.forEach(doc => {
-                    const professional = doc.data();
+                    const professional = {id: doc.id, ...doc.data()};
+                    localProfessionalsCache.push(professional);
                     const placeholderImg = `https://placehold.co/100x100/333333/FFFFFF?text=${professional.nome.charAt(0)}`;
                     const card = document.createElement('div');
                     card.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex items-center';
@@ -1029,13 +1074,19 @@
         });
 
 
-        // --- NOVA LÓGICA DA AGENDA (CORRIGIDA) ---
+        // --- LÓGICA DA AGENDA ---
         const datePicker = document.getElementById('date-picker');
         const prevDayBtn = document.getElementById('prev-day-btn');
         const nextDayBtn = document.getElementById('next-day-btn');
         const agendaTitle = document.getElementById('agenda-title');
         const agendaGridView = document.getElementById('agenda-grid-view');
         const loadingAgenda = document.getElementById('loading-agenda');
+        const professionalFilter = document.getElementById('professional-filter');
+        const addAppointmentBtn = document.getElementById('add-appointment-btn');
+        const addAppointmentModal = document.getElementById('add-appointment-modal');
+        const addAppointmentForm = document.getElementById('add-appointment-form');
+        const cancelAddAppointmentButton = document.getElementById('cancel-add-appointment-button');
+        const saveAddAppointmentButton = document.getElementById('save-add-appointment-button');
         let unsubscribeAgenda = null;
 
         function formatDateForInput(date) {
@@ -1072,6 +1123,22 @@
             loadAgendaData(userId);
         }
 
+        function populateProfessionalFilter() {
+            const currentVal = professionalFilter.value;
+            professionalFilter.innerHTML = '<option value="all">Todos Profissionais</option>';
+            agendaState.professionals.forEach(prof => {
+                const option = document.createElement('option');
+                option.value = prof.id;
+                option.textContent = prof.nome;
+                if (prof.id === currentVal) {
+                    option.selected = true;
+                }
+                professionalFilter.appendChild(option);
+            });
+        }
+        professionalFilter.addEventListener('change', renderAgendaGrid);
+
+
         async function loadAgendaData(userId) {
             loadingAgenda.classList.remove('hidden');
             agendaGridView.classList.add('hidden');
@@ -1082,6 +1149,7 @@
                 const professionalsQuery = query(collection(db, "profissionais"), where("gestorId", "==", userId));
                 const professionalsSnapshot = await getDocs(professionalsQuery);
                 agendaState.professionals = professionalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                populateProfessionalFilter();
 
                 const startOfDay = new Date(agendaState.currentDate);
                 startOfDay.setHours(0, 0, 0, 0);
@@ -1105,7 +1173,7 @@
                 });
             } catch (error) {
                 console.error("Erro ao carregar dados da agenda:", error);
-                agendaGridView.innerHTML = `<p class="text-center text-red-500 p-8">Ocorreu um erro ao carregar os dados da agenda. Verifique o console para mais detalhes.</p>`;
+                agendaGridView.innerHTML = `<p class="text-center text-red-500 p-8">Ocorreu um erro. Verifique o console.</p>`;
                 loadingAgenda.classList.add('hidden');
                 agendaGridView.classList.remove('hidden');
             }
@@ -1114,8 +1182,13 @@
         function renderAgendaGrid() {
             agendaGridView.innerHTML = '';
             
-            if (agendaState.professionals.length === 0) {
-                 agendaGridView.innerHTML = '<p class="text-center text-gray-400 p-8">Nenhum profissional cadastrado. Adicione um na aba "Profissionais" para ver a agenda.</p>';
+            const selectedProfId = professionalFilter.value;
+            const professionalsToRender = selectedProfId === 'all'
+                ? agendaState.professionals
+                : agendaState.professionals.filter(p => p.id === selectedProfId);
+
+            if (professionalsToRender.length === 0) {
+                 agendaGridView.innerHTML = '<p class="text-center text-gray-400 p-8">Nenhum profissional para exibir. Adicione um na aba "Profissionais".</p>';
                  loadingAgenda.classList.add('hidden');
                  agendaGridView.classList.remove('hidden');
                  return;
@@ -1145,7 +1218,7 @@
             timeColumn.appendChild(timeSlotsContainer);
             grid.appendChild(timeColumn);
 
-            agendaState.professionals.forEach(prof => {
+            professionalsToRender.forEach(prof => {
                 const profColumn = document.createElement('div');
                 profColumn.className = 'professional-column';
                 profColumn.dataset.professionalId = prof.id;
@@ -1198,7 +1271,7 @@
                 card.style.top = `${topPosition}px`;
                 card.style.height = `${height}px`;
                 card.innerHTML = `
-                    <p class="font-bold">${appt.cliente?.nome || 'Cliente'}</p>
+                    <p class="font-bold">${appt.cliente?.name || 'Cliente'}</p>
                     <p class="text-xs">${appt.servico?.nome || 'Serviço'}</p>
                 `;
                 
@@ -1245,12 +1318,14 @@
             unsubscribeClients = onSnapshot(clientsCollection, (snapshot) => {
                 loadingClientsP.classList.add('hidden');
                 clientsListDiv.innerHTML = '';
+                localClientsCache = [];
                 if (snapshot.empty) {
                     clientsListDiv.innerHTML = '<p class="text-gray-400">Nenhum cliente cadastrado.</p>';
                     return;
                 }
                 snapshot.forEach(doc => {
-                    const client = doc.data();
+                    const client = {id: doc.id, ...doc.data()};
+                    localClientsCache.push(client);
                     const placeholderImg = `https://placehold.co/100x100/333333/FFFFFF?text=${client.name ? client.name.charAt(0) : 'C'}`;
                     const card = document.createElement('div');
                     card.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex items-center';
@@ -1474,7 +1549,6 @@
         }
 
         async function loadGoals(userId) {
-            // Garante que os serviços estão carregados para popular o select
             if (localServicesCache.length === 0) {
                 const servicesQuery = query(collection(db, "servicos"), where("gestorId", "==", userId));
                 const querySnapshot = await getDocs(servicesQuery);
@@ -1609,7 +1683,7 @@
             
             const settingsRef = doc(db, 'configuracoes', user.uid);
             try {
-                await updateDoc(settingsRef, { agendaInterval: newInterval, updatedAt: serverTimestamp() });
+                await setDoc(settingsRef, { agendaInterval: newInterval, updatedAt: serverTimestamp() }, { merge: true });
                 agendaState.interval = newInterval;
                 agendaSettingsFeedback.textContent = 'Configurações salvas!';
                 agendaSettingsFeedback.className = 'text-sm h-4 text-green-500';
@@ -1692,7 +1766,7 @@
             });
         }
 
-        // --- MODAL DE CONFIRMAÇÃO E FUNÇÃO GLOBAL DE EXCLUSÃO ---
+        // --- MODAIS E FUNÇÕES GLOBAIS ---
         const confirmationModal = document.getElementById('confirmation-modal');
         const confirmationMessage = document.getElementById('confirmation-message');
         const cancelConfirmationButton = document.getElementById('cancel-confirmation-button');
@@ -1727,7 +1801,121 @@
                     console.error("Erro ao deletar:", e);
                 }
             });
-        }
+        };
+
+        // --- LÓGICA DO MODAL DE AGENDAMENTO ---
+        addAppointmentBtn.addEventListener('click', async () => {
+            const form = addAppointmentModal.querySelector('form');
+            form.reset();
+            const feedback = document.getElementById('add-appointment-feedback');
+            feedback.textContent = '';
+
+            const clientSelect = document.getElementById('appt-client-select');
+            const profSelect = document.getElementById('appt-professional-select');
+            const serviceSelect = document.getElementById('appt-service-select');
+            
+            clientSelect.innerHTML = '<option value="">Carregando...</option>';
+            profSelect.innerHTML = '<option value="">Carregando...</option>';
+            serviceSelect.innerHTML = '<option value="">Carregando...</option>';
+
+            addAppointmentModal.classList.remove('hidden');
+
+            try {
+                // Carrega clientes, profissionais e serviços em paralelo
+                const [clientsSnapshot, profsSnapshot] = await Promise.all([
+                    getDocs(query(collection(db, "users"))),
+                    getDocs(query(collection(db, "profissionais"), where("gestorId", "==", auth.currentUser.uid)))
+                ]);
+
+                localClientsCache = clientsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                clientSelect.innerHTML = '<option value="">Selecione um cliente</option>';
+                localClientsCache.forEach(c => clientSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+
+                localProfessionalsCache = profsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                profSelect.innerHTML = '<option value="">Selecione um profissional</option>';
+                localProfessionalsCache.forEach(p => profSelect.innerHTML += `<option value="${p.id}">${p.nome}</option>`);
+
+                serviceSelect.innerHTML = '<option value="">Selecione um serviço</option>';
+                localServicesCache.forEach(s => serviceSelect.innerHTML += `<option value="${s.id}">${s.nome}</option>`);
+
+                const dateTimeInput = document.getElementById('appt-datetime-input');
+                const now = new Date(agendaState.currentDate);
+                now.setHours(9, 0, 0, 0);
+                const year = now.getFullYear();
+                const month = (now.getMonth() + 1).toString().padStart(2, '0');
+                const day = now.getDate().toString().padStart(2, '0');
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                dateTimeInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+            } catch (error) {
+                console.error("Erro ao abrir modal de agendamento:", error);
+                feedback.textContent = "Erro ao carregar dados.";
+                feedback.className = "text-sm h-4 text-center text-red-500";
+            }
+        });
+
+        cancelAddAppointmentButton.addEventListener('click', () => addAppointmentModal.classList.add('hidden'));
+
+        saveAddAppointmentButton.addEventListener('click', async () => {
+            const btnText = saveAddAppointmentButton.querySelector('.btn-text');
+            const loader = saveAddAppointmentButton.querySelector('.loader');
+            const feedback = document.getElementById('add-appointment-feedback');
+            feedback.textContent = '';
+            
+            const clientId = document.getElementById('appt-client-select').value;
+            const profId = document.getElementById('appt-professional-select').value;
+            const serviceId = document.getElementById('appt-service-select').value;
+            const datetime = document.getElementById('appt-datetime-input').value;
+
+            if (!clientId || !profId || !serviceId || !datetime) {
+                feedback.textContent = "Preencha todos os campos.";
+                feedback.className = "text-sm h-4 text-center text-red-500";
+                return;
+            }
+
+            btnText.classList.add('hidden');
+            loader.classList.remove('hidden');
+            saveAddAppointmentButton.disabled = true;
+            cancelAddAppointmentButton.disabled = true;
+
+            try {
+                const clientData = localClientsCache.find(c => c.id === clientId);
+                const profData = localProfessionalsCache.find(p => p.id === profId);
+                const serviceData = localServicesCache.find(s => s.id === serviceId);
+
+                const unitsQuery = query(collection(db, "unidades"), where("gestorId", "==", auth.currentUser.uid));
+                const unitsSnapshot = await getDocs(unitsQuery);
+                if (unitsSnapshot.empty) {
+                    throw new Error("Cadastre pelo menos uma unidade antes de criar agendamentos.");
+                }
+                const firstUnit = { id: unitsSnapshot.docs[0].id, ...unitsSnapshot.docs[0].data() };
+
+                const appointmentData = {
+                    barbeiro: { id: profData.id, nome: profData.nome },
+                    cliente: { id: clientData.id, name: clientData.name },
+                    data: new Date(datetime),
+                    gestorId: auth.currentUser.uid,
+                    servico: { id: serviceData.id, nome: serviceData.nome, valor: serviceData.valor, duracaoMinutos: serviceData.duracaoMinutos },
+                    unidade: { id: firstUnit.id, nome: firstUnit.nome },
+                    createdAt: serverTimestamp()
+                };
+
+                await addDoc(collection(db, "agendamentos"), appointmentData);
+                addAppointmentModal.classList.add('hidden');
+            
+            } catch (error) {
+                console.error("Erro ao salvar agendamento:", error);
+                feedback.textContent = error.message || "Erro ao salvar.";
+                feedback.className = "text-sm h-4 text-center text-red-500";
+            } finally {
+                btnText.classList.remove('hidden');
+                loader.classList.add('hidden');
+                saveAddAppointmentButton.disabled = false;
+                cancelAddAppointmentButton.disabled = false;
+            }
+        });
+
     </script>
 </body>
 </html>
