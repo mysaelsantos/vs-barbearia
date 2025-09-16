@@ -53,6 +53,10 @@
             border-radius: 0.5rem;
             padding: 0.75rem 1rem;
             transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
         .btn-primary:hover {
             background-color: #e0a828;
@@ -112,8 +116,8 @@
                 <input id="email" name="email" type="email" autocomplete="email" required placeholder="E-mail" class="block w-full form-input">
                 <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Senha" class="block w-full form-input">
                 <p id="auth-error" class="text-center text-sm text-red-500"></p>
-                <button id="login-button" class="flex w-full justify-center btn-primary">Entrar</button>
-                <button id="signup-button" class="flex w-full justify-center btn-secondary">Não tenho conta, Cadastrar</button>
+                <button id="login-button" class="w-full justify-center btn-primary">Entrar</button>
+                <button id="signup-button" class="w-full justify-center btn-secondary">Não tenho conta, Cadastrar</button>
             </div>
         </div>
     </div>
@@ -149,11 +153,14 @@
                         <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
                             <h3 class="text-lg font-bold text-primary mb-4">Adicionar Novo Serviço</h3>
                             <form id="add-service-form" class="space-y-4">
-                                <input type="hidden" id="service-id">
                                 <input type="text" id="service-name" required placeholder="Nome do Serviço" class="form-input w-full">
                                 <input type="number" id="service-value" step="0.01" required placeholder="Valor (R$)" class="form-input w-full">
+                                <input type="number" id="service-promo-value" step="0.01" placeholder="Valor Promocional (Opcional)" class="form-input w-full">
                                 <input type="number" id="service-duration" required placeholder="Duração (minutos)" class="form-input w-full">
-                                <button type="submit" class="w-full justify-center btn-primary">Salvar Serviço</button>
+                                <button type="submit" class="w-full justify-center btn-primary">
+                                    <span class="btn-text">Salvar Serviço</span>
+                                    <div class="loader hidden"></div>
+                                </button>
                             </form>
                         </div>
                         <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
@@ -216,11 +223,15 @@
                     <input type="hidden" id="edit-service-id">
                     <input type="text" id="edit-service-name" required placeholder="Nome" class="form-input w-full">
                     <input type="number" step="0.01" id="edit-service-value" required placeholder="Valor (R$)" class="form-input w-full">
+                    <input type="number" step="0.01" id="edit-service-promo-value" placeholder="Valor Promocional (Opcional)" class="form-input w-full">
                     <input type="number" id="edit-service-duration" required placeholder="Duração (min)" class="form-input w-full">
                 </form>
                 <div class="mt-8 flex justify-end space-x-4">
                     <button id="cancel-edit-button" class="btn-secondary">Cancelar</button>
-                    <button id="save-edit-button" class="btn-primary">Salvar Alterações</button>
+                    <button id="save-edit-button" class="btn-primary">
+                        <span class="btn-text">Salvar Alterações</span>
+                        <div class="loader hidden"></div>
+                    </button>
                 </div>
             </div>
         </div>
@@ -248,7 +259,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- Lógica de Autenticação (sem alterações, apenas referências de UI) ---
+        // --- Lógica de Autenticação (sem alterações) ---
         const authSection = document.getElementById('auth-section');
         const panelSection = document.getElementById('panel-section');
         const userEmailSpan = document.getElementById('user-email');
@@ -271,37 +282,21 @@
             }
         });
         
-        signupButton.addEventListener('click', async () => { /* ... (código sem alterações) ... */ 
-            const email = emailInput.value; const password = passwordInput.value; authError.textContent = '';
-            try { await createUserWithEmailAndPassword(auth, email, password); } catch (error) { console.error("Erro no cadastro:", error); authError.textContent = "Erro ao cadastrar. Verifique o email e a senha (mínimo 6 caracteres)."; }
-        });
-        loginButton.addEventListener('click', async () => { /* ... (código sem alterações) ... */ 
-            const email = emailInput.value; const password = passwordInput.value; authError.textContent = '';
-            try { await signInWithEmailAndPassword(auth, email, password); } catch (error) { console.error("Erro no login:", error); authError.textContent = "Email ou senha inválidos."; }
-        });
-        logoutButton.addEventListener('click', async () => { /* ... (código sem alterações) ... */ 
-            try { await signOut(auth); } catch (error) { console.error("Erro no logout:", error); }
-        });
+        signupButton.addEventListener('click', async () => { /* ... */ const email = emailInput.value; const password = passwordInput.value; authError.textContent = ''; try { await createUserWithEmailAndPassword(auth, email, password); } catch (error) { console.error("Erro no cadastro:", error); authError.textContent = "Erro ao cadastrar. Verifique o email e a senha (mínimo 6 caracteres)."; } });
+        loginButton.addEventListener('click', async () => { /* ... */ const email = emailInput.value; const password = passwordInput.value; authError.textContent = ''; try { await signInWithEmailAndPassword(auth, email, password); } catch (error) { console.error("Erro no login:", error); authError.textContent = "Email ou senha inválidos."; } });
+        logoutButton.addEventListener('click', async () => { /* ... */ try { await signOut(auth); } catch (error) { console.error("Erro no logout:", error); } });
 
         // --- Lógica de Navegação por Abas (sem alterações) ---
         const tabs = document.querySelectorAll('.tab-button');
-        const contents = {
-            'tab-servicos': document.getElementById('content-servicos'),
-            'tab-profissionais': document.getElementById('content-profissionais'),
-            'tab-unidades': document.getElementById('content-unidades')
-        };
+        const contents = { 'tab-servicos': document.getElementById('content-servicos'), 'tab-profissionais': document.getElementById('content-profissionais'), 'tab-unidades': document.getElementById('content-unidades') };
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 tabs.forEach(item => item.classList.remove('active'));
                 tab.classList.add('active');
-                
                 Object.values(contents).forEach(content => content.classList.add('hidden'));
                 const activeContent = contents[tab.id];
                 activeContent.classList.remove('hidden');
-
-                const user = auth.currentUser;
-                if (!user) return;
-
+                const user = auth.currentUser; if (!user) return;
                 if (tab.id === 'tab-servicos') loadServices(user.uid);
                 if (tab.id === 'tab-profissionais') loadProfessionals(user.uid);
                 if (tab.id === 'tab-unidades') loadUnits(user.uid);
@@ -316,10 +311,44 @@
         const cancelEditButton = document.getElementById('cancel-edit-button');
         const saveEditButton = document.getElementById('save-edit-button');
 
-        addServiceForm.addEventListener('submit', async (e) => { e.preventDefault(); /* ... (código sem alterações) ... */ 
+        addServiceForm.addEventListener('submit', async (e) => { 
+            e.preventDefault(); 
             const user = auth.currentUser; if (!user) return;
-            const serviceName = document.getElementById('service-name').value; const serviceValue = parseFloat(document.getElementById('service-value').value); const serviceDuration = parseInt(document.getElementById('service-duration').value);
-            try { await addDoc(collection(db, "servicos"), { nome: serviceName, valor: serviceValue, duracaoMinutos: serviceDuration, gestorId: user.uid }); addServiceForm.reset(); } catch (error) { console.error("Erro ao adicionar serviço: ", error); }
+            
+            const submitBtn = addServiceForm.querySelector('button[type="submit"]');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const loader = submitBtn.querySelector('.loader');
+
+            btnText.classList.add('hidden');
+            loader.classList.remove('hidden');
+            submitBtn.disabled = true;
+
+            const serviceName = document.getElementById('service-name').value; 
+            const serviceValue = parseFloat(document.getElementById('service-value').value); 
+            const servicePromoValueInput = document.getElementById('service-promo-value');
+            const serviceDuration = parseInt(document.getElementById('service-duration').value);
+
+            const data = {
+                nome: serviceName,
+                valor: serviceValue,
+                duracaoMinutos: serviceDuration,
+                gestorId: user.uid
+            };
+
+            if (servicePromoValueInput.value) {
+                data.promocao = parseFloat(servicePromoValueInput.value);
+            }
+
+            try { 
+                await addDoc(collection(db, "servicos"), data); 
+                addServiceForm.reset(); 
+            } catch (error) { 
+                console.error("Erro ao adicionar serviço: ", error); 
+            } finally {
+                btnText.classList.remove('hidden');
+                loader.classList.add('hidden');
+                submitBtn.disabled = false;
+            }
         });
 
         let unsubscribeServices = null;
@@ -332,16 +361,27 @@
                 if (snapshot.empty) { servicesListDiv.innerHTML = '<p class="text-gray-400">Nenhum serviço cadastrado.</p>'; return; }
                 snapshot.forEach((doc) => {
                     const servico = doc.data(); const servicoId = doc.id;
+                    
+                    let priceHtml = '';
+                    if (servico.promocao && typeof servico.promocao === 'number') {
+                        priceHtml = `<span class="font-bold text-primary">R$ ${servico.promocao.toFixed(2)}</span> <span class="text-xs line-through text-gray-500">R$ ${servico.valor.toFixed(2)}</span>`;
+                    } else {
+                        priceHtml = `R$ ${servico.valor.toFixed(2)}`;
+                    }
+
                     const servicoCard = document.createElement('div');
                     servicoCard.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex justify-between items-center';
                     servicoCard.innerHTML = `
                         <div>
                             <p class="font-bold text-white">${servico.nome}</p>
-                            <p class="text-sm text-gray-400">R$ ${servico.valor.toFixed(2)} - ${servico.duracaoMinutos} min</p>
+                            <p class="text-sm text-gray-400">${priceHtml} - ${servico.duracaoMinutos} min</p>
                         </div>
-                        <div class="space-x-4">
+                        <div class="space-x-2 sm:space-x-4">
                             <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${servicoId}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
-                            <button class="text-sm text-red-500 hover:text-red-400 font-semibold" data-id="${servicoId}" data-action="delete"><i class="fas fa-trash-alt mr-1"></i>Excluir</button>
+                            <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${servicoId}" data-action="delete">
+                                <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
+                                <div class="loader hidden"></div>
+                            </button>
                         </div>`;
                     servicesListDiv.appendChild(servicoCard);
                 });
@@ -355,7 +395,22 @@
             const action = button.dataset.action;
 
             if (action === 'delete') {
-                try { await deleteDoc(doc(db, "servicos", id)); } catch (error) { console.error("Erro ao excluir: ", error); }
+                const btnText = button.querySelector('.btn-text');
+                const loader = button.querySelector('.loader');
+
+                btnText.classList.add('hidden');
+                loader.classList.remove('hidden');
+                button.disabled = true;
+
+                try { 
+                    await deleteDoc(doc(db, "servicos", id)); 
+                } catch (error) { 
+                    console.error("Erro ao excluir: ", error); 
+                    // Em caso de erro, reabilita o botão para nova tentativa
+                    btnText.classList.remove('hidden');
+                    loader.classList.add('hidden');
+                    button.disabled = false;
+                }
             }
             if (action === 'edit') {
                 const serviceDoc = await getDoc(doc(db, "servicos", id));
@@ -364,6 +419,7 @@
                     document.getElementById('edit-service-id').value = id;
                     document.getElementById('edit-service-name').value = data.nome;
                     document.getElementById('edit-service-value').value = data.valor;
+                    document.getElementById('edit-service-promo-value').value = data.promocao || '';
                     document.getElementById('edit-service-duration').value = data.duracaoMinutos;
                     editServiceModal.classList.remove('hidden');
                 }
@@ -373,16 +429,36 @@
         cancelEditButton.addEventListener('click', () => editServiceModal.classList.add('hidden'));
 
         saveEditButton.addEventListener('click', async () => {
+            const btnText = saveEditButton.querySelector('.btn-text');
+            const loader = saveEditButton.querySelector('.loader');
+            
+            btnText.classList.add('hidden');
+            loader.classList.remove('hidden');
+            saveEditButton.disabled = true;
+            cancelEditButton.disabled = true;
+
             const id = document.getElementById('edit-service-id').value;
+            const servicePromoValueInput = document.getElementById('edit-service-promo-value');
             const servicoRef = doc(db, "servicos", id);
+
+            const dataToUpdate = {
+                nome: document.getElementById('edit-service-name').value,
+                valor: parseFloat(document.getElementById('edit-service-value').value),
+                duracaoMinutos: parseInt(document.getElementById('edit-service-duration').value),
+                promocao: servicePromoValueInput.value ? parseFloat(servicePromoValueInput.value) : null
+            };
+
             try {
-                await updateDoc(servicoRef, {
-                    nome: document.getElementById('edit-service-name').value,
-                    valor: parseFloat(document.getElementById('edit-service-value').value),
-                    duracaoMinutos: parseInt(document.getElementById('edit-service-duration').value)
-                });
+                await updateDoc(servicoRef, dataToUpdate);
                 editServiceModal.classList.add('hidden');
-            } catch (error) { console.error("Erro ao atualizar serviço:", error); }
+            } catch (error) { 
+                console.error("Erro ao atualizar serviço:", error); 
+            } finally {
+                btnText.classList.remove('hidden');
+                loader.classList.add('hidden');
+                saveEditButton.disabled = false;
+                cancelEditButton.disabled = false;
+            }
         });
 
         // --- CRUD DE PROFISSIONAIS (Lógica de exibição atualizada) ---
