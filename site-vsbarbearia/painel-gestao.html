@@ -179,7 +179,14 @@
                             <h3 class="text-lg font-bold text-primary mb-4">Adicionar Profissional</h3>
                             <form id="add-professional-form" class="space-y-4">
                                 <input type="text" id="professional-name" required placeholder="Nome do Profissional" class="form-input w-full">
-                                <button type="submit" class="w-full justify-center btn-primary">Salvar Profissional</button>
+                                <input type="text" id="professional-function" required placeholder="Função (ex: Barbeiro)" class="form-input w-full">
+                                <input type="url" id="professional-photo" placeholder="URL da Foto (Opcional)" class="form-input w-full">
+                                <input type="number" id="professional-commission-services" step="1" min="0" max="100" placeholder="Comissão Serviços (%)" class="form-input w-full">
+                                <input type="number" id="professional-commission-products" step="1" min="0" max="100" placeholder="Comissão Produtos (%)" class="form-input w-full">
+                                <button type="submit" class="w-full justify-center btn-primary">
+                                    <span class="btn-text">Salvar Profissional</span>
+                                    <div class="loader hidden"></div>
+                                </button>
                             </form>
                         </div>
                         <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
@@ -229,6 +236,30 @@
                 <div class="mt-8 flex justify-end space-x-4">
                     <button id="cancel-edit-button" class="btn-secondary">Cancelar</button>
                     <button id="save-edit-button" class="btn-primary">
+                        <span class="btn-text">Salvar Alterações</span>
+                        <div class="loader hidden"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Edição de Profissional -->
+    <div id="edit-professional-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4">
+        <div class="relative w-full max-w-md">
+             <div class="modal-content rounded-lg shadow-xl p-6">
+                <h3 class="text-xl font-bold text-primary text-center mb-6">Editar Profissional</h3>
+                <form id="edit-professional-form" class="space-y-4 text-left">
+                    <input type="hidden" id="edit-professional-id">
+                    <input type="text" id="edit-professional-name" required placeholder="Nome do Profissional" class="form-input w-full">
+                    <input type="text" id="edit-professional-function" required placeholder="Função" class="form-input w-full">
+                    <input type="url" id="edit-professional-photo" placeholder="URL da Foto (Opcional)" class="form-input w-full">
+                    <input type="number" id="edit-professional-commission-services" step="1" min="0" max="100" placeholder="Comissão Serviços (%)" class="form-input w-full">
+                    <input type="number" id="edit-professional-commission-products" step="1" min="0" max="100" placeholder="Comissão Produtos (%)" class="form-input w-full">
+                </form>
+                <div class="mt-8 flex justify-end space-x-4">
+                    <button id="cancel-edit-professional-button" class="btn-secondary">Cancelar</button>
+                    <button id="save-edit-professional-button" class="btn-primary">
                         <span class="btn-text">Salvar Alterações</span>
                         <div class="loader hidden"></div>
                     </button>
@@ -314,41 +345,21 @@
         addServiceForm.addEventListener('submit', async (e) => { 
             e.preventDefault(); 
             const user = auth.currentUser; if (!user) return;
-            
             const submitBtn = addServiceForm.querySelector('button[type="submit"]');
             const btnText = submitBtn.querySelector('.btn-text');
             const loader = submitBtn.querySelector('.loader');
-
             btnText.classList.add('hidden');
             loader.classList.remove('hidden');
             submitBtn.disabled = true;
-
             const serviceName = document.getElementById('service-name').value; 
             const serviceValue = parseFloat(document.getElementById('service-value').value); 
             const servicePromoValueInput = document.getElementById('service-promo-value');
             const serviceDuration = parseInt(document.getElementById('service-duration').value);
-
-            const data = {
-                nome: serviceName,
-                valor: serviceValue,
-                duracaoMinutos: serviceDuration,
-                gestorId: user.uid
-            };
-
-            if (servicePromoValueInput.value) {
-                data.promocao = parseFloat(servicePromoValueInput.value);
-            }
-
-            try { 
-                await addDoc(collection(db, "servicos"), data); 
-                addServiceForm.reset(); 
-            } catch (error) { 
-                console.error("Erro ao adicionar serviço: ", error); 
-            } finally {
-                btnText.classList.remove('hidden');
-                loader.classList.add('hidden');
-                submitBtn.disabled = false;
-            }
+            const data = { nome: serviceName, valor: serviceValue, duracaoMinutos: serviceDuration, gestorId: user.uid };
+            if (servicePromoValueInput.value) { data.promocao = parseFloat(servicePromoValueInput.value); }
+            try { await addDoc(collection(db, "servicos"), data); addServiceForm.reset(); } 
+            catch (error) { console.error("Erro ao adicionar serviço: ", error); } 
+            finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false; }
         });
 
         let unsubscribeServices = null;
@@ -361,14 +372,10 @@
                 if (snapshot.empty) { servicesListDiv.innerHTML = '<p class="text-gray-400">Nenhum serviço cadastrado.</p>'; return; }
                 snapshot.forEach((doc) => {
                     const servico = doc.data(); const servicoId = doc.id;
-                    
                     let priceHtml = '';
                     if (servico.promocao && typeof servico.promocao === 'number') {
                         priceHtml = `<span class="font-bold text-primary">R$ ${servico.promocao.toFixed(2)}</span> <span class="text-xs line-through text-gray-500">R$ ${servico.valor.toFixed(2)}</span>`;
-                    } else {
-                        priceHtml = `R$ ${servico.valor.toFixed(2)}`;
-                    }
-
+                    } else { priceHtml = `R$ ${servico.valor.toFixed(2)}`; }
                     const servicoCard = document.createElement('div');
                     servicoCard.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex justify-between items-center';
                     servicoCard.innerHTML = `
@@ -393,24 +400,11 @@
             if (!button || !button.dataset.id) return;
             const id = button.dataset.id;
             const action = button.dataset.action;
-
             if (action === 'delete') {
-                const btnText = button.querySelector('.btn-text');
-                const loader = button.querySelector('.loader');
-
-                btnText.classList.add('hidden');
-                loader.classList.remove('hidden');
-                button.disabled = true;
-
-                try { 
-                    await deleteDoc(doc(db, "servicos", id)); 
-                } catch (error) { 
-                    console.error("Erro ao excluir: ", error); 
-                    // Em caso de erro, reabilita o botão para nova tentativa
-                    btnText.classList.remove('hidden');
-                    loader.classList.add('hidden');
-                    button.disabled = false;
-                }
+                const btnText = button.querySelector('.btn-text'); const loader = button.querySelector('.loader');
+                btnText.classList.add('hidden'); loader.classList.remove('hidden'); button.disabled = true;
+                try { await deleteDoc(doc(db, "servicos", id)); } 
+                catch (error) { console.error("Erro ao excluir: ", error); btnText.classList.remove('hidden'); loader.classList.add('hidden'); button.disabled = false; }
             }
             if (action === 'edit') {
                 const serviceDoc = await getDoc(doc(db, "servicos", id));
@@ -429,47 +423,55 @@
         cancelEditButton.addEventListener('click', () => editServiceModal.classList.add('hidden'));
 
         saveEditButton.addEventListener('click', async () => {
-            const btnText = saveEditButton.querySelector('.btn-text');
-            const loader = saveEditButton.querySelector('.loader');
-            
-            btnText.classList.add('hidden');
-            loader.classList.remove('hidden');
-            saveEditButton.disabled = true;
-            cancelEditButton.disabled = true;
-
+            const btnText = saveEditButton.querySelector('.btn-text'); const loader = saveEditButton.querySelector('.loader');
+            btnText.classList.add('hidden'); loader.classList.remove('hidden'); saveEditButton.disabled = true; cancelEditButton.disabled = true;
             const id = document.getElementById('edit-service-id').value;
             const servicePromoValueInput = document.getElementById('edit-service-promo-value');
             const servicoRef = doc(db, "servicos", id);
-
             const dataToUpdate = {
                 nome: document.getElementById('edit-service-name').value,
                 valor: parseFloat(document.getElementById('edit-service-value').value),
                 duracaoMinutos: parseInt(document.getElementById('edit-service-duration').value),
                 promocao: servicePromoValueInput.value ? parseFloat(servicePromoValueInput.value) : null
             };
-
-            try {
-                await updateDoc(servicoRef, dataToUpdate);
-                editServiceModal.classList.add('hidden');
-            } catch (error) { 
-                console.error("Erro ao atualizar serviço:", error); 
-            } finally {
-                btnText.classList.remove('hidden');
-                loader.classList.add('hidden');
-                saveEditButton.disabled = false;
-                cancelEditButton.disabled = false;
-            }
+            try { await updateDoc(servicoRef, dataToUpdate); editServiceModal.classList.add('hidden'); } 
+            catch (error) { console.error("Erro ao atualizar serviço:", error); } 
+            finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditButton.disabled = false; cancelEditButton.disabled = false; }
         });
 
         // --- CRUD DE PROFISSIONAIS (Lógica de exibição atualizada) ---
         const addProfessionalForm = document.getElementById('add-professional-form');
         const professionalsListDiv = document.getElementById('professionals-list');
+        const editProfessionalModal = document.getElementById('edit-professional-modal');
+        const cancelEditProfessionalButton = document.getElementById('cancel-edit-professional-button');
+        const saveEditProfessionalButton = document.getElementById('save-edit-professional-button');
         let unsubscribeProfessionals = null;
         
         addProfessionalForm.addEventListener('submit', async (e) => {
             e.preventDefault(); const user = auth.currentUser; if (!user) return;
+            const submitBtn = addProfessionalForm.querySelector('button[type="submit"]');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const loader = submitBtn.querySelector('.loader');
+            btnText.classList.add('hidden'); loader.classList.remove('hidden'); submitBtn.disabled = true;
+
             const name = document.getElementById('professional-name').value;
-            try { await addDoc(collection(db, "profissionais"), { nome: name, gestorId: user.uid }); addProfessionalForm.reset(); } catch (error) { console.error("Erro ao adicionar profissional:", error); }
+            const func = document.getElementById('professional-function').value;
+            const photoUrl = document.getElementById('professional-photo').value;
+            const comissaoServicos = document.getElementById('professional-commission-services').value;
+            const comissaoProdutos = document.getElementById('professional-commission-products').value;
+
+            const data = { 
+                nome: name, 
+                funcao: func, 
+                imgUrl: photoUrl,
+                comissaoServicos: comissaoServicos ? parseInt(comissaoServicos) : 0,
+                comissaoProdutos: comissaoProdutos ? parseInt(comissaoProdutos) : 0,
+                gestorId: user.uid 
+            };
+
+            try { await addDoc(collection(db, "profissionais"), data); addProfessionalForm.reset(); } 
+            catch (error) { console.error("Erro ao adicionar profissional:", error); }
+            finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false; }
         });
 
         function loadProfessionals(userId) {
@@ -480,13 +482,79 @@
                 if (snapshot.empty) { professionalsListDiv.innerHTML = '<p class="text-gray-400">Nenhum profissional cadastrado.</p>'; return; }
                 snapshot.forEach(doc => {
                     const professional = doc.data();
+                    const placeholderImg = `https://placehold.co/100x100/333333/FFFFFF?text=${professional.nome.charAt(0)}`;
                     const card = document.createElement('div');
-                    card.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex justify-between items-center';
-                    card.innerHTML = `<p class="font-bold text-white">${professional.nome}</p><button class="text-sm text-red-500 hover:text-red-400 font-semibold" onclick="deleteDocument('profissionais', '${doc.id}')"><i class="fas fa-trash-alt mr-1"></i>Excluir</button>`;
+                    card.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex items-center';
+                    card.innerHTML = `
+                        <img src="${professional.imgUrl || placeholderImg}" alt="${professional.nome}" class="w-16 h-16 rounded-full mr-4 object-cover border-2 border-gray-600" onerror="this.onerror=null;this.src='${placeholderImg}';">
+                        <div class="flex-grow">
+                            <p class="font-bold text-white">${professional.nome}</p>
+                            <p class="text-sm text-gray-400">${professional.funcao || 'Sem função'}</p>
+                            <div class="text-xs text-gray-500 mt-2 flex gap-4">
+                                <span><i class="fas fa-cut mr-1 text-primary/70"></i> Serv.: ${professional.comissaoServicos || 0}%</span>
+                                <span><i class="fas fa-box mr-1 text-primary/70"></i> Prod.: ${professional.comissaoProdutos || 0}%</span>
+                            </div>
+                        </div>
+                        <div class="space-x-2 sm:space-x-4">
+                            <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${doc.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
+                            <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${doc.id}" data-action="delete">
+                                <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
+                                <div class="loader hidden"></div>
+                            </button>
+                        </div>`;
                     professionalsListDiv.appendChild(card);
                 });
             });
         }
+
+        professionalsListDiv.addEventListener('click', async (e) => {
+            const button = e.target.closest('button');
+            if (!button || !button.dataset.id) return;
+            const id = button.dataset.id;
+            const action = button.dataset.action;
+
+            if (action === 'delete') {
+                const btnText = button.querySelector('.btn-text'); const loader = button.querySelector('.loader');
+                btnText.classList.add('hidden'); loader.classList.remove('hidden'); button.disabled = true;
+                try { await deleteDoc(doc(db, "profissionais", id)); }
+                catch(error) { console.error("Erro ao excluir profissional:", error); btnText.classList.remove('hidden'); loader.classList.add('hidden'); button.disabled = false;}
+            }
+            if (action === 'edit') {
+                const professionalDoc = await getDoc(doc(db, "profissionais", id));
+                if (professionalDoc.exists()) {
+                    const data = professionalDoc.data();
+                    document.getElementById('edit-professional-id').value = id;
+                    document.getElementById('edit-professional-name').value = data.nome;
+                    document.getElementById('edit-professional-function').value = data.funcao || '';
+                    document.getElementById('edit-professional-photo').value = data.imgUrl || '';
+                    document.getElementById('edit-professional-commission-services').value = data.comissaoServicos || '';
+                    document.getElementById('edit-professional-commission-products').value = data.comissaoProdutos || '';
+                    editProfessionalModal.classList.remove('hidden');
+                }
+            }
+        });
+        
+        cancelEditProfessionalButton.addEventListener('click', () => editProfessionalModal.classList.add('hidden'));
+
+        saveEditProfessionalButton.addEventListener('click', async () => {
+            const btnText = saveEditProfessionalButton.querySelector('.btn-text'); const loader = saveEditProfessionalButton.querySelector('.loader');
+            btnText.classList.add('hidden'); loader.classList.remove('hidden'); saveEditProfessionalButton.disabled = true; cancelEditProfessionalButton.disabled = true;
+            
+            const id = document.getElementById('edit-professional-id').value;
+            const professionalRef = doc(db, "profissionais", id);
+            const dataToUpdate = {
+                nome: document.getElementById('edit-professional-name').value,
+                funcao: document.getElementById('edit-professional-function').value,
+                imgUrl: document.getElementById('edit-professional-photo').value,
+                comissaoServicos: parseInt(document.getElementById('edit-professional-commission-services').value) || 0,
+                comissaoProdutos: parseInt(document.getElementById('edit-professional-commission-products').value) || 0,
+            };
+
+            try { await updateDoc(professionalRef, dataToUpdate); editProfessionalModal.classList.add('hidden'); }
+            catch(error) { console.error("Erro ao atualizar profissional:", error); }
+            finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditProfessionalButton.disabled = false; cancelEditProfessionalButton.disabled = false; }
+        });
+
 
         // --- CRUD DE UNIDADES (Lógica de exibição atualizada) ---
         const addUnitForm = document.getElementById('add-unit-form');
