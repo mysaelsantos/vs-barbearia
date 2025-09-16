@@ -598,13 +598,27 @@
         </div>
     </div>
 
+    <!-- NOVO Modal de Confirmação -->
+    <div id="confirmation-modal" class="hidden fixed inset-0 z-[100] overflow-y-auto modal-backdrop flex items-center justify-center p-4">
+        <div class="relative w-full max-w-md">
+             <div class="modal-content rounded-lg shadow-xl p-6">
+                <h3 class="text-xl font-bold text-white text-center mb-4">Confirmar Ação</h3>
+                <p id="confirmation-message" class="text-center text-gray-300 mb-8">Você tem certeza?</p>
+                <div class="flex justify-center space-x-4">
+                    <button id="cancel-confirmation-button" class="btn-secondary">Cancelar</button>
+                    <button id="confirm-action-button" class="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- SDK do Firebase -->
     <script type="module">
         // Importações do Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, getDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, getDoc, query, where, getDocs, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // Configuração do Firebase
         const firebaseConfig = {
@@ -748,7 +762,6 @@
                             <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${servicoId}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
                             <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${servicoId}" data-action="delete">
                                 <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
-                                <div class="loader hidden"></div>
                             </button>
                         </div>`;
                     servicesListDiv.appendChild(servicoCard);
@@ -762,10 +775,7 @@
             const id = button.dataset.id;
             const action = button.dataset.action;
             if (action === 'delete') {
-                const btnText = button.querySelector('.btn-text'); const loader = button.querySelector('.loader');
-                btnText.classList.add('hidden'); loader.classList.remove('hidden'); button.disabled = true;
-                try { await deleteDoc(doc(db, "servicos", id)); } 
-                catch (error) { console.error("Erro ao excluir: ", error); btnText.classList.remove('hidden'); loader.classList.add('hidden'); button.disabled = false; }
+                window.deleteDocument('servicos', id);
             }
             if (action === 'edit') {
                 const serviceDoc = await getDoc(doc(db, "servicos", id));
@@ -861,7 +871,6 @@
                             <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${doc.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
                             <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${doc.id}" data-action="delete">
                                 <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
-                                <div class="loader hidden"></div>
                             </button>
                         </div>`;
                     professionalsListDiv.appendChild(card);
@@ -876,10 +885,7 @@
             const action = button.dataset.action;
 
             if (action === 'delete') {
-                const btnText = button.querySelector('.btn-text'); const loader = button.querySelector('.loader');
-                btnText.classList.add('hidden'); loader.classList.remove('hidden'); button.disabled = true;
-                try { await deleteDoc(doc(db, "profissionais", id)); }
-                catch(error) { console.error("Erro ao excluir profissional:", error); btnText.classList.remove('hidden'); loader.classList.add('hidden'); button.disabled = false;}
+                window.deleteDocument('profissionais', id);
             }
             if (action === 'edit') {
                 const professionalDoc = await getDoc(doc(db, "profissionais", id));
@@ -972,7 +978,6 @@
                             <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${doc.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
                             <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${doc.id}" data-action="delete">
                                 <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
-                                <div class="loader hidden"></div>
                             </button>
                         </div>`;
                     unitsListDiv.appendChild(card);
@@ -987,10 +992,7 @@
             const action = button.dataset.action;
 
             if (action === 'delete') {
-                const btnText = button.querySelector('.btn-text'); const loader = button.querySelector('.loader');
-                btnText.classList.add('hidden'); loader.classList.remove('hidden'); button.disabled = true;
-                try { await deleteDoc(doc(db, "unidades", id)); }
-                catch(error) { console.error("Erro ao excluir unidade:", error); btnText.classList.remove('hidden'); loader.classList.add('hidden'); button.disabled = false;}
+                window.deleteDocument('unidades', id);
             }
             if (action === 'edit') {
                 const unitDoc = await getDoc(doc(db, "unidades", id));
@@ -1027,7 +1029,7 @@
         });
 
 
-        // --- NOVA LÓGICA DA AGENDA ---
+        // --- NOVA LÓGICA DA AGENDA (CORRIGIDA) ---
         const datePicker = document.getElementById('date-picker');
         const prevDayBtn = document.getElementById('prev-day-btn');
         const nextDayBtn = document.getElementById('next-day-btn');
@@ -1036,7 +1038,6 @@
         const loadingAgenda = document.getElementById('loading-agenda');
         let unsubscribeAgenda = null;
 
-        // Formata data para yyyy-mm-dd para o input
         function formatDateForInput(date) {
             const year = date.getFullYear();
             const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -1044,13 +1045,11 @@
             return `${year}-${month}-${day}`;
         }
         
-        // Atualiza a data no picker e no título
         function updateDateDisplay() {
             datePicker.value = formatDateForInput(agendaState.currentDate);
             agendaTitle.textContent = `Agenda - ${agendaState.currentDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}`;
         }
 
-        // Event Listeners para navegação de data
         prevDayBtn.addEventListener('click', () => {
             agendaState.currentDate.setDate(agendaState.currentDate.getDate() - 1);
             updateDateDisplay();
@@ -1068,46 +1067,52 @@
             loadAgendaData(auth.currentUser.uid);
         });
         
-        // Função para inicializar a agenda
         function initializeAgenda(userId) {
             updateDateDisplay();
             loadAgendaData(userId);
         }
 
-        // Função principal para carregar os dados da agenda
         async function loadAgendaData(userId) {
             loadingAgenda.classList.remove('hidden');
             agendaGridView.classList.add('hidden');
 
             if (unsubscribeAgenda) unsubscribeAgenda();
 
-            // 1. Buscar profissionais
-            const professionalsQuery = query(collection(db, "profissionais"), where("gestorId", "==", userId));
-            const professionalsSnapshot = await getDocs(professionalsQuery);
-            agendaState.professionals = professionalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            try {
+                const professionalsQuery = query(collection(db, "profissionais"), where("gestorId", "==", userId));
+                const professionalsSnapshot = await getDocs(professionalsQuery);
+                agendaState.professionals = professionalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-            // 2. Buscar agendamentos para a data selecionada
-            const startOfDay = new Date(agendaState.currentDate);
-            startOfDay.setHours(0, 0, 0, 0);
-            const endOfDay = new Date(agendaState.currentDate);
-            endOfDay.setHours(23, 59, 59, 999);
+                const startOfDay = new Date(agendaState.currentDate);
+                startOfDay.setHours(0, 0, 0, 0);
+                const endOfDay = new Date(agendaState.currentDate);
+                endOfDay.setHours(23, 59, 59, 999);
 
-            const appointmentsQuery = query(collection(db, "agendamentos"), 
-                where("gestorId", "==", userId),
-                where("data", ">=", startOfDay),
-                where("data", "<=", endOfDay)
-            );
+                const appointmentsQuery = query(collection(db, "agendamentos"), 
+                    where("gestorId", "==", userId),
+                    where("data", ">=", startOfDay),
+                    where("data", "<=", endOfDay)
+                );
 
-            // Listener para atualizações em tempo real
-            unsubscribeAgenda = onSnapshot(appointmentsQuery, (snapshot) => {
-                agendaState.appointments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderAgendaGrid(); // Renderiza a grade com os dados atualizados
-            });
+                unsubscribeAgenda = onSnapshot(appointmentsQuery, (snapshot) => {
+                    agendaState.appointments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderAgendaGrid();
+                }, (error) => {
+                    console.error("Erro no listener de agendamentos:", error);
+                    agendaGridView.innerHTML = '<p class="text-center text-red-500 p-8">Ocorreu um erro ao carregar os agendamentos.</p>';
+                    loadingAgenda.classList.add('hidden');
+                    agendaGridView.classList.remove('hidden');
+                });
+            } catch (error) {
+                console.error("Erro ao carregar dados da agenda:", error);
+                agendaGridView.innerHTML = `<p class="text-center text-red-500 p-8">Ocorreu um erro ao carregar os dados da agenda. Verifique o console para mais detalhes.</p>`;
+                loadingAgenda.classList.add('hidden');
+                agendaGridView.classList.remove('hidden');
+            }
         }
         
-        // Função para renderizar a grade da agenda
         function renderAgendaGrid() {
-            agendaGridView.innerHTML = ''; // Limpa a visualização anterior
+            agendaGridView.innerHTML = '';
             
             if (agendaState.professionals.length === 0) {
                  agendaGridView.innerHTML = '<p class="text-center text-gray-400 p-8">Nenhum profissional cadastrado. Adicione um na aba "Profissionais" para ver a agenda.</p>';
@@ -1119,17 +1124,16 @@
             const grid = document.createElement('div');
             grid.className = 'agenda-grid';
 
-            // --- Coluna de Horários ---
             const timeColumn = document.createElement('div');
             timeColumn.className = 'time-column';
             const timeHeader = document.createElement('div');
-            timeHeader.className = 'professional-header'; // Mesmo estilo do cabeçalho
+            timeHeader.className = 'professional-header';
             timeHeader.innerHTML = `<i class="far fa-clock"></i>`;
             timeColumn.appendChild(timeHeader);
             
             const timeSlotsContainer = document.createElement('div');
-            const startTime = 8; // 8:00
-            const endTime = 20; // 20:00
+            const startTime = 8;
+            const endTime = 20;
             for (let hour = startTime; hour < endTime; hour++) {
                 for (let minute = 0; minute < 60; minute += agendaState.interval) {
                     const timeSlot = document.createElement('div');
@@ -1141,19 +1145,16 @@
             timeColumn.appendChild(timeSlotsContainer);
             grid.appendChild(timeColumn);
 
-            // --- Colunas dos Profissionais ---
             agendaState.professionals.forEach(prof => {
                 const profColumn = document.createElement('div');
                 profColumn.className = 'professional-column';
                 profColumn.dataset.professionalId = prof.id;
 
-                // Cabeçalho do profissional
                 const profHeader = document.createElement('div');
                 profHeader.className = 'professional-header';
-                profHeader.textContent = prof.nome.split(' ')[0]; // Pega só o primeiro nome
+                profHeader.textContent = prof.nome.split(' ')[0];
                 profColumn.appendChild(profHeader);
                 
-                // Linhas de horário
                 const linesContainer = document.createElement('div');
                 for (let hour = startTime; hour < endTime; hour++) {
                     for (let minute = 0; minute < 60; minute += agendaState.interval) {
@@ -1167,8 +1168,6 @@
             });
             
             agendaGridView.appendChild(grid);
-            
-            // --- Posicionar Agendamentos ---
             placeAppointments();
 
             loadingAgenda.classList.add('hidden');
@@ -1183,11 +1182,11 @@
                 const column = agendaGridView.querySelector(`.professional-column[data-professional-id="${professionalId}"]`);
                 if (!column) return;
 
-                const apptDate = appt.data.toDate(); // Converte Timestamp do Firebase para Date
+                const apptDate = appt.data.toDate();
                 const startHour = 8;
                 const totalMinutesFromStart = (apptDate.getHours() - startHour) * 60 + apptDate.getMinutes();
 
-                const slotHeight = 40; // Corresponde à altura do .time-slot-line em CSS
+                const slotHeight = 40;
                 const pixelsPerMinute = slotHeight / agendaState.interval;
 
                 const topPosition = totalMinutesFromStart * pixelsPerMinute;
@@ -1203,10 +1202,9 @@
                     <p class="text-xs">${appt.servico?.nome || 'Serviço'}</p>
                 `;
                 
-                // Adiciona o card ao container de linhas para que ele fique por cima delas
                 const linesContainer = column.querySelector('div:not(.professional-header)');
                 if (linesContainer) {
-                    linesContainer.style.position = 'relative'; // Garante o contexto de posicionamento
+                    linesContainer.style.position = 'relative';
                     linesContainer.appendChild(card);
                 }
             });
@@ -1236,7 +1234,6 @@
                 gestorId: user.uid
             };
             
-            // A coleção para clientes do app é 'users'
             try { await addDoc(collection(db, "users"), data); addClientForm.reset(); }
             catch(error) { console.error("Erro ao adicionar cliente:", error); }
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false; }
@@ -1244,7 +1241,6 @@
 
         function loadClients(userId) {
             if (unsubscribeClients) unsubscribeClients();
-            // A coleção para clientes do app é 'users'
             const clientsCollection = collection(db, "users");
             unsubscribeClients = onSnapshot(clientsCollection, (snapshot) => {
                 loadingClientsP.classList.add('hidden');
@@ -1273,7 +1269,6 @@
                              <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${doc.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
                              <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${doc.id}" data-action="delete">
                                  <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
-                                 <div class="loader hidden"></div>
                              </button>
                         </div>`;
                     clientsListDiv.appendChild(card);
@@ -1288,10 +1283,7 @@
             const action = button.dataset.action;
 
             if (action === 'delete') {
-                const btnText = button.querySelector('.btn-text'); const loader = button.querySelector('.loader');
-                btnText.classList.add('hidden'); loader.classList.remove('hidden'); button.disabled = true;
-                try { await deleteDoc(doc(db, "users", id)); }
-                catch(error) { console.error("Erro ao excluir cliente:", error); btnText.classList.remove('hidden'); loader.classList.add('hidden'); button.disabled = false;}
+                window.deleteDocument('users', id);
             }
             if (action === 'edit') {
                 const clientDoc = await getDoc(doc(db, "users", id));
@@ -1385,7 +1377,6 @@
                             <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${doc.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
                             <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${doc.id}" data-action="delete">
                                 <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
-                                <div class="loader hidden"></div>
                             </button>
                         </div>
                     `;
@@ -1401,10 +1392,7 @@
             const action = button.dataset.action;
 
             if (action === 'delete') {
-                const btnText = button.querySelector('.btn-text'); const loader = button.querySelector('.loader');
-                btnText.classList.add('hidden'); loader.classList.remove('hidden'); button.disabled = true;
-                try { await deleteDoc(doc(db, "planos", id)); }
-                catch(error) { console.error("Erro ao excluir plano:", error); btnText.classList.remove('hidden'); loader.classList.add('hidden'); button.disabled = false;}
+                window.deleteDocument('planos', id);
             }
 
             if (action === 'edit') {
@@ -1518,7 +1506,6 @@
                             <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${doc.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
                             <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${doc.id}" data-action="delete">
                                 <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
-                                <div class="loader hidden"></div>
                             </button>
                         </div>`;
                     goalsListDiv.appendChild(card);
@@ -1533,10 +1520,7 @@
             const action = button.dataset.action;
 
             if (action === 'delete') {
-                const btnText = button.querySelector('.btn-text'); const loader = button.querySelector('.loader');
-                btnText.classList.add('hidden'); loader.classList.remove('hidden'); button.disabled = true;
-                try { await deleteDoc(doc(db, "metas", id)); }
-                catch(error) { console.error("Erro ao excluir meta:", error); btnText.classList.remove('hidden'); loader.classList.add('hidden'); button.disabled = false;}
+                window.deleteDocument('metas', id);
             }
 
             if (action === 'edit') {
@@ -1579,7 +1563,6 @@
         const agendaSettingsForm = document.getElementById('agenda-settings-form');
         const agendaSettingsFeedback = document.getElementById('agenda-settings-feedback');
         
-        // Alteração de senha
         changePasswordForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const submitBtn = changePasswordForm.querySelector('button[type="submit"]');
@@ -1608,7 +1591,6 @@
             }
         });
         
-        // Salvar configurações da agenda
         agendaSettingsForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const user = auth.currentUser; if (!user) return;
@@ -1628,7 +1610,7 @@
             const settingsRef = doc(db, 'configuracoes', user.uid);
             try {
                 await updateDoc(settingsRef, { agendaInterval: newInterval, updatedAt: serverTimestamp() });
-                agendaState.interval = newInterval; // Atualiza o estado local
+                agendaState.interval = newInterval;
                 agendaSettingsFeedback.textContent = 'Configurações salvas!';
                 agendaSettingsFeedback.className = 'text-sm h-4 text-green-500';
             } catch(error) {
@@ -1640,7 +1622,6 @@
             }
         });
         
-        // Carregar configurações da agenda ao logar
         async function loadAgendaSettings(userId) {
             const settingsRef = doc(db, 'configuracoes', userId);
             const docSnap = await getDoc(settingsRef);
@@ -1649,7 +1630,6 @@
                 agendaState.interval = settings.agendaInterval || 30;
                 document.getElementById('agenda-interval').value = agendaState.interval;
             } else {
-                 // Se não existir, cria um documento com o valor padrão
                 try {
                     await setDoc(settingsRef, { agendaInterval: 30, createdAt: serverTimestamp() });
                 } catch(error) { console.error("Erro ao criar doc de config:", error); }
@@ -1712,14 +1692,43 @@
             });
         }
 
+        // --- MODAL DE CONFIRMAÇÃO E FUNÇÃO GLOBAL DE EXCLUSÃO ---
+        const confirmationModal = document.getElementById('confirmation-modal');
+        const confirmationMessage = document.getElementById('confirmation-message');
+        const cancelConfirmationButton = document.getElementById('cancel-confirmation-button');
+        const confirmActionButton = document.getElementById('confirm-action-button');
+        let confirmationCallback = null;
 
-        // --- FUNÇÃO GLOBAL DE EXCLUSÃO ---
-        window.deleteDocument = async (collectionName, docId) => {
-            if (confirm(`Tem certeza que deseja excluir este item da coleção ${collectionName}?`)) {
-                 try { await deleteDoc(doc(db, collectionName, docId)); } catch(e) { console.error("Erro ao deletar:", e); }
-            }
+        function showConfirmationModal(message, callback) {
+            confirmationMessage.textContent = message;
+            confirmationCallback = callback;
+            confirmationModal.classList.remove('hidden');
         }
+        
+        cancelConfirmationButton.addEventListener('click', () => {
+            confirmationModal.classList.add('hidden');
+            confirmationCallback = null;
+        });
 
+        confirmActionButton.addEventListener('click', () => {
+            if (confirmationCallback) {
+                confirmationCallback();
+            }
+            confirmationModal.classList.add('hidden');
+            confirmationCallback = null;
+        });
+
+        window.deleteDocument = (collectionName, docId) => {
+            const message = `Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.`;
+            showConfirmationModal(message, async () => {
+                try { 
+                    await deleteDoc(doc(db, collectionName, docId)); 
+                } catch(e) { 
+                    console.error("Erro ao deletar:", e);
+                }
+            });
+        }
     </script>
 </body>
 </html>
+
