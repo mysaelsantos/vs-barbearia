@@ -30,7 +30,7 @@
             color: #fbb62c;
         }
         
-        /* Estilos dos Formulários Inspirados no App */
+        /* Estilos dos Formulários */
         .form-input, .form-textarea, .form-select {
             background-color: #333;
             border: 1px solid #555;
@@ -100,6 +100,61 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        /* --- NOVOS ESTILOS PARA A AGENDA --- */
+        #agenda-container {
+            overflow-x: auto; /* Permite scroll horizontal em telas pequenas */
+        }
+        .agenda-grid {
+            display: flex;
+            min-width: 800px; /* Largura mínima para a grade não quebrar */
+        }
+        .time-column {
+            flex: 0 0 70px; /* Coluna de horários com largura fixa */
+        }
+        .professional-column {
+            flex: 1 1 0px; /* Colunas dos profissionais flexíveis */
+            border-left: 1px solid #444;
+            position: relative; /* Para posicionar os agendamentos */
+        }
+        .time-slot, .professional-header {
+            height: 40px; /* Altura do slot de 30min e do cabeçalho */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+        .professional-header {
+            font-weight: 600;
+            color: #fff;
+            border-bottom: 1px solid #444;
+        }
+        .time-slot-line {
+            height: 40px;
+            border-bottom: 1px solid #333;
+            box-sizing: border-box;
+        }
+        .appointment-card {
+            position: absolute;
+            left: 5px;
+            right: 5px;
+            background-color: #005c99; /* Cor base do agendamento */
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            color: white;
+            overflow: hidden;
+            box-sizing: border-box;
+            border-left: 3px solid #00bfff; /* Cor da borda */
+            z-index: 10;
+        }
+        .appointment-card p {
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     </style>
 </head>
@@ -228,12 +283,27 @@
                     </div>
                 </div>
                 
-                <!-- Conteúdo da Aba Agenda (inicialmente escondido) -->
+                <!-- Conteúdo da Aba Agenda (MODIFICADO) -->
                 <div id="content-agenda" class="hidden">
-                    <div class="bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                        <h3 class="text-lg font-bold text-primary mb-4">Próximos Agendamentos</h3>
-                        <div id="appointments-list" class="space-y-4">
-                            <p id="loading-appointments" class="text-gray-400">Carregando agendamentos...</p>
+                    <div class="bg-[#1e1e1e] p-4 sm:p-6 rounded-lg border border-gray-800">
+                        <!-- Cabeçalho da Agenda -->
+                        <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                            <h3 id="agenda-title" class="text-lg font-bold text-primary">Agenda</h3>
+                            <div class="flex items-center gap-2 sm:gap-4">
+                                <button id="prev-day-btn" class="btn-secondary px-3 py-2"><i class="fas fa-chevron-left"></i></button>
+                                <input type="date" id="date-picker" class="form-input !p-2 text-center">
+                                <button id="next-day-btn" class="btn-secondary px-3 py-2"><i class="fas fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+                        <!-- Container da Grade da Agenda -->
+                        <div id="agenda-container">
+                             <div id="loading-agenda" class="text-center p-8">
+                                <p class="text-gray-400">Carregando agenda...</p>
+                                <div class="loader mx-auto mt-4" style="width: 30px; height: 30px;"></div>
+                            </div>
+                            <div id="agenda-grid-view" class="hidden">
+                                <!-- A grade será gerada pelo JavaScript aqui -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -321,7 +391,7 @@
                     </div>
                 </div>
 
-                 <!-- Conteúdo da Aba Configurações (inicialmente escondido) -->
+                 <!-- Conteúdo da Aba Configurações (MODIFICADO) -->
                 <div id="content-configuracoes" class="hidden">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Seção Minha Conta -->
@@ -338,6 +408,7 @@
                                 </button>
                             </form>
                         </div>
+                        
                         <!-- Seção Usuários do Painel -->
                         <div class="bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
                             <h3 class="text-lg font-bold text-primary mb-4">Usuários do Painel</h3>
@@ -361,6 +432,23 @@
                                    <p id="loading-panel-users">Carregando...</p>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- NOVA Seção Configurações da Agenda -->
+                        <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                             <h3 class="text-lg font-bold text-primary mb-4">Configurações da Agenda</h3>
+                             <form id="agenda-settings-form" class="space-y-4">
+                                <label for="agenda-interval" class="block text-sm font-medium text-gray-300">Intervalo padrão dos serviços (minutos)</label>
+                                <input type="number" id="agenda-interval" value="30" class="form-input w-full max-w-xs" placeholder="Ex: 30">
+                                <p class="text-xs text-gray-500">Este valor define a grade de horários da agenda. Agendamentos com durações diferentes irão se ajustar.</p>
+                                <p id="agenda-settings-feedback" class="text-sm h-4"></p>
+                                <div>
+                                    <button type="submit" class="btn-primary">
+                                        <span class="btn-text">Salvar Configurações</span>
+                                        <div class="loader hidden"></div>
+                                    </button>
+                                </div>
+                             </form>
                         </div>
                     </div>
                 </div>
@@ -516,7 +604,7 @@
         // Importações do Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, getDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, getDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // Configuração do Firebase
         const firebaseConfig = {
@@ -531,6 +619,14 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        
+        // Estado global para a agenda
+        let agendaState = {
+            currentDate: new Date(),
+            interval: 30, // Intervalo padrão em minutos
+            professionals: [],
+            appointments: []
+        };
 
         // --- Lógica de Autenticação ---
         const authSection = document.getElementById('auth-section');
@@ -548,7 +644,8 @@
                 authSection.classList.add('hidden');
                 panelSection.classList.remove('hidden');
                 userEmailSpan.textContent = user.email;
-                loadServices(user.uid);
+                loadServices(user.uid); // Carrega a primeira aba por padrão
+                loadAgendaSettings(user.uid); // Carrega as configurações da agenda
             } else {
                 authSection.classList.remove('hidden');
                 panelSection.classList.add('hidden');
@@ -583,10 +680,11 @@
                 const user = auth.currentUser;
                 if (!user) return;
 
+                // Carrega os dados da aba selecionada
                 if (tab.id === 'tab-servicos') loadServices(user.uid);
                 if (tab.id === 'tab-profissionais') loadProfessionals(user.uid);
                 if (tab.id === 'tab-unidades') loadUnits(user.uid);
-                if (tab.id === 'tab-agenda') loadAppointments(user.uid);
+                if (tab.id === 'tab-agenda') initializeAgenda(user.uid);
                 if (tab.id === 'tab-clientes') loadClients(user.uid);
                 if (tab.id === 'tab-planos') loadPlans(user.uid);
                 if (tab.id === 'tab-metas') loadGoals(user.uid);
@@ -739,7 +837,8 @@
 
         function loadProfessionals(userId) {
             if (unsubscribeProfessionals) unsubscribeProfessionals();
-            unsubscribeProfessionals = onSnapshot(collection(db, "profissionais"), (snapshot) => {
+            const q = query(collection(db, "profissionais"), where("gestorId", "==", userId));
+            unsubscribeProfessionals = onSnapshot(q, (snapshot) => {
                 document.getElementById('loading-professionals').classList.add('hidden');
                 professionalsListDiv.innerHTML = '';
                 if (snapshot.empty) { professionalsListDiv.innerHTML = '<p class="text-gray-400">Nenhum profissional cadastrado.</p>'; return; }
@@ -848,7 +947,8 @@
 
         function loadUnits(userId) {
             if (unsubscribeUnits) unsubscribeUnits();
-            unsubscribeUnits = onSnapshot(collection(db, "unidades"), (snapshot) => {
+            const q = query(collection(db, "unidades"), where("gestorId", "==", userId));
+            unsubscribeUnits = onSnapshot(q, (snapshot) => {
                 document.getElementById('loading-units').classList.add('hidden');
                 unitsListDiv.innerHTML = '';
                 if (snapshot.empty) { unitsListDiv.innerHTML = '<p class="text-gray-400">Nenhuma unidade cadastrada.</p>'; return; }
@@ -927,53 +1027,188 @@
         });
 
 
-        // --- CRUD DE AGENDAMENTOS ---
-        const appointmentsListDiv = document.getElementById('appointments-list');
-        const loadingAppointmentsP = document.getElementById('loading-appointments');
-        let unsubscribeAppointments = null;
+        // --- NOVA LÓGICA DA AGENDA ---
+        const datePicker = document.getElementById('date-picker');
+        const prevDayBtn = document.getElementById('prev-day-btn');
+        const nextDayBtn = document.getElementById('next-day-btn');
+        const agendaTitle = document.getElementById('agenda-title');
+        const agendaGridView = document.getElementById('agenda-grid-view');
+        const loadingAgenda = document.getElementById('loading-agenda');
+        let unsubscribeAgenda = null;
 
-        async function loadAppointments(userId) {
-            if (unsubscribeAppointments) unsubscribeAppointments();
+        // Formata data para yyyy-mm-dd para o input
+        function formatDateForInput(date) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        // Atualiza a data no picker e no título
+        function updateDateDisplay() {
+            datePicker.value = formatDateForInput(agendaState.currentDate);
+            agendaTitle.textContent = `Agenda - ${agendaState.currentDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}`;
+        }
+
+        // Event Listeners para navegação de data
+        prevDayBtn.addEventListener('click', () => {
+            agendaState.currentDate.setDate(agendaState.currentDate.getDate() - 1);
+            updateDateDisplay();
+            loadAgendaData(auth.currentUser.uid);
+        });
+        nextDayBtn.addEventListener('click', () => {
+            agendaState.currentDate.setDate(agendaState.currentDate.getDate() + 1);
+            updateDateDisplay();
+            loadAgendaData(auth.currentUser.uid);
+        });
+        datePicker.addEventListener('change', () => {
+            const [year, month, day] = datePicker.value.split('-').map(Number);
+            agendaState.currentDate = new Date(year, month - 1, day);
+            updateDateDisplay();
+            loadAgendaData(auth.currentUser.uid);
+        });
+        
+        // Função para inicializar a agenda
+        function initializeAgenda(userId) {
+            updateDateDisplay();
+            loadAgendaData(userId);
+        }
+
+        // Função principal para carregar os dados da agenda
+        async function loadAgendaData(userId) {
+            loadingAgenda.classList.remove('hidden');
+            agendaGridView.classList.add('hidden');
+
+            if (unsubscribeAgenda) unsubscribeAgenda();
+
+            // 1. Buscar profissionais
+            const professionalsQuery = query(collection(db, "profissionais"), where("gestorId", "==", userId));
+            const professionalsSnapshot = await getDocs(professionalsQuery);
+            agendaState.professionals = professionalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            // 2. Buscar agendamentos para a data selecionada
+            const startOfDay = new Date(agendaState.currentDate);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(agendaState.currentDate);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            const appointmentsQuery = query(collection(db, "agendamentos"), 
+                where("gestorId", "==", userId),
+                where("data", ">=", startOfDay),
+                where("data", "<=", endOfDay)
+            );
+
+            // Listener para atualizações em tempo real
+            unsubscribeAgenda = onSnapshot(appointmentsQuery, (snapshot) => {
+                agendaState.appointments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderAgendaGrid(); // Renderiza a grade com os dados atualizados
+            });
+        }
+        
+        // Função para renderizar a grade da agenda
+        function renderAgendaGrid() {
+            agendaGridView.innerHTML = ''; // Limpa a visualização anterior
             
-            const appointmentsCollection = collection(db, "agendamentos");
-            unsubscribeAppointments = onSnapshot(appointmentsCollection, async (snapshot) => {
-                loadingAppointmentsP.classList.add('hidden');
-                appointmentsListDiv.innerHTML = '';
-                if (snapshot.empty) {
-                    appointmentsListDiv.innerHTML = '<p class="text-gray-400">Nenhum agendamento encontrado.</p>';
-                    return;
+            if (agendaState.professionals.length === 0) {
+                 agendaGridView.innerHTML = '<p class="text-center text-gray-400 p-8">Nenhum profissional cadastrado. Adicione um na aba "Profissionais" para ver a agenda.</p>';
+                 loadingAgenda.classList.add('hidden');
+                 agendaGridView.classList.remove('hidden');
+                 return;
+            }
+
+            const grid = document.createElement('div');
+            grid.className = 'agenda-grid';
+
+            // --- Coluna de Horários ---
+            const timeColumn = document.createElement('div');
+            timeColumn.className = 'time-column';
+            const timeHeader = document.createElement('div');
+            timeHeader.className = 'professional-header'; // Mesmo estilo do cabeçalho
+            timeHeader.innerHTML = `<i class="far fa-clock"></i>`;
+            timeColumn.appendChild(timeHeader);
+            
+            const timeSlotsContainer = document.createElement('div');
+            const startTime = 8; // 8:00
+            const endTime = 20; // 20:00
+            for (let hour = startTime; hour < endTime; hour++) {
+                for (let minute = 0; minute < 60; minute += agendaState.interval) {
+                    const timeSlot = document.createElement('div');
+                    timeSlot.className = 'time-slot';
+                    timeSlot.textContent = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+                    timeSlotsContainer.appendChild(timeSlot);
                 }
+            }
+            timeColumn.appendChild(timeSlotsContainer);
+            grid.appendChild(timeColumn);
 
-                const appointmentPromises = snapshot.docs.map(async (appointmentDoc) => {
-                    const appointment = appointmentDoc.data();
-                    
-                    const serviceName = appointment.servico?.nome || 'Serviço não encontrado';
-                    const professionalName = appointment.barbeiro?.nome || 'Profissional não encontrado';
-                    const unitName = appointment.unidade?.nome || 'Unidade não encontrada';
-                    const clientName = appointment.cliente?.nome || 'Cliente não identificado';
+            // --- Colunas dos Profissionais ---
+            agendaState.professionals.forEach(prof => {
+                const profColumn = document.createElement('div');
+                profColumn.className = 'professional-column';
+                profColumn.dataset.professionalId = prof.id;
 
-                    const appointmentDate = new Date(appointment.data);
-                    const formattedDate = appointmentDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
-                    const formattedTime = appointmentDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
-                    const card = document.createElement('div');
-                    card.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4';
-                    card.innerHTML = `
-                        <div class="flex-grow">
-                            <p class="font-bold text-white text-lg">${serviceName}</p>
-                            <p class="text-sm text-gray-400">com <span class="font-semibold text-gray-300">${professionalName}</span></p>
-                            <p class="text-xs text-gray-500 mt-1">em <span class="font-semibold">${unitName}</span></p>
-                        </div>
-                        <div class="text-left sm:text-right w-full sm:w-auto">
-                             <p class="font-bold text-primary">${formattedDate} às ${formattedTime}</p>
-                             <p class="text-sm text-gray-300">Cliente: ${clientName}</p>
-                        </div>
-                    `;
-                    return card;
-                });
+                // Cabeçalho do profissional
+                const profHeader = document.createElement('div');
+                profHeader.className = 'professional-header';
+                profHeader.textContent = prof.nome.split(' ')[0]; // Pega só o primeiro nome
+                profColumn.appendChild(profHeader);
                 
-                const appointmentCards = await Promise.all(appointmentPromises);
-                appointmentCards.forEach(card => appointmentsListDiv.appendChild(card));
+                // Linhas de horário
+                const linesContainer = document.createElement('div');
+                for (let hour = startTime; hour < endTime; hour++) {
+                    for (let minute = 0; minute < 60; minute += agendaState.interval) {
+                         const line = document.createElement('div');
+                         line.className = 'time-slot-line';
+                         linesContainer.appendChild(line);
+                    }
+                }
+                profColumn.appendChild(linesContainer);
+                grid.appendChild(profColumn);
+            });
+            
+            agendaGridView.appendChild(grid);
+            
+            // --- Posicionar Agendamentos ---
+            placeAppointments();
+
+            loadingAgenda.classList.add('hidden');
+            agendaGridView.classList.remove('hidden');
+        }
+
+        function placeAppointments() {
+            agendaState.appointments.forEach(appt => {
+                const professionalId = appt.barbeiro?.id;
+                if (!professionalId) return;
+
+                const column = agendaGridView.querySelector(`.professional-column[data-professional-id="${professionalId}"]`);
+                if (!column) return;
+
+                const apptDate = appt.data.toDate(); // Converte Timestamp do Firebase para Date
+                const startHour = 8;
+                const totalMinutesFromStart = (apptDate.getHours() - startHour) * 60 + apptDate.getMinutes();
+
+                const slotHeight = 40; // Corresponde à altura do .time-slot-line em CSS
+                const pixelsPerMinute = slotHeight / agendaState.interval;
+
+                const topPosition = totalMinutesFromStart * pixelsPerMinute;
+                const duration = appt.servico?.duracaoMinutos || agendaState.interval;
+                const height = duration * pixelsPerMinute;
+
+                const card = document.createElement('div');
+                card.className = 'appointment-card';
+                card.style.top = `${topPosition}px`;
+                card.style.height = `${height}px`;
+                card.innerHTML = `
+                    <p class="font-bold">${appt.cliente?.nome || 'Cliente'}</p>
+                    <p class="text-xs">${appt.servico?.nome || 'Serviço'}</p>
+                `;
+                
+                // Adiciona o card ao container de linhas para que ele fique por cima delas
+                const linesContainer = column.querySelector('div:not(.professional-header)');
+                if (linesContainer) {
+                    linesContainer.style.position = 'relative'; // Garante o contexto de posicionamento
+                    linesContainer.appendChild(card);
+                }
             });
         }
         
@@ -1124,7 +1359,8 @@
 
         function loadPlans(userId) {
             if (unsubscribePlans) unsubscribePlans();
-            unsubscribePlans = onSnapshot(collection(db, "planos"), (snapshot) => {
+            const q = query(collection(db, "planos"), where("gestorId", "==", userId));
+            unsubscribePlans = onSnapshot(q, (snapshot) => {
                 loadingPlansP.classList.add('hidden');
                 plansListDiv.innerHTML = '';
                 if (snapshot.empty) { plansListDiv.innerHTML = '<p class="text-gray-400">Nenhum plano cadastrado.</p>'; return; }
@@ -1261,7 +1497,8 @@
             populateServicesSelect(document.getElementById('goal-service-id'));
             
             if (unsubscribeGoals) unsubscribeGoals();
-            unsubscribeGoals = onSnapshot(collection(db, "metas"), (snapshot) => {
+            const q = query(collection(db, "metas"), where("gestorId", "==", userId));
+            unsubscribeGoals = onSnapshot(q, (snapshot) => {
                 loadingGoalsP.classList.add('hidden');
                 goalsListDiv.innerHTML = '';
                 if (snapshot.empty) { goalsListDiv.innerHTML = '<p class="text-gray-400">Nenhuma meta cadastrada.</p>'; return; }
@@ -1339,7 +1576,10 @@
         // --- CONFIGURAÇÕES ---
         const changePasswordForm = document.getElementById('change-password-form');
         const changePasswordFeedback = document.getElementById('change-password-feedback');
+        const agendaSettingsForm = document.getElementById('agenda-settings-form');
+        const agendaSettingsFeedback = document.getElementById('agenda-settings-feedback');
         
+        // Alteração de senha
         changePasswordForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const submitBtn = changePasswordForm.querySelector('button[type="submit"]');
@@ -1368,10 +1608,55 @@
             }
         });
         
+        // Salvar configurações da agenda
+        agendaSettingsForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser; if (!user) return;
+            const submitBtn = agendaSettingsForm.querySelector('button[type="submit"]');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const loader = submitBtn.querySelector('.loader');
+            btnText.classList.add('hidden'); loader.classList.remove('hidden'); submitBtn.disabled = true;
+            
+            const newInterval = parseInt(document.getElementById('agenda-interval').value);
+            if (isNaN(newInterval) || newInterval <= 0) {
+                 agendaSettingsFeedback.textContent = 'Por favor, insira um valor válido.';
+                 agendaSettingsFeedback.className = 'text-sm h-4 text-red-500';
+                 btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false;
+                 return;
+            }
+            
+            const settingsRef = doc(db, 'configuracoes', user.uid);
+            try {
+                await updateDoc(settingsRef, { agendaInterval: newInterval, updatedAt: serverTimestamp() });
+                agendaState.interval = newInterval; // Atualiza o estado local
+                agendaSettingsFeedback.textContent = 'Configurações salvas!';
+                agendaSettingsFeedback.className = 'text-sm h-4 text-green-500';
+            } catch(error) {
+                 console.error("Erro ao salvar configurações:", error);
+                 agendaSettingsFeedback.textContent = 'Erro ao salvar.';
+                 agendaSettingsFeedback.className = 'text-sm h-4 text-red-500';
+            } finally {
+                btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false;
+            }
+        });
+        
+        // Carregar configurações da agenda ao logar
+        async function loadAgendaSettings(userId) {
+            const settingsRef = doc(db, 'configuracoes', userId);
+            const docSnap = await getDoc(settingsRef);
+            if (docSnap.exists()) {
+                const settings = docSnap.data();
+                agendaState.interval = settings.agendaInterval || 30;
+                document.getElementById('agenda-interval').value = agendaState.interval;
+            } else {
+                 // Se não existir, cria um documento com o valor padrão
+                try {
+                    await setDoc(settingsRef, { agendaInterval: 30, createdAt: serverTimestamp() });
+                } catch(error) { console.error("Erro ao criar doc de config:", error); }
+            }
+        }
+
         // --- GESTÃO DE USUÁRIOS DO PAINEL ---
-        // ATENÇÃO: A criação e exclusão de usuários do Auth diretamente do client-side
-        // não é recomendada em produção por motivos de segurança.
-        // O ideal é usar Firebase Cloud Functions. Este é um workaround para fins de prototipagem.
         const addPanelUserForm = document.getElementById('add-panel-user-form');
         const addUserFeedback = document.getElementById('add-user-feedback');
         const panelUsersListDiv = document.getElementById('panel-users-list');
@@ -1389,8 +1674,6 @@
             const password = document.getElementById('panel-user-password').value;
             const role = document.getElementById('panel-user-role').value;
             
-            // SIMULAÇÃO: Adiciona a uma coleção `panel_users`. A criação de Auth real
-            // requer Cloud Functions para ser feita de forma segura sem deslogar o admin.
             try {
                 await addDoc(collection(db, "panel_users"), { email: email, role: role, createdAt: new Date() });
                 addUserFeedback.textContent = `Usuário ${email} convidado com sucesso!`;
@@ -1430,12 +1713,13 @@
         }
 
 
-        // --- FUNÇÃO GLOBAL DE EXCLUSÃO (sem alterações) ---
+        // --- FUNÇÃO GLOBAL DE EXCLUSÃO ---
         window.deleteDocument = async (collectionName, docId) => {
-            try { await deleteDoc(doc(db, collectionName, docId)); } catch(e) { console.error("Erro ao deletar:", e); }
+            if (confirm(`Tem certeza que deseja excluir este item da coleção ${collectionName}?`)) {
+                 try { await deleteDoc(doc(db, collectionName, docId)); } catch(e) { console.error("Erro ao deletar:", e); }
+            }
         }
 
     </script>
 </body>
 </html>
-
