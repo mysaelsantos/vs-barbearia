@@ -1,20 +1,101 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="h-full bg-gray-100">
+<html lang="pt-BR" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Gestão - Barbearia</title>
+    <title>Painel de Gestão - VS Barbearia</title>
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Montserrat -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* Ajustes para transições e modal */
-        .hidden { display: none; }
-        .tab-button.active {
-            border-bottom-color: #4f46e5; /* indigo-600 */
-            color: #4f46e5;
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #111111;
+            color: #e0e0e0;
         }
+        .hidden { display: none; }
+        
+        /* Estilo das Abas */
         .tab-button {
-            border-bottom: 2px solid transparent;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            border-bottom-color: #fbb62c;
+            color: #fbb62c;
+        }
+        
+        /* Estilos dos Formulários Inspirados no App */
+        .form-input {
+            background-color: #333;
+            border: 1px solid #555;
+            color: white;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            transition: all 0.2s ease;
+        }
+        .form-input:focus {
+            border-color: #fbb62c;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(251, 182, 44, 0.5);
+        }
+        
+        /* Estilos dos Botões */
+        .btn-primary {
+            background-color: #fbb62c;
+            color: #111111;
+            font-weight: 700;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #e0a828;
+        }
+        .btn-primary:disabled {
+            background-color: #4a4a4a;
+            color: #888;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background-color: #333;
+            border: 1px solid #555;
+            color: #f0f0f0;
+            font-weight: 600;
+             border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            transition: background-color 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background-color: #444;
+        }
+
+        /* Estilos do Modal */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        .modal-content {
+            background-color: #1e1e1e;
+            border-top: 2px solid #fbb62c;
+        }
+
+        /* Animação de Spinner/Loader */
+        .loader {
+            border: 3px solid #444;
+            border-top: 3px solid #fbb62c;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -22,55 +103,42 @@
 
     <!-- Seção de Login e Cadastro (Visível quando deslogado) -->
     <div id="auth-section" class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
-        <!-- Conteúdo de Login/Cadastro (sem alterações) -->
-        <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-            <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">Acesse seu painel</h2>
+        <div class="sm:mx-auto sm:w-full sm:max-w-sm text-center">
+            <img src="https://i.postimg.cc/5yBSjg1F/Bigode-3.png" alt="Logo VS Barbearia" class="w-20 h-20 mx-auto mb-4">
+            <h2 class="text-2xl font-bold leading-9 tracking-tight text-white">Acesse seu painel</h2>
         </div>
         <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
             <div class="space-y-6">
-                <div>
-                    <label for="email" class="block text-sm font-medium leading-6 text-gray-900">Email</label>
-                    <div class="mt-2">
-                        <input id="email" name="email" type="email" autocomplete="email" required class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 p-2">
-                    </div>
-                </div>
-                <div>
-                    <div class="flex items-center justify-between">
-                        <label for="password" class="block text-sm font-medium leading-6 text-gray-900">Senha</label>
-                    </div>
-                    <div class="mt-2">
-                        <input id="password" name="password" type="password" autocomplete="current-password" required class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 p-2">
-                    </div>
-                </div>
-                <p id="auth-error" class="text-center text-sm text-red-600"></p>
-                <div>
-                    <button id="login-button" class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Entrar</button>
-                </div>
-                <div>
-                    <button id="signup-button" class="flex w-full justify-center rounded-md bg-gray-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-gray-500">Não tenho conta, Cadastrar</button>
-                </div>
+                <input id="email" name="email" type="email" autocomplete="email" required placeholder="E-mail" class="block w-full form-input">
+                <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Senha" class="block w-full form-input">
+                <p id="auth-error" class="text-center text-sm text-red-500"></p>
+                <button id="login-button" class="flex w-full justify-center btn-primary">Entrar</button>
+                <button id="signup-button" class="flex w-full justify-center btn-secondary">Não tenho conta, Cadastrar</button>
             </div>
         </div>
     </div>
 
     <!-- Painel Principal (Visível quando logado) -->
     <div id="panel-section" class="hidden">
-        <header class="bg-white shadow">
-            <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
-                <h1 class="text-3xl font-bold tracking-tight text-gray-900">Painel de Gestão</h1>
-                <div>
-                    <span id="user-email" class="text-sm text-gray-500 mr-4"></span>
+        <header class="bg-[#1e1e1e] shadow-lg">
+            <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                     <img src="https://i.postimg.cc/5yBSjg1F/Bigode-3.png" alt="Logo VS Barbearia" class="w-10 h-10">
+                    <h1 class="text-2xl font-bold tracking-tight text-white">Painel de Gestão</h1>
+                </div>
+                <div class="flex items-center">
+                    <span id="user-email" class="text-sm text-gray-400 mr-4 hidden sm:block"></span>
                     <button id="logout-button" class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">Sair</button>
                 </div>
             </div>
         </header>
         <main>
             <!-- Abas de Navegação -->
-            <div class="border-b border-gray-200 bg-white">
+            <div class="border-b border-gray-800 bg-[#1e1e1e]">
                 <nav class="-mb-px flex space-x-8 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Tabs">
                     <button id="tab-servicos" class="tab-button active whitespace-nowrap py-4 px-1 text-sm font-medium">Serviços</button>
-                    <button id="tab-profissionais" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">Profissionais</button>
-                    <button id="tab-unidades" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">Unidades</button>
+                    <button id="tab-profissionais" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Profissionais</button>
+                    <button id="tab-unidades" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Unidades</button>
                 </nav>
             </div>
 
@@ -78,35 +146,20 @@
                 <!-- Conteúdo da Aba Serviços -->
                 <div id="content-servicos">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <!-- Coluna 1: Formulário para Adicionar Serviço -->
-                        <div class="md:col-span-1">
-                            <div class="bg-white p-6 rounded-lg shadow">
-                                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Adicionar Novo Serviço</h3>
-                                <form id="add-service-form" class="space-y-4">
-                                    <input type="hidden" id="service-id">
-                                    <div>
-                                        <label for="service-name" class="block text-sm font-medium text-gray-700">Nome do Serviço</label>
-                                        <input type="text" id="service-name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
-                                    </div>
-                                    <div>
-                                        <label for="service-value" class="block text-sm font-medium text-gray-700">Valor (R$)</label>
-                                        <input type="number" id="service-value" step="0.01" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
-                                    </div>
-                                    <div>
-                                        <label for="service-duration" class="block text-sm font-medium text-gray-700">Duração (minutos)</label>
-                                        <input type="number" id="service-duration" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
-                                    </div>
-                                    <button type="submit" class="w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Salvar Serviço</button>
-                                </form>
-                            </div>
+                        <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                            <h3 class="text-lg font-bold text-primary mb-4">Adicionar Novo Serviço</h3>
+                            <form id="add-service-form" class="space-y-4">
+                                <input type="hidden" id="service-id">
+                                <input type="text" id="service-name" required placeholder="Nome do Serviço" class="form-input w-full">
+                                <input type="number" id="service-value" step="0.01" required placeholder="Valor (R$)" class="form-input w-full">
+                                <input type="number" id="service-duration" required placeholder="Duração (minutos)" class="form-input w-full">
+                                <button type="submit" class="w-full justify-center btn-primary">Salvar Serviço</button>
+                            </form>
                         </div>
-                        <!-- Coluna 2: Lista de Serviços -->
-                        <div class="md:col-span-2">
-                            <div class="bg-white p-6 rounded-lg shadow">
-                                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Serviços Cadastrados</h3>
-                                <div id="services-list" class="space-y-4">
-                                    <p id="loading-services" class="text-gray-500">Carregando serviços...</p>
-                                </div>
+                        <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                            <h3 class="text-lg font-bold text-primary mb-4">Serviços Cadastrados</h3>
+                            <div id="services-list" class="space-y-4">
+                                <p id="loading-services" class="text-gray-400">Carregando serviços...</p>
                             </div>
                         </div>
                     </div>
@@ -115,24 +168,17 @@
                 <!-- Conteúdo da Aba Profissionais (inicialmente escondido) -->
                 <div id="content-profissionais" class="hidden">
                      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="md:col-span-1">
-                            <div class="bg-white p-6 rounded-lg shadow">
-                                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Adicionar Novo Profissional</h3>
-                                <form id="add-professional-form" class="space-y-4">
-                                    <div>
-                                        <label for="professional-name" class="block text-sm font-medium text-gray-700">Nome do Profissional</label>
-                                        <input type="text" id="professional-name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
-                                    </div>
-                                    <button type="submit" class="w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Salvar Profissional</button>
-                                </form>
-                            </div>
+                        <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                            <h3 class="text-lg font-bold text-primary mb-4">Adicionar Profissional</h3>
+                            <form id="add-professional-form" class="space-y-4">
+                                <input type="text" id="professional-name" required placeholder="Nome do Profissional" class="form-input w-full">
+                                <button type="submit" class="w-full justify-center btn-primary">Salvar Profissional</button>
+                            </form>
                         </div>
-                        <div class="md:col-span-2">
-                            <div class="bg-white p-6 rounded-lg shadow">
-                                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Profissionais Cadastrados</h3>
-                                <div id="professionals-list" class="space-y-4">
-                                    <p id="loading-professionals" class="text-gray-500">Carregando...</p>
-                                </div>
+                        <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                            <h3 class="text-lg font-bold text-primary mb-4">Profissionais Cadastrados</h3>
+                            <div id="professionals-list" class="space-y-4">
+                                <p id="loading-professionals" class="text-gray-400">Carregando...</p>
                             </div>
                         </div>
                     </div>
@@ -141,28 +187,18 @@
                 <!-- Conteúdo da Aba Unidades (inicialmente escondido) -->
                 <div id="content-unidades" class="hidden">
                      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="md:col-span-1">
-                            <div class="bg-white p-6 rounded-lg shadow">
-                                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Adicionar Nova Unidade</h3>
-                                <form id="add-unit-form" class="space-y-4">
-                                    <div>
-                                        <label for="unit-name" class="block text-sm font-medium text-gray-700">Nome da Unidade</label>
-                                        <input type="text" id="unit-name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
-                                    </div>
-                                    <div>
-                                        <label for="unit-address" class="block text-sm font-medium text-gray-700">Endereço</label>
-                                        <input type="text" id="unit-address" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
-                                    </div>
-                                    <button type="submit" class="w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Salvar Unidade</button>
-                                </form>
-                            </div>
+                        <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                            <h3 class="text-lg font-bold text-primary mb-4">Adicionar Unidade</h3>
+                            <form id="add-unit-form" class="space-y-4">
+                                <input type="text" id="unit-name" required placeholder="Nome da Unidade" class="form-input w-full">
+                                <input type="text" id="unit-address" required placeholder="Endereço" class="form-input w-full">
+                                <button type="submit" class="w-full justify-center btn-primary">Salvar Unidade</button>
+                            </form>
                         </div>
-                        <div class="md:col-span-2">
-                            <div class="bg-white p-6 rounded-lg shadow">
-                                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Unidades Cadastradas</h3>
-                                <div id="units-list" class="space-y-4">
-                                    <p id="loading-units" class="text-gray-500">Carregando...</p>
-                                </div>
+                        <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                            <h3 class="text-lg font-bold text-primary mb-4">Unidades Cadastradas</h3>
+                            <div id="units-list" class="space-y-4">
+                                <p id="loading-units" class="text-gray-400">Carregando...</p>
                             </div>
                         </div>
                     </div>
@@ -171,31 +207,20 @@
         </main>
     </div>
 
-    <!-- Modal de Edição de Serviço (inicialmente escondido) -->
-    <div id="edit-service-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3 text-center">
-                <h3 class="text-lg leading-6 font-medium text-gray-900">Editar Serviço</h3>
-                <div class="mt-2 px-7 py-3">
-                    <form id="edit-service-form" class="space-y-4 text-left">
-                         <input type="hidden" id="edit-service-id">
-                        <div>
-                            <label for="edit-service-name" class="block text-sm font-medium text-gray-700">Nome</label>
-                            <input type="text" id="edit-service-name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                        </div>
-                         <div>
-                            <label for="edit-service-value" class="block text-sm font-medium text-gray-700">Valor (R$)</label>
-                            <input type="number" step="0.01" id="edit-service-value" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                        </div>
-                        <div>
-                            <label for="edit-service-duration" class="block text-sm font-medium text-gray-700">Duração (min)</label>
-                            <input type="number" id="edit-service-duration" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                        </div>
-                    </form>
-                </div>
-                <div class="items-center px-4 py-3">
-                    <button id="cancel-edit-button" class="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-auto shadow-sm hover:bg-gray-600">Cancelar</button>
-                    <button id="save-edit-button" class="px-4 py-2 bg-indigo-600 text-white text-base font-medium rounded-md w-auto shadow-sm hover:bg-indigo-700">Salvar Alterações</button>
+    <!-- Modal de Edição de Serviço -->
+    <div id="edit-service-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4">
+        <div class="relative w-full max-w-md">
+             <div class="modal-content rounded-lg shadow-xl p-6">
+                <h3 class="text-xl font-bold text-primary text-center mb-6">Editar Serviço</h3>
+                <form id="edit-service-form" class="space-y-4 text-left">
+                    <input type="hidden" id="edit-service-id">
+                    <input type="text" id="edit-service-name" required placeholder="Nome" class="form-input w-full">
+                    <input type="number" step="0.01" id="edit-service-value" required placeholder="Valor (R$)" class="form-input w-full">
+                    <input type="number" id="edit-service-duration" required placeholder="Duração (min)" class="form-input w-full">
+                </form>
+                <div class="mt-8 flex justify-end space-x-4">
+                    <button id="cancel-edit-button" class="btn-secondary">Cancelar</button>
+                    <button id="save-edit-button" class="btn-primary">Salvar Alterações</button>
                 </div>
             </div>
         </div>
@@ -204,11 +229,12 @@
 
     <!-- SDK do Firebase -->
     <script type="module">
-        // Importe as funções necessárias do SDK
+        // Importações do Firebase (sem alterações)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+        // Configuração do Firebase (sem alterações)
         const firebaseConfig = {
             apiKey: "AIzaSyBSB03qbus51od3i1ipHJ_Wf6O6rf-1UeY",
             authDomain: "agenda-vs-barbearia.firebaseapp.com",
@@ -218,17 +244,14 @@
             appId: "1:1052414878320:web:6bb826bc64b16f9e5b8ab5",
             measurementId: "G-1FYTSFFPYV"
         };
-
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- REFERÊNCIAS GERAIS ---
+        // --- Lógica de Autenticação (sem alterações, apenas referências de UI) ---
         const authSection = document.getElementById('auth-section');
         const panelSection = document.getElementById('panel-section');
         const userEmailSpan = document.getElementById('user-email');
-        
-        // --- LÓGICA DE AUTENTICAÇÃO ---
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const loginButton = document.getElementById('login-button');
@@ -241,7 +264,6 @@
                 authSection.classList.add('hidden');
                 panelSection.classList.remove('hidden');
                 userEmailSpan.textContent = user.email;
-                // Carrega os dados da aba ativa (Serviços) ao logar
                 loadServices(user.uid);
             } else {
                 authSection.classList.remove('hidden');
@@ -261,14 +283,13 @@
             try { await signOut(auth); } catch (error) { console.error("Erro no logout:", error); }
         });
 
-        // --- LÓGICA DE NAVEGAÇÃO POR ABAS ---
+        // --- Lógica de Navegação por Abas (sem alterações) ---
         const tabs = document.querySelectorAll('.tab-button');
         const contents = {
             'tab-servicos': document.getElementById('content-servicos'),
             'tab-profissionais': document.getElementById('content-profissionais'),
             'tab-unidades': document.getElementById('content-unidades')
         };
-
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 tabs.forEach(item => item.classList.remove('active'));
@@ -278,7 +299,6 @@
                 const activeContent = contents[tab.id];
                 activeContent.classList.remove('hidden');
 
-                // Carrega os dados da aba selecionada
                 const user = auth.currentUser;
                 if (!user) return;
 
@@ -288,7 +308,7 @@
             });
         });
 
-        // --- CRUD DE SERVIÇOS ---
+        // --- CRUD DE SERVIÇOS (Lógica de exibição atualizada) ---
         const addServiceForm = document.getElementById('add-service-form');
         const servicesListDiv = document.getElementById('services-list');
         const loadingServicesP = document.getElementById('loading-services');
@@ -309,19 +329,19 @@
             unsubscribeServices = onSnapshot(servicosCollection, (snapshot) => {
                 loadingServicesP.classList.add('hidden');
                 servicesListDiv.innerHTML = '';
-                if (snapshot.empty) { servicesListDiv.innerHTML = '<p class="text-gray-500">Nenhum serviço cadastrado.</p>'; return; }
+                if (snapshot.empty) { servicesListDiv.innerHTML = '<p class="text-gray-400">Nenhum serviço cadastrado.</p>'; return; }
                 snapshot.forEach((doc) => {
                     const servico = doc.data(); const servicoId = doc.id;
                     const servicoCard = document.createElement('div');
-                    servicoCard.className = 'p-4 border rounded-lg flex justify-between items-center';
+                    servicoCard.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex justify-between items-center';
                     servicoCard.innerHTML = `
                         <div>
-                            <p class="font-bold text-gray-800">${servico.nome}</p>
-                            <p class="text-sm text-gray-600">R$ ${servico.valor.toFixed(2)} - ${servico.duracaoMinutos} min</p>
+                            <p class="font-bold text-white">${servico.nome}</p>
+                            <p class="text-sm text-gray-400">R$ ${servico.valor.toFixed(2)} - ${servico.duracaoMinutos} min</p>
                         </div>
                         <div class="space-x-4">
-                            <button class="text-sm text-indigo-500 hover:text-indigo-700 font-semibold" data-id="${servicoId}" data-action="edit">Editar</button>
-                            <button class="text-sm text-red-500 hover:text-red-700 font-semibold" data-id="${servicoId}" data-action="delete">Excluir</button>
+                            <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${servicoId}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
+                            <button class="text-sm text-red-500 hover:text-red-400 font-semibold" data-id="${servicoId}" data-action="delete"><i class="fas fa-trash-alt mr-1"></i>Excluir</button>
                         </div>`;
                     servicesListDiv.appendChild(servicoCard);
                 });
@@ -329,9 +349,10 @@
         }
         
         servicesListDiv.addEventListener('click', async (e) => {
-            if (!e.target.dataset.id) return;
-            const id = e.target.dataset.id;
-            const action = e.target.dataset.action;
+            const button = e.target.closest('button');
+            if (!button || !button.dataset.id) return;
+            const id = button.dataset.id;
+            const action = button.dataset.action;
 
             if (action === 'delete') {
                 try { await deleteDoc(doc(db, "servicos", id)); } catch (error) { console.error("Erro ao excluir: ", error); }
@@ -364,8 +385,7 @@
             } catch (error) { console.error("Erro ao atualizar serviço:", error); }
         });
 
-
-        // --- CRUD DE PROFISSIONAIS ---
+        // --- CRUD DE PROFISSIONAIS (Lógica de exibição atualizada) ---
         const addProfessionalForm = document.getElementById('add-professional-form');
         const professionalsListDiv = document.getElementById('professionals-list');
         let unsubscribeProfessionals = null;
@@ -381,19 +401,18 @@
             unsubscribeProfessionals = onSnapshot(collection(db, "profissionais"), (snapshot) => {
                 document.getElementById('loading-professionals').classList.add('hidden');
                 professionalsListDiv.innerHTML = '';
-                if (snapshot.empty) { professionalsListDiv.innerHTML = '<p class="text-gray-500">Nenhum profissional cadastrado.</p>'; return; }
+                if (snapshot.empty) { professionalsListDiv.innerHTML = '<p class="text-gray-400">Nenhum profissional cadastrado.</p>'; return; }
                 snapshot.forEach(doc => {
                     const professional = doc.data();
                     const card = document.createElement('div');
-                    card.className = 'p-4 border rounded-lg flex justify-between items-center';
-                    card.innerHTML = `<p class="font-bold text-gray-800">${professional.nome}</p><button class="text-sm text-red-500 hover:text-red-700 font-semibold" onclick="deleteDocument('profissionais', '${doc.id}')">Excluir</button>`;
+                    card.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex justify-between items-center';
+                    card.innerHTML = `<p class="font-bold text-white">${professional.nome}</p><button class="text-sm text-red-500 hover:text-red-400 font-semibold" onclick="deleteDocument('profissionais', '${doc.id}')"><i class="fas fa-trash-alt mr-1"></i>Excluir</button>`;
                     professionalsListDiv.appendChild(card);
                 });
             });
         }
 
-
-        // --- CRUD DE UNIDADES ---
+        // --- CRUD DE UNIDADES (Lógica de exibição atualizada) ---
         const addUnitForm = document.getElementById('add-unit-form');
         const unitsListDiv = document.getElementById('units-list');
         let unsubscribeUnits = null;
@@ -410,18 +429,18 @@
             unsubscribeUnits = onSnapshot(collection(db, "unidades"), (snapshot) => {
                 document.getElementById('loading-units').classList.add('hidden');
                 unitsListDiv.innerHTML = '';
-                if (snapshot.empty) { unitsListDiv.innerHTML = '<p class="text-gray-500">Nenhuma unidade cadastrada.</p>'; return; }
+                if (snapshot.empty) { unitsListDiv.innerHTML = '<p class="text-gray-400">Nenhuma unidade cadastrada.</p>'; return; }
                 snapshot.forEach(doc => {
                     const unit = doc.data();
                     const card = document.createElement('div');
-                    card.className = 'p-4 border rounded-lg flex justify-between items-center';
-                    card.innerHTML = `<div><p class="font-bold text-gray-800">${unit.nome}</p><p class="text-sm text-gray-600">${unit.endereco}</p></div><button class="text-sm text-red-500 hover:text-red-700 font-semibold" onclick="deleteDocument('unidades', '${doc.id}')">Excluir</button>`;
+                    card.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex justify-between items-center';
+                    card.innerHTML = `<div><p class="font-bold text-white">${unit.nome}</p><p class="text-sm text-gray-400">${unit.endereco}</p></div><button class="text-sm text-red-500 hover:text-red-400 font-semibold" onclick="deleteDocument('unidades', '${doc.id}')"><i class="fas fa-trash-alt mr-1"></i>Excluir</button>`;
                     unitsListDiv.appendChild(card);
                 });
             });
         }
 
-        // --- FUNÇÃO GLOBAL DE EXCLUSÃO ---
+        // --- FUNÇÃO GLOBAL DE EXCLUSÃO (sem alterações) ---
         window.deleteDocument = async (collectionName, docId) => {
             try { await deleteDoc(doc(db, collectionName, docId)); } catch(e) { console.error("Erro ao deletar:", e); }
         }
