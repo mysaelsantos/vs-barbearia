@@ -31,7 +31,7 @@
         }
         
         /* Estilos dos Formulários Inspirados no App */
-        .form-input {
+        .form-input, .form-textarea {
             background-color: #333;
             border: 1px solid #555;
             color: white;
@@ -39,7 +39,7 @@
             padding: 0.75rem;
             transition: all 0.2s ease;
         }
-        .form-input:focus {
+        .form-input:focus, .form-textarea:focus {
             border-color: #fbb62c;
             outline: none;
             box-shadow: 0 0 0 2px rgba(251, 182, 44, 0.5);
@@ -145,6 +145,7 @@
                     <button id="tab-unidades" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Unidades</button>
                     <button id="tab-agenda" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Agenda</button>
                     <button id="tab-clientes" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Clientes</button>
+                    <button id="tab-planos" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Planos</button>
                 </nav>
             </div>
 
@@ -244,6 +245,37 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Conteúdo da Aba Planos (inicialmente escondido) -->
+                <div id="content-planos" class="hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                            <h3 class="text-lg font-bold text-primary mb-4">Adicionar Novo Plano</h3>
+                            <form id="add-plan-form" class="space-y-4">
+                                <input type="text" id="plan-title" required placeholder="Título do Plano" class="form-input w-full">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <input type="text" id="plan-price" required placeholder="Preço (ex: 129,90)" class="form-input w-full">
+                                    <input type="text" id="plan-period" required placeholder="Período (ex: /mês)" class="form-input w-full">
+                                </div>
+                                <textarea id="plan-features" required placeholder="Características (uma por linha)" rows="4" class="form-textarea w-full"></textarea>
+                                <div class="flex items-center">
+                                    <input id="plan-popular" type="checkbox" class="h-4 w-4 rounded border-gray-600 bg-gray-700 text-primary focus:ring-primary">
+                                    <label for="plan-popular" class="ml-2 block text-sm text-gray-300">Marcar como "Mais Popular"?</label>
+                                </div>
+                                <button type="submit" class="w-full justify-center btn-primary">
+                                    <span class="btn-text">Salvar Plano</span>
+                                    <div class="loader hidden"></div>
+                                </button>
+                            </form>
+                        </div>
+                        <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                            <h3 class="text-lg font-bold text-primary mb-4">Planos Cadastrados</h3>
+                            <div id="plans-list" class="space-y-4">
+                                <p id="loading-plans" class="text-gray-400">Carregando planos...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -318,6 +350,35 @@
         </div>
     </div>
 
+    <!-- Modal de Edição de Plano -->
+    <div id="edit-plan-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4">
+        <div class="relative w-full max-w-md">
+             <div class="modal-content rounded-lg shadow-xl p-6">
+                <h3 class="text-xl font-bold text-primary text-center mb-6">Editar Plano</h3>
+                <form id="edit-plan-form" class="space-y-4 text-left">
+                    <input type="hidden" id="edit-plan-id">
+                    <input type="text" id="edit-plan-title" required placeholder="Título do Plano" class="form-input w-full">
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" id="edit-plan-price" required placeholder="Preço (ex: 129,90)" class="form-input w-full">
+                        <input type="text" id="edit-plan-period" required placeholder="Período (ex: /mês)" class="form-input w-full">
+                    </div>
+                    <textarea id="edit-plan-features" required placeholder="Características (uma por linha)" rows="4" class="form-textarea w-full"></textarea>
+                    <div class="flex items-center">
+                        <input id="edit-plan-popular" type="checkbox" class="h-4 w-4 rounded border-gray-600 bg-gray-700 text-primary focus:ring-primary">
+                        <label for="edit-plan-popular" class="ml-2 block text-sm text-gray-300">Marcar como "Mais Popular"?</label>
+                    </div>
+                </form>
+                <div class="mt-8 flex justify-end space-x-4">
+                    <button id="cancel-edit-plan-button" class="btn-secondary">Cancelar</button>
+                    <button id="save-edit-plan-button" class="btn-primary">
+                        <span class="btn-text">Salvar Alterações</span>
+                        <div class="loader hidden"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- SDK do Firebase -->
     <script type="module">
@@ -374,7 +435,8 @@
             'tab-profissionais': document.getElementById('content-profissionais'), 
             'tab-unidades': document.getElementById('content-unidades'),
             'tab-agenda': document.getElementById('content-agenda'),
-            'tab-clientes': document.getElementById('content-clientes')
+            'tab-clientes': document.getElementById('content-clientes'),
+            'tab-planos': document.getElementById('content-planos')
         };
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -393,6 +455,7 @@
                 if (tab.id === 'tab-unidades') loadUnits(user.uid);
                 if (tab.id === 'tab-agenda') loadAppointments(user.uid);
                 if (tab.id === 'tab-clientes') loadClients(user.uid);
+                if (tab.id === 'tab-planos') loadPlans(user.uid);
             });
         });
 
@@ -813,6 +876,121 @@
                 });
             });
         }
+        
+        // --- CRUD DE PLANOS ---
+        const addPlanForm = document.getElementById('add-plan-form');
+        const plansListDiv = document.getElementById('plans-list');
+        const loadingPlansP = document.getElementById('loading-plans');
+        const editPlanModal = document.getElementById('edit-plan-modal');
+        const cancelEditPlanButton = document.getElementById('cancel-edit-plan-button');
+        const saveEditPlanButton = document.getElementById('save-edit-plan-button');
+        let unsubscribePlans = null;
+
+        addPlanForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); const user = auth.currentUser; if (!user) return;
+            const submitBtn = addPlanForm.querySelector('button[type="submit"]');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const loader = submitBtn.querySelector('.loader');
+            btnText.classList.add('hidden'); loader.classList.remove('hidden'); submitBtn.disabled = true;
+
+            const data = {
+                title: document.getElementById('plan-title').value,
+                price: document.getElementById('plan-price').value,
+                period: document.getElementById('plan-period').value,
+                features: document.getElementById('plan-features').value.split('\n').filter(f => f.trim() !== ''),
+                popular: document.getElementById('plan-popular').checked,
+                gestorId: user.uid
+            };
+
+            try { await addDoc(collection(db, "planos"), data); addPlanForm.reset(); }
+            catch(error) { console.error("Erro ao adicionar plano:", error); }
+            finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false; }
+        });
+
+        function loadPlans(userId) {
+            if (unsubscribePlans) unsubscribePlans();
+            unsubscribePlans = onSnapshot(collection(db, "planos"), (snapshot) => {
+                loadingPlansP.classList.add('hidden');
+                plansListDiv.innerHTML = '';
+                if (snapshot.empty) { plansListDiv.innerHTML = '<p class="text-gray-400">Nenhum plano cadastrado.</p>'; return; }
+                snapshot.forEach(doc => {
+                    const plan = doc.data();
+                    const card = document.createElement('div');
+                    card.className = `p-6 bg-[#2a2a2a] border ${plan.popular ? 'border-primary' : 'border-gray-700'} rounded-lg relative`;
+                    
+                    if (plan.popular) {
+                        card.innerHTML += `<div class="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 bg-primary text-black text-xs font-bold px-3 py-1 rounded-full">MAIS POPULAR</div>`;
+                    }
+
+                    card.innerHTML += `
+                        <div class="flex-grow mt-4">
+                            <h4 class="font-bold text-white text-xl">${plan.title}</h4>
+                            <p class="text-2xl font-bold text-primary my-2">R$${plan.price} <span class="text-base font-medium text-gray-400">${plan.period}</span></p>
+                            <ul class="space-y-2 text-sm text-gray-300 mt-4">
+                                ${plan.features.map(f => `<li class="flex items-start"><i class="fas fa-check text-primary mr-3 mt-1"></i><span>${f}</span></li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="flex justify-end space-x-4 mt-6 pt-4 border-t border-gray-700">
+                            <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${doc.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
+                            <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${doc.id}" data-action="delete">
+                                <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
+                                <div class="loader hidden"></div>
+                            </button>
+                        </div>
+                    `;
+                    plansListDiv.appendChild(card);
+                });
+            });
+        }
+
+        plansListDiv.addEventListener('click', async (e) => {
+            const button = e.target.closest('button');
+            if (!button || !button.dataset.id) return;
+            const id = button.dataset.id;
+            const action = button.dataset.action;
+
+            if (action === 'delete') {
+                const btnText = button.querySelector('.btn-text'); const loader = button.querySelector('.loader');
+                btnText.classList.add('hidden'); loader.classList.remove('hidden'); button.disabled = true;
+                try { await deleteDoc(doc(db, "planos", id)); }
+                catch(error) { console.error("Erro ao excluir plano:", error); btnText.classList.remove('hidden'); loader.classList.add('hidden'); button.disabled = false;}
+            }
+
+            if (action === 'edit') {
+                const planDoc = await getDoc(doc(db, "planos", id));
+                if (planDoc.exists()) {
+                    const data = planDoc.data();
+                    document.getElementById('edit-plan-id').value = id;
+                    document.getElementById('edit-plan-title').value = data.title;
+                    document.getElementById('edit-plan-price').value = data.price;
+                    document.getElementById('edit-plan-period').value = data.period;
+                    document.getElementById('edit-plan-features').value = data.features.join('\n');
+                    document.getElementById('edit-plan-popular').checked = data.popular;
+                    editPlanModal.classList.remove('hidden');
+                }
+            }
+        });
+
+        cancelEditPlanButton.addEventListener('click', () => editPlanModal.classList.add('hidden'));
+
+        saveEditPlanButton.addEventListener('click', async () => {
+            const btnText = saveEditPlanButton.querySelector('.btn-text'); const loader = saveEditPlanButton.querySelector('.loader');
+            btnText.classList.add('hidden'); loader.classList.remove('hidden'); saveEditPlanButton.disabled = true; cancelEditPlanButton.disabled = true;
+
+            const id = document.getElementById('edit-plan-id').value;
+            const planRef = doc(db, "planos", id);
+            const dataToUpdate = {
+                title: document.getElementById('edit-plan-title').value,
+                price: document.getElementById('edit-plan-price').value,
+                period: document.getElementById('edit-plan-period').value,
+                features: document.getElementById('edit-plan-features').value.split('\n').filter(f => f.trim() !== ''),
+                popular: document.getElementById('edit-plan-popular').checked,
+            };
+
+            try { await updateDoc(planRef, dataToUpdate); editPlanModal.classList.add('hidden'); }
+            catch(error) { console.error("Erro ao atualizar plano:", error); }
+            finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditPlanButton.disabled = false; cancelEditPlanButton.disabled = false; }
+        });
 
 
         // --- FUNÇÃO GLOBAL DE EXCLUSÃO (sem alterações) ---
@@ -823,4 +1001,5 @@
     </script>
 </body>
 </html>
+
 
