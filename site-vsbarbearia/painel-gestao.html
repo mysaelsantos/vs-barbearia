@@ -12,6 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Interact.js for Drag and Drop -->
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <style>
         body {
             font-family: 'Montserrat', sans-serif;
@@ -150,11 +152,17 @@
             border-left: 3px solid #00bfff;
             z-index: 10;
             cursor: pointer;
-            transition: background-color 0.3s, border-color 0.3s;
+            transition: background-color 0.3s, border-color 0.3s, opacity 0.2s;
         }
         .appointment-card:hover {
             opacity: 0.9;
         }
+        /* NOVO: Estilo para arrastar */
+        .appointment-card.dragging {
+            opacity: 0.6;
+            z-index: 20;
+        }
+
         /* Cores por Status */
         .appointment-card.status-confirmado {
             background-color: #166534; /* green-800 */
@@ -1482,11 +1490,11 @@
                 profColumn.dataset.professionalId = prof.id;
 
                 const profHeader = document.createElement('div');
-                profHeader.className = 'professional-header !h-auto flex-col !py-2';
+                profHeader.className = 'professional-header !justify-between !px-2';
                 profHeader.innerHTML = `
                     <span class="font-bold text-white">${prof.nome.split(' ')[0]}</span>
-                    <button data-prof-id="${prof.id}" class="block-day-btn text-xs mt-1 px-2 py-0.5 bg-gray-700/50 hover:bg-gray-700 rounded-md transition-colors" title="Bloquear dia inteiro">
-                        <i class="fas fa-ban mr-1"></i>Bloquear Dia
+                    <button data-prof-id="${prof.id}" class="block-day-btn text-xs h-6 w-6 flex items-center justify-center bg-gray-700/50 hover:bg-gray-700 rounded-full transition-colors" title="Bloquear dia inteiro">
+                        <i class="fas fa-ban"></i>
                     </button>
                 `;
                 profColumn.appendChild(profHeader);
@@ -1547,15 +1555,17 @@
                     card.addEventListener('click', () => openEditBlockModal(appt.id));
                 } else {
                     card.className = `appointment-card status-${appt.status || 'agendado'}`;
-                    cardContent = `
-                        <p class="font-bold">${appt.cliente?.nome || 'Cliente'}</p>
-                        <p class="text-xs">${appt.servico?.nome || 'Serviço'}</p>
-                    `;
-                    card.dataset.id = appt.id; // Adiciona o ID para ser clicável
-                    card.addEventListener('click', () => openEditAppointmentModal(appt.id));
-                }
-                
-                card.style.top = `${topPosition}px`;
+                cardContent = `
+                    <p class="font-bold">${appt.cliente?.nome || 'Cliente'}</p>
+                    <p class="text-xs">${appt.servico?.nome || 'Serviço'}</p>
+                `;
+                card.dataset.id = appt.id;
+                card.addEventListener('click', () => openEditAppointmentModal(appt.id));
+                // Torna o card arrastável
+                makeDraggable(card);
+            }
+            
+            card.style.top = `${topPosition}px`;
                 card.style.height = `${height}px`;
                 card.innerHTML = cardContent;
 
@@ -2572,6 +2582,101 @@
             });
         });
 
+        // --- NOVO: LÓGICA DE DRAG AND DROP ---
+        function makeDraggable(element) {
+            interact(element)
+                .draggable({
+                    inertia: true,
+                    modifiers: [
+                        interact.modifiers.restrictRect({
+                            restriction: 'parent',
+                            endOnly: true
+                        })
+                    ],
+                    autoScroll: true,
+                    listeners: {
+                        start(event) {
+                            event.target.classList.add('dragging');
+                        },
+                        move(event) {
+                            const target = event.target;
+                            const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                            const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+                            target.style.transform = `translate(${x}px, ${y}px)`;
+                            target.setAttribute('data-x', x);
+                            target.setAttribute('data-y', y);
+                        },
+                        end(event) {
+                            event.target.classList.remove('dragging');
+                            // Reseta a transformação se não for solto em uma zona válida
+                            if (!event.relatedTarget) {
+                                event.target.style.transform = 'none';
+                                event.target.setAttribute('data-x', 0);
+                                event.target.setAttribute('data-y', 0);
+                            }
+                        }
+                    }
+                });
+        }
+
+        interact('.professional-column .time-slot-line').dropzone({
+            accept: '.appointment-card',
+            overlap: 0.5, // Pelo menos 50% de sobreposição para ativar
+
+            ondrop: async function (event) {
+                const draggedElement = event.relatedTarget;
+                const dropzoneElement = event.target;
+                const dropzoneContainer = dropzoneElement.parentElement.parentElement; // A .professional-column
+
+                const appointmentId = draggedElement.dataset.id;
+                const newProfessionalId = dropzoneContainer.dataset.professionalId;
+                
+                // Calcula a nova hora
+                const gridTop = agendaGridView.querySelector('.time-slots-container')?.offsetTop || 0;
+                const dropzoneTop = dropzoneElement.offsetTop;
+                const totalMinutesFromStart = (dropzoneTop / 40) * agendaState.interval;
+                
+                const newDate = new Date(agendaState.currentDate);
+                newDate.setHours(8, 0, 0, 0); // Começa às 8:00
+                newDate.setMinutes(newDate.getMinutes() + totalMinutesFromStart);
+
+                // Atualiza o Firestore
+                try {
+                    const appointmentRef = doc(db, "agendamentos", appointmentId);
+                    const newProfessional = localProfessionalsCache.find(p => p.id === newProfessionalId);
+
+                    await updateDoc(appointmentRef, {
+                        data: newDate,
+                        barbeiro: {
+                            id: newProfessional.id,
+                            nome: newProfessional.nome
+                        }
+                    });
+                } catch (error) {
+                    console.error("Erro ao mover agendamento:", error);
+                    // Reverte visualmente se der erro
+                    draggedElement.style.transform = 'none';
+                    draggedElement.setAttribute('data-x', 0);
+                    draggedElement.setAttribute('data-y', 0);
+                }
+            },
+            ondragenter: function (event) {
+                event.target.style.background = 'rgba(251, 182, 44, 0.2)';
+            },
+            ondragleave: function (event) {
+                event.target.style.background = '';
+            },
+            ondropdeactivate: function (event) {
+                event.target.style.background = '';
+                // Reseta o elemento arrastado após o drop
+                const draggedElement = event.relatedTarget;
+                draggedElement.style.transform = 'none';
+                draggedElement.setAttribute('data-x', 0);
+                draggedElement.setAttribute('data-y', 0);
+            }
+        });
+
         // --- NOVO: LÓGICA DO MODAL DE CADASTRO RÁPIDO DE CLIENTE ---
         const addQuickClientModal = document.getElementById('add-quick-client-modal');
         const openQuickClientModalBtn = document.getElementById('open-quick-client-modal-btn');
@@ -2675,5 +2780,7 @@
     </script>
 </body>
 </html>
+
+
 
 
