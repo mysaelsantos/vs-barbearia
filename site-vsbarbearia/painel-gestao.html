@@ -102,24 +102,24 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* --- NOVOS ESTILOS PARA A AGENDA --- */
+        /* --- ESTILOS DA AGENDA --- */
         #agenda-container {
-            overflow-x: auto; /* Permite scroll horizontal em telas pequenas */
+            overflow-x: auto;
         }
         .agenda-grid {
             display: flex;
-            min-width: 800px; /* Largura mínima para a grade não quebrar */
+            min-width: 800px;
         }
         .time-column {
-            flex: 0 0 70px; /* Coluna de horários com largura fixa */
+            flex: 0 0 70px;
         }
         .professional-column {
-            flex: 1 1 0px; /* Colunas dos profissionais flexíveis */
+            flex: 1 1 0px;
             border-left: 1px solid #444;
-            position: relative; /* Para posicionar os agendamentos */
+            position: relative;
         }
         .time-slot, .professional-header {
-            height: 40px; /* Altura do slot de 30min e do cabeçalho */
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -140,16 +140,35 @@
             position: absolute;
             left: 5px;
             right: 5px;
-            background-color: #005c99; /* Cor base do agendamento */
+            background-color: #005c99; /* Agendado */
             border-radius: 4px;
             padding: 4px 8px;
             font-size: 0.75rem;
             color: white;
             overflow: hidden;
             box-sizing: border-box;
-            border-left: 3px solid #00bfff; /* Cor da borda */
+            border-left: 3px solid #00bfff;
             z-index: 10;
+            cursor: pointer;
+            transition: background-color 0.3s, border-color 0.3s;
         }
+        .appointment-card:hover {
+            opacity: 0.9;
+        }
+        /* Cores por Status */
+        .appointment-card.status-confirmado {
+            background-color: #166534; /* green-800 */
+            border-left-color: #22c55e; /* green-500 */
+        }
+        .appointment-card.status-finalizado {
+            background-color: #4b5563; /* gray-600 */
+            border-left-color: #9ca3af; /* gray-400 */
+        }
+        .appointment-card.status-cancelado {
+            background-color: #991b1b; /* red-800 */
+            border-left-color: #ef4444; /* red-500 */
+        }
+
         .appointment-card p {
             margin: 0;
             white-space: nowrap;
@@ -283,7 +302,7 @@
                     </div>
                 </div>
                 
-                <!-- Conteúdo da Aba Agenda (MODIFICADO) -->
+                <!-- Conteúdo da Aba Agenda -->
                 <div id="content-agenda" class="hidden">
                     <div class="bg-[#1e1e1e] p-4 sm:p-6 rounded-lg border border-gray-800">
                         <!-- Cabeçalho da Agenda -->
@@ -395,7 +414,7 @@
                     </div>
                 </div>
 
-                 <!-- Conteúdo da Aba Configurações (MODIFICADO) -->
+                 <!-- Conteúdo da Aba Configurações -->
                 <div id="content-configuracoes" class="hidden">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Seção Minha Conta -->
@@ -438,7 +457,7 @@
                             </div>
                         </div>
 
-                        <!-- NOVA Seção Configurações da Agenda -->
+                        <!-- Seção Configurações da Agenda -->
                         <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
                              <h3 class="text-lg font-bold text-primary mb-4">Configurações da Agenda</h3>
                              <form id="agenda-settings-form" class="space-y-4">
@@ -616,7 +635,7 @@
         </div>
     </div>
 
-    <!-- NOVO Modal de Adicionar Agendamento -->
+    <!-- Modal de Adicionar Agendamento -->
     <div id="add-appointment-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4">
         <div class="relative w-full max-w-lg">
              <div class="modal-content rounded-lg shadow-xl p-6">
@@ -648,6 +667,48 @@
                         <span class="btn-text">Salvar Agendamento</span>
                         <div class="loader hidden"></div>
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOVO Modal de Edição de Agendamento -->
+    <div id="edit-appointment-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4">
+        <div class="relative w-full max-w-lg">
+             <div class="modal-content rounded-lg shadow-xl p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-primary">Gerenciar Agendamento</h3>
+                    <button id="close-edit-appointment-modal" class="text-gray-400 hover:text-white">&times;</button>
+                </div>
+                <form id="edit-appointment-form" class="space-y-4 text-left">
+                    <input type="hidden" id="edit-appointment-id">
+                    <div>
+                        <label for="edit-appt-status" class="block text-sm font-medium text-gray-300 mb-1">Status</label>
+                        <select id="edit-appt-status" required class="form-select w-full">
+                            <option value="agendado">Agendado</option>
+                            <option value="confirmado">Confirmado</option>
+                            <option value="finalizado">Finalizado</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                     <div>
+                        <label for="edit-appt-datetime" class="block text-sm font-medium text-gray-300 mb-1">Data e Hora</label>
+                        <input type="datetime-local" id="edit-appt-datetime" required class="form-input w-full">
+                    </div>
+                    <!-- Mais campos podem ser adicionados aqui para editar cliente, serviço, etc. -->
+                     <p id="edit-appointment-feedback" class="text-sm h-4 text-center"></p>
+                </form>
+                <div class="mt-8 flex flex-wrap justify-between gap-4">
+                    <div>
+                        <button id="delete-appointment-button" class="btn-secondary !bg-red-800 !border-red-700 hover:!bg-red-700"><i class="fas fa-trash-alt mr-2"></i>Remover</button>
+                    </div>
+                    <div class="flex flex-wrap gap-4">
+                        <button id="whatsapp-reminder-button" class="btn-secondary !bg-green-700 !border-green-600 hover:!bg-green-600"><i class="fab fa-whatsapp mr-2"></i>Lembrete</button>
+                        <button id="save-edit-appointment-button" class="btn-primary">
+                            <span class="btn-text">Salvar Alterações</span>
+                            <div class="loader hidden"></div>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1084,7 +1145,6 @@
         const professionalFilter = document.getElementById('professional-filter');
         const addAppointmentBtn = document.getElementById('add-appointment-btn');
         const addAppointmentModal = document.getElementById('add-appointment-modal');
-        const addAppointmentForm = document.getElementById('add-appointment-form');
         const cancelAddAppointmentButton = document.getElementById('cancel-add-appointment-button');
         const saveAddAppointmentButton = document.getElementById('save-add-appointment-button');
         let unsubscribeAgenda = null;
@@ -1151,8 +1211,6 @@
                 agendaState.professionals = professionalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 populateProfessionalFilter();
 
-                // Workaround: Query all appointments for the manager and filter by date on the client side
-                // This avoids the "missing index" error in Firestore for compound queries.
                 const allAppointmentsQuery = query(collection(db, "agendamentos"), where("gestorId", "==", userId));
 
                 unsubscribeAgenda = onSnapshot(allAppointmentsQuery, (snapshot) => {
@@ -1270,14 +1328,17 @@
                 const height = duration * pixelsPerMinute;
 
                 const card = document.createElement('div');
-                card.className = 'appointment-card';
+                card.className = `appointment-card status-${appt.status || 'agendado'}`;
                 card.style.top = `${topPosition}px`;
                 card.style.height = `${height}px`;
+                card.dataset.id = appt.id; // Adiciona o ID para ser clicável
                 card.innerHTML = `
                     <p class="font-bold">${appt.cliente?.nome || 'Cliente'}</p>
                     <p class="text-xs">${appt.servico?.nome || 'Serviço'}</p>
                 `;
                 
+                card.addEventListener('click', () => openEditAppointmentModal(appt.id));
+
                 const linesContainer = column.querySelector('div:not(.professional-header)');
                 if (linesContainer) {
                     linesContainer.style.position = 'relative';
@@ -1824,7 +1885,6 @@
             addAppointmentModal.classList.remove('hidden');
 
             try {
-                // Carrega clientes, profissionais e serviços em paralelo
                 const [clientsSnapshot, profsSnapshot] = await Promise.all([
                     getDocs(query(collection(db, "users"), where("gestorId", "==", auth.currentUser.uid))),
                     getDocs(query(collection(db, "profissionais"), where("gestorId", "==", auth.currentUser.uid)))
@@ -1901,7 +1961,8 @@
                     gestorId: auth.currentUser.uid,
                     servico: { id: serviceData.id, nome: serviceData.nome, valor: serviceData.valor, duracaoMinutos: serviceData.duracaoMinutos },
                     unidade: { id: firstUnit.id, nome: firstUnit.nome },
-                    createdAt: serverTimestamp()
+                    createdAt: serverTimestamp(),
+                    status: 'agendado' // NOVO: status padrão
                 };
 
                 await addDoc(collection(db, "agendamentos"), appointmentData);
@@ -1918,6 +1979,104 @@
                 cancelAddAppointmentButton.disabled = false;
             }
         });
+
+        // --- LÓGICA DO MODAL DE EDIÇÃO DE AGENDAMENTO ---
+        const editAppointmentModal = document.getElementById('edit-appointment-modal');
+        const closeEditAppointmentModal = document.getElementById('close-edit-appointment-modal');
+        const saveEditAppointmentButton = document.getElementById('save-edit-appointment-button');
+        const deleteAppointmentButton = document.getElementById('delete-appointment-button');
+        const whatsappReminderButton = document.getElementById('whatsapp-reminder-button');
+
+        async function openEditAppointmentModal(appointmentId) {
+            const docRef = doc(db, "agendamentos", appointmentId);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const appointment = docSnap.data();
+                document.getElementById('edit-appointment-id').value = appointmentId;
+                document.getElementById('edit-appt-status').value = appointment.status || 'agendado';
+                
+                const apptDate = appointment.data.toDate();
+                const year = apptDate.getFullYear();
+                const month = (apptDate.getMonth() + 1).toString().padStart(2, '0');
+                const day = apptDate.getDate().toString().padStart(2, '0');
+                const hours = apptDate.getHours().toString().padStart(2, '0');
+                const minutes = apptDate.getMinutes().toString().padStart(2, '0');
+                document.getElementById('edit-appt-datetime').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+                editAppointmentModal.classList.remove('hidden');
+            } else {
+                console.error("Agendamento não encontrado!");
+            }
+        }
+
+        closeEditAppointmentModal.addEventListener('click', () => editAppointmentModal.classList.add('hidden'));
+
+        saveEditAppointmentButton.addEventListener('click', async () => {
+            const btnText = saveEditAppointmentButton.querySelector('.btn-text');
+            const loader = saveEditAppointmentButton.querySelector('.loader');
+            const feedback = document.getElementById('edit-appointment-feedback');
+            feedback.textContent = '';
+
+            const id = document.getElementById('edit-appointment-id').value;
+            const newStatus = document.getElementById('edit-appt-status').value;
+            const newDatetime = document.getElementById('edit-appt-datetime').value;
+
+            btnText.classList.add('hidden');
+            loader.classList.remove('hidden');
+            saveEditAppointmentButton.disabled = true;
+
+            try {
+                const appointmentRef = doc(db, "agendamentos", id);
+                await updateDoc(appointmentRef, {
+                    status: newStatus,
+                    data: new Date(newDatetime)
+                });
+                editAppointmentModal.classList.add('hidden');
+            } catch (error) {
+                console.error("Erro ao atualizar agendamento:", error);
+                feedback.textContent = "Erro ao salvar.";
+                feedback.className = "text-sm h-4 text-center text-red-500";
+            } finally {
+                btnText.classList.remove('hidden');
+                loader.classList.add('hidden');
+                saveEditAppointmentButton.disabled = false;
+            }
+        });
+
+        deleteAppointmentButton.addEventListener('click', () => {
+            const id = document.getElementById('edit-appointment-id').value;
+            showConfirmationModal("Tem certeza que deseja remover este agendamento?", async () => {
+                try {
+                    await deleteDoc(doc(db, "agendamentos", id));
+                    editAppointmentModal.classList.add('hidden');
+                } catch(e) {
+                    console.error("Erro ao remover agendamento:", e);
+                }
+            });
+        });
+
+        whatsappReminderButton.addEventListener('click', async () => {
+            const id = document.getElementById('edit-appointment-id').value;
+            const docRef = doc(db, "agendamentos", id);
+            const docSnap = await getDoc(docRef);
+
+            if(docSnap.exists()){
+                const appt = docSnap.data();
+                const clientRef = doc(db, "users", appt.cliente.id);
+                const clientSnap = await getDoc(clientRef);
+                if(clientSnap.exists() && clientSnap.data().phone) {
+                    const phone = clientSnap.data().phone.replace(/\D/g, '');
+                    const date = appt.data.toDate().toLocaleDateString('pt-BR');
+                    const time = appt.data.toDate().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+                    const message = encodeURIComponent(`Olá ${appt.cliente.nome}! Lembrete do seu agendamento na VS Barbearia para o serviço de ${appt.servico.nome} no dia ${date} às ${time}. Estamos te esperando!`);
+                    window.open(`https://wa.me/55${phone}?text=${message}`, '_blank');
+                } else {
+                    alert("Cliente não possui telefone cadastrado para enviar lembrete.");
+                }
+            }
+        });
+
 
     </script>
 </body>
