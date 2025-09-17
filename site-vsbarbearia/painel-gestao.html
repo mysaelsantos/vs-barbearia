@@ -1460,6 +1460,19 @@
             });
             professionalFilter.addEventListener('change', renderAgendaGrid);
             
+            // NOVO: Event listener delegado para o botão de bloquear dia
+            const agendaContainer = document.getElementById('agenda-container');
+            agendaContainer.addEventListener('click', (e) => {
+                const blockBtn = e.target.closest('.block-day-btn');
+                if (blockBtn) {
+                    const profId = blockBtn.dataset.profId;
+                    const professional = localProfessionalsCache.find(p => p.id === profId);
+                    if (professional) {
+                        blockEntireDay(profId, professional.nome);
+                    }
+                }
+            });
+            
             // Botão principal de Adicionar Agendamento
             addAppointmentBtn.addEventListener('click', () => openAddAppointmentModal());
             
@@ -1506,6 +1519,41 @@
             });
         }
         
+        // NOVO: Função para bloquear o dia inteiro de um profissional
+        function blockEntireDay(professionalId, professionalName) {
+            const message = `Tem certeza que deseja bloquear a agenda inteira de ${professionalName} para este dia? Isto irá criar um bloqueio de dia inteiro e não pode ser desfeito facilmente.`;
+            showConfirmationModal(message, async () => {
+                try {
+                    const professional = localProfessionalsCache.find(p => p.id === professionalId);
+                    if (!professional) throw new Error("Profissional não encontrado.");
+
+                    const startTime = 8; // 08:00
+                    const endTime = 20;  // 20:00
+                    const duration = (endTime - startTime) * 60; // Duração em minutos
+
+                    const blockDateTime = new Date(agendaState.currentDate);
+                    blockDateTime.setHours(startTime, 0, 0, 0);
+
+                    // Adiciona o bloqueio ao banco de dados
+                    await addDoc(collection(db, "agendamentos"), {
+                        barbeiro: { id: professional.id, nome: professional.nome },
+                        data: blockDateTime,
+                        status: 'bloqueio',
+                        motivo: 'folga',
+                        duracaoMinutos: duration,
+                        gestorId: auth.currentUser.uid,
+                        createdAt: serverTimestamp()
+                    });
+                    
+                    // A agenda será atualizada automaticamente pelo listener onSnapshot.
+
+                } catch (error) {
+                    console.error("Erro ao bloquear o dia inteiro:", error);
+                    // Futuramente, podemos adicionar um feedback visual de erro aqui.
+                }
+            });
+        }
+
         async function openAddAppointmentModal() {
             const form = addAppointmentModal.querySelector('form');
             form.reset();
@@ -2778,5 +2826,6 @@
     </script>
 </body>
 </html>
+
 
 
