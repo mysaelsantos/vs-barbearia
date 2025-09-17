@@ -821,6 +821,45 @@
         </div>
     </div>
 
+    <!-- NOVO Modal de Edição de Bloqueio -->
+    <div id="edit-block-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4">
+        <div class="relative w-full max-w-lg">
+             <div class="modal-content rounded-lg shadow-xl p-6">
+                <div class="flex justify-between items-start mb-4">
+                     <div>
+                        <h3 class="text-xl font-bold text-primary">Gerenciar Bloqueio</h3>
+                        <p id="edit-block-subtitle" class="text-sm text-gray-400"></p>
+                    </div>
+                    <button id="close-edit-block-modal" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+                </div>
+                <form id="edit-block-form" class="space-y-4 text-left">
+                    <input type="hidden" id="edit-block-id">
+                    <div>
+                        <label for="edit-block-reason" class="block text-sm font-medium text-gray-300 mb-1">Motivo do Bloqueio</label>
+                        <select id="edit-block-reason" class="form-select w-full">
+                            <option value="folga">Folga</option>
+                            <option value="almoco">Almoço</option>
+                            <option value="reuniao">Reunião</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+                     <div>
+                        <label for="edit-block-duration" class="block text-sm font-medium text-gray-300 mb-1">Duração (em minutos)</label>
+                        <input type="number" id="edit-block-duration" value="30" step="15" min="15" class="form-input w-full">
+                    </div>
+                     <p id="edit-block-feedback" class="text-sm h-4 text-center"></p>
+                </form>
+                <div class="mt-8 flex justify-between items-center">
+                    <button id="delete-block-button" class="btn-secondary !bg-red-800 !border-red-700 hover:!bg-red-700"><i class="fas fa-trash-alt mr-2"></i>Remover Bloqueio</button>
+                    <button id="save-edit-block-button" class="btn-primary">
+                        <span class="btn-text">Salvar Alterações</span>
+                        <div class="loader hidden"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- SDK do Firebase -->
     <script type="module">
@@ -1473,8 +1512,9 @@
                 if (appt.status === 'bloqueio') {
                     const motivo = appt.motivo || 'bloqueio';
                     card.className = `appointment-card status-bloqueio motivo-${motivo}`;
-                    cardContent = `<i class="fas ${motivo === 'almoco' ? 'fa-utensils' : 'fa-coffee'} mr-2"></i> ${motivo.toUpperCase()}`;
-                    card.style.cursor = 'not-allowed'; // Folgas não são clicáveis para edição por enquanto
+                    cardContent = `<i class="fas ${motivo === 'almoco' ? 'fa-utensils' : 'fa-coffee'} mr-2"></i> ${appt.servico.nome.toUpperCase()}`;
+                    card.dataset.id = appt.id; // Adiciona o ID para ser clicável
+                    card.addEventListener('click', () => openEditBlockModal(appt.id));
                 } else {
                     card.className = `appointment-card status-${appt.status || 'agendado'}`;
                     cardContent = `
@@ -2289,131 +2329,75 @@
             }
         });
 
-        // Salvar agendamento a partir do slot
-        const saveSlotAppointmentButton = document.getElementById('save-slot-appointment-button');
-        saveSlotAppointmentButton.addEventListener('click', async () => {
-            const btnText = saveSlotAppointmentButton.querySelector('.btn-text');
-            const loader = saveSlotAppointmentButton.querySelector('.loader');
-            const feedback = document.getElementById('slot-appointment-feedback');
-            feedback.textContent = '';
-            
-            const clientId = document.getElementById('slot-client-select').value;
-            const serviceId = document.getElementById('slot-service-select').value;
-            const profId = document.getElementById('slot-professional-id').value;
-            const datetime = document.getElementById('slot-datetime').value;
-            const isRecurring = document.getElementById('slot-recurring-checkbox').checked;
+        // --- NOVO: LÓGICA DO MODAL DE EDIÇÃO DE BLOQUEIO ---
+        const editBlockModal = document.getElementById('edit-block-modal');
+        const closeEditBlockModal = document.getElementById('close-edit-block-modal');
+        const saveEditBlockButton = document.getElementById('save-edit-block-button');
+        const deleteBlockButton = document.getElementById('delete-block-button');
 
-            if (!clientId || !serviceId) {
-                feedback.textContent = "Preencha cliente e serviço.";
-                feedback.className = "text-sm h-4 text-center text-red-500";
-                return;
+        async function openEditBlockModal(blockId) {
+            const docRef = doc(db, "agendamentos", blockId);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const block = docSnap.data();
+                document.getElementById('edit-block-id').value = blockId;
+                document.getElementById('edit-block-reason').value = block.motivo || 'folga';
+                document.getElementById('edit-block-duration').value = block.servico.duracaoMinutos || 30;
+                document.getElementById('edit-block-subtitle').textContent = `Para ${block.barbeiro.nome}`;
+                editBlockModal.classList.remove('hidden');
+            } else {
+                console.error("Bloqueio não encontrado!");
             }
+        }
+
+        closeEditBlockModal.addEventListener('click', () => editBlockModal.classList.add('hidden'));
+
+        saveEditBlockButton.addEventListener('click', async () => {
+            const btnText = saveEditBlockButton.querySelector('.btn-text');
+            const loader = saveEditBlockButton.querySelector('.loader');
+            const feedback = document.getElementById('edit-block-feedback');
+            feedback.textContent = '';
+
+            const id = document.getElementById('edit-block-id').value;
+            const newReason = document.getElementById('edit-block-reason').value;
+            const newDuration = parseInt(document.getElementById('edit-block-duration').value);
 
             btnText.classList.add('hidden');
             loader.classList.remove('hidden');
-            saveSlotAppointmentButton.disabled = true;
+            saveEditBlockButton.disabled = true;
 
             try {
-                const clientData = localClientsCache.find(c => c.id === clientId);
-                const profData = localProfessionalsCache.find(p => p.id === profId);
-                const serviceData = localServicesCache.find(s => s.id === serviceId);
-                const unitsQuery = query(collection(db, "unidades"), where("gestorId", "==", auth.currentUser.uid));
-                const unitsSnapshot = await getDocs(unitsQuery);
-                if (unitsSnapshot.empty) throw new Error("Cadastre uma unidade primeiro.");
-                const firstUnit = { id: unitsSnapshot.docs[0].id, ...unitsSnapshot.docs[0].data() };
-
-                const batch = writeBatch(db);
-                
-                const createAppointmentData = (date) => ({
-                    barbeiro: { id: profData.id, nome: profData.nome },
-                    cliente: { id: clientData.id, nome: clientData.name },
-                    data: date,
-                    gestorId: auth.currentUser.uid,
-                    servico: { id: serviceData.id, nome: serviceData.nome, valor: serviceData.valor, duracaoMinutos: serviceData.duracaoMinutos },
-                    unidade: { id: firstUnit.id, nome: firstUnit.nome },
-                    createdAt: serverTimestamp(),
-                    status: 'agendado'
+                const blockRef = doc(db, "agendamentos", id);
+                await updateDoc(blockRef, {
+                    motivo: newReason,
+                    "servico.nome": newReason.charAt(0).toUpperCase() + newReason.slice(1),
+                    "servico.duracaoMinutos": newDuration
                 });
-
-                const firstAppointmentDate = new Date(datetime);
-                const firstAppointmentRef = doc(collection(db, "agendamentos"));
-                batch.set(firstAppointmentRef, createAppointmentData(firstAppointmentDate));
-
-                if (isRecurring) {
-                    const frequency = parseInt(document.getElementById('slot-recurring-frequency').value);
-                    const period = document.getElementById('slot-recurring-period').value;
-                    const count = parseInt(document.getElementById('slot-recurring-count').value);
-
-                    let currentDate = new Date(firstAppointmentDate);
-                    for (let i = 1; i < count; i++) {
-                        if (period === 'weeks') {
-                            currentDate.setDate(currentDate.getDate() + 7 * frequency);
-                        } else if (period === 'months') {
-                            currentDate.setMonth(currentDate.getMonth() + frequency);
-                        }
-                        const newAppointmentRef = doc(collection(db, "agendamentos"));
-                        batch.set(newAppointmentRef, createAppointmentData(new Date(currentDate)));
-                    }
-                }
-
-                await batch.commit();
-                slotActionModal.classList.add('hidden');
-            
+                editBlockModal.classList.add('hidden');
             } catch (error) {
-                console.error("Erro ao salvar agendamento:", error);
-                feedback.textContent = error.message || "Erro ao salvar.";
-                feedback.className = "text-sm h-4 text-center text-red-500";
-            } finally {
-                btnText.classList.remove('hidden');
-                loader.classList.add('hidden');
-                saveSlotAppointmentButton.disabled = false;
-            }
-        });
-
-        // Salvar folga/bloqueio a partir do slot
-        const saveSlotBlockButton = document.getElementById('save-slot-block-button');
-        saveSlotBlockButton.addEventListener('click', async () => {
-             const btnText = saveSlotBlockButton.querySelector('.btn-text');
-            const loader = saveSlotBlockButton.querySelector('.loader');
-            const feedback = document.getElementById('slot-block-feedback');
-            feedback.textContent = '';
-            
-            const duration = parseInt(document.getElementById('slot-block-duration').value);
-            const reason = document.getElementById('slot-block-reason').value;
-            const profId = document.getElementById('slot-professional-id').value;
-            const datetime = document.getElementById('slot-datetime').value;
-
-            if (!duration || duration <= 0) {
-                feedback.textContent = "Duração inválida.";
-                feedback.className = "text-sm h-4 text-center text-red-500";
-                return;
-            }
-            btnText.classList.add('hidden');
-            loader.classList.remove('hidden');
-            saveSlotBlockButton.disabled = true;
-            try {
-                const profData = localProfessionalsCache.find(p => p.id === profId);
-                const blockData = {
-                    barbeiro: { id: profData.id, nome: profData.nome },
-                    data: new Date(datetime),
-                    gestorId: auth.currentUser.uid,
-                    servico: { nome: reason.charAt(0).toUpperCase() + reason.slice(1), duracaoMinutos: duration },
-                    status: 'bloqueio',
-                    motivo: reason,
-                    createdAt: serverTimestamp()
-                };
-                await addDoc(collection(db, "agendamentos"), blockData);
-                slotActionModal.classList.add('hidden');
-            } catch (error) {
-                console.error("Erro ao salvar bloqueio:", error);
+                console.error("Erro ao atualizar bloqueio:", error);
                 feedback.textContent = "Erro ao salvar.";
                 feedback.className = "text-sm h-4 text-center text-red-500";
             } finally {
                 btnText.classList.remove('hidden');
                 loader.classList.add('hidden');
-                saveSlotBlockButton.disabled = false;
+                saveEditBlockButton.disabled = false;
             }
         });
+
+        deleteBlockButton.addEventListener('click', () => {
+            const id = document.getElementById('edit-block-id').value;
+            showConfirmationModal("Tem certeza que deseja remover este bloqueio da agenda?", async () => {
+                try {
+                    await deleteDoc(doc(db, "agendamentos", id));
+                    editBlockModal.classList.add('hidden');
+                } catch(e) {
+                    console.error("Erro ao remover bloqueio:", e);
+                }
+            });
+        });
+
 
         // Lidar com o clique do botão de bloquear o dia
         agendaGridView.addEventListener('click', e => {
@@ -2454,5 +2438,6 @@
     </script>
 </body>
 </html>
+
 
 
