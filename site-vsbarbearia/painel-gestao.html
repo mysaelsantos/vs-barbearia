@@ -1416,7 +1416,7 @@
         });
 
 
-        // --- LÓGICA DA AGENDA (CORRIGIDA) ---
+        // --- LÓGICA DA AGENDA (CORRIGIDA E FUNCIONAL) ---
         const datePicker = document.getElementById('date-picker');
         const prevDayBtn = document.getElementById('prev-day-btn');
         const nextDayBtn = document.getElementById('next-day-btn');
@@ -1448,76 +1448,125 @@
                 loadAgendaData(auth.currentUser.uid);
             });
             professionalFilter.addEventListener('change', renderAgendaGrid);
-             addAppointmentBtn.addEventListener('click', async () => {
-                const form = addAppointmentModal.querySelector('form');
-                form.reset();
-                const feedback = document.getElementById('add-appointment-feedback');
-                feedback.textContent = '';
-
-                const clientSelect = document.getElementById('appt-client-select');
-                const profSelect = document.getElementById('appt-professional-select');
-                const serviceSelect = document.getElementById('appt-service-select');
-                
-                clientSelect.innerHTML = '<option value="">Carregando...</option>';
-                profSelect.innerHTML = '<option value="">Carregando...</option>';
-                serviceSelect.innerHTML = '<option value="">Carregando...</option>';
-
-                addAppointmentModal.classList.remove('hidden');
+            
+            // Botão principal de Adicionar Agendamento
+            addAppointmentBtn.addEventListener('click', () => openAddAppointmentModal());
+            
+            // Botões do modal principal de Adicionar Agendamento
+            cancelAddAppointmentButton.addEventListener('click', () => addAppointmentModal.classList.add('hidden'));
+            addAppointmentModal.querySelector('form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = saveAddAppointmentButton;
+                const btnText = btn.querySelector('.btn-text');
+                const loader = btn.querySelector('.loader');
+                btnText.classList.add('hidden'); loader.classList.remove('hidden'); btn.disabled = true;
 
                 try {
-                    // Carrega clientes, profissionais e serviços em paralelo
-                    const [clientsSnapshot, profsSnapshot] = await Promise.all([
-                        getDocs(query(collection(db, "users"), where("gestorId", "==", auth.currentUser.uid))),
-                        getDocs(query(collection(db, "profissionais"), where("gestorId", "==", auth.currentUser.uid)))
-                    ]);
+                    const clientId = document.getElementById('appt-client-select').value;
+                    const professionalId = document.getElementById('appt-professional-select').value;
+                    const serviceId = document.getElementById('appt-service-select').value;
+                    const dateTime = new Date(document.getElementById('appt-datetime-input').value);
 
-                    localClientsCache = clientsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    clientSelect.innerHTML = '<option value="">Selecione um cliente</option>';
-                    localClientsCache.forEach(c => clientSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+                    const client = localClientsCache.find(c => c.id === clientId);
+                    const professional = localProfessionalsCache.find(p => p.id === professionalId);
+                    const service = localServicesCache.find(s => s.id === serviceId);
+                    
+                    if (!client || !professional || !service) throw new Error("Dados inválidos selecionados.");
 
-                    localProfessionalsCache = profsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    profSelect.innerHTML = '<option value="">Selecione um profissional</option>';
-                    localProfessionalsCache.forEach(p => profSelect.innerHTML += `<option value="${p.id}">${p.nome}</option>`);
-
-                    serviceSelect.innerHTML = '<option value="">Selecione um serviço</option>';
-                    localServicesCache.forEach(s => serviceSelect.innerHTML += `<option value="${s.id}">${s.nome}</option>`);
-
-                    const dateTimeInput = document.getElementById('appt-datetime-input');
-                    const now = new Date(agendaState.currentDate);
-                    now.setHours(9, 0, 0, 0);
-                    const year = now.getFullYear();
-                    const month = (now.getMonth() + 1).toString().padStart(2, '0');
-                    const day = now.getDate().toString().padStart(2, '0');
-                    const hours = now.getHours().toString().padStart(2, '0');
-                    const minutes = now.getMinutes().toString().padStart(2, '0');
-                    dateTimeInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                    const newAppointment = {
+                        cliente: { id: client.id, nome: client.name },
+                        barbeiro: { id: professional.id, nome: professional.nome },
+                        servico: { id: service.id, nome: service.nome, duracaoMinutos: service.duracaoMinutos },
+                        data: dateTime,
+                        status: 'agendado',
+                        gestorId: auth.currentUser.uid,
+                        createdAt: serverTimestamp()
+                    };
+                    
+                    await addDoc(collection(db, "agendamentos"), newAppointment);
+                    addAppointmentModal.classList.add('hidden');
 
                 } catch (error) {
-                    console.error("Erro ao abrir modal de agendamento:", error);
-                    feedback.textContent = "Erro ao carregar dados.";
-                    feedback.className = "text-sm h-4 text-center text-red-500";
+                    console.error("Erro ao salvar agendamento manual:", error);
+                    document.getElementById('add-appointment-feedback').textContent = "Erro ao salvar.";
+                } finally {
+                    btnText.classList.remove('hidden'); loader.classList.add('hidden'); btn.disabled = false;
                 }
             });
         }
+        
+        async function openAddAppointmentModal() {
+            const form = addAppointmentModal.querySelector('form');
+            form.reset();
+            const feedback = document.getElementById('add-appointment-feedback');
+            feedback.textContent = '';
+
+            const clientSelect = document.getElementById('appt-client-select');
+            const profSelect = document.getElementById('appt-professional-select');
+            const serviceSelect = document.getElementById('appt-service-select');
+            
+            clientSelect.innerHTML = '<option value="">Carregando...</option>';
+            profSelect.innerHTML = '<option value="">Carregando...</option>';
+            serviceSelect.innerHTML = '<option value="">Carregando...</option>';
+
+            addAppointmentModal.classList.remove('hidden');
+
+            try {
+                // Carrega clientes, profissionais e serviços em paralelo
+                await populateCaches(auth.currentUser.uid);
+
+                clientSelect.innerHTML = '<option value="">Selecione um cliente</option>';
+                localClientsCache.forEach(c => clientSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+
+                profSelect.innerHTML = '<option value="">Selecione um profissional</option>';
+                localProfessionalsCache.forEach(p => profSelect.innerHTML += `<option value="${p.id}">${p.nome}</option>`);
+
+                serviceSelect.innerHTML = '<option value="">Selecione um serviço</option>';
+                localServicesCache.forEach(s => serviceSelect.innerHTML += `<option value="${s.id}">${s.nome}</option>`);
+
+                const dateTimeInput = document.getElementById('appt-datetime-input');
+                const now = new Date(agendaState.currentDate);
+                now.setHours(9, 0, 0, 0);
+                dateTimeInput.value = formatDateTimeForInput(now);
+
+            } catch (error) {
+                console.error("Erro ao abrir modal de agendamento:", error);
+                feedback.textContent = "Erro ao carregar dados.";
+                feedback.className = "text-sm h-4 text-center text-red-500";
+            }
+        }
 
         async function populateCaches(userId) {
-            // Garante que os dados locais (clientes, serviços, etc.) estejam carregados antes de usar a agenda.
             try {
+                const cachePromises = [];
                 if (localServicesCache.length === 0) {
-                    const servicesSnapshot = await getDocs(query(collection(db, "servicos"), where("gestorId", "==", userId)));
-                    localServicesCache = servicesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    cachePromises.push(getDocs(query(collection(db, "servicos"), where("gestorId", "==", userId))).then(snap => {
+                        localServicesCache = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    }));
                 }
                 if (localClientsCache.length === 0) {
-                    const clientsSnapshot = await getDocs(query(collection(db, "users"), where("gestorId", "==", userId)));
-                    localClientsCache = clientsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    cachePromises.push(getDocs(query(collection(db, "users"), where("gestorId", "==", userId))).then(snap => {
+                        localClientsCache = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    }));
                 }
                  if (localProfessionalsCache.length === 0) {
-                    const profsSnapshot = await getDocs(query(collection(db, "profissionais"), where("gestorId", "==", userId)));
-                    localProfessionalsCache = profsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                     cachePromises.push(getDocs(query(collection(db, "profissionais"), where("gestorId", "==", userId))).then(snap => {
+                        localProfessionalsCache = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    }));
                 }
+                await Promise.all(cachePromises);
             } catch (error) {
                 console.error("Falha ao carregar dados de suporte da agenda:", error);
             }
+        }
+        
+        function formatDateTimeForInput(date) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
         }
 
         function formatDateForInput(date) {
@@ -1690,20 +1739,25 @@
                 const pixelsPerMinute = slotHeight / agendaState.interval;
 
                 const topPosition = totalMinutesFromStart * pixelsPerMinute;
-                const duration = appt.servico?.duracaoMinutos || agendaState.interval;
+                
+                let duration;
+                if(appt.status === 'bloqueio') {
+                    duration = appt.duracaoMinutos || agendaState.interval;
+                } else {
+                    duration = appt.servico?.duracaoMinutos || agendaState.interval;
+                }
                 const height = duration * pixelsPerMinute;
 
                 const card = document.createElement('div');
                 let cardContent = '';
 
-                // Verifica se é uma folga para estilizar diferente
                 if (appt.status === 'bloqueio') {
-                    const motivo = appt.motivo || 'bloqueio';
+                    const motivo = appt.motivo || 'folga';
                     card.className = `appointment-card status-bloqueio motivo-${motivo}`;
-                    cardContent = `<i class="fas ${motivo === 'almoco' ? 'fa-utensils' : 'fa-coffee'} mr-2"></i> ${appt.servico.nome.toUpperCase()}`;
-                    card.dataset.id = appt.id; // Adiciona o ID para ser clicável
+                    cardContent = `<i class="fas ${motivo === 'almoco' ? 'fa-utensils' : 'fa-coffee'} mr-2"></i> ${(appt.motivo || 'bloqueio').toUpperCase()}`;
+                    card.dataset.id = appt.id;
                     card.addEventListener('click', () => {
-                        if (isDragging) return; // Evita abrir modal após arrastar
+                        if (isDragging) return;
                         openEditBlockModal(appt.id);
                     });
                 } else {
@@ -1714,14 +1768,13 @@
                     `;
                     card.dataset.id = appt.id;
                     card.addEventListener('click', () => {
-                        if (isDragging) return; // Evita abrir modal após arrastar
+                        if (isDragging) return;
                         openEditAppointmentModal(appt.id);
                     });
-                    // Torna o card arrastável
                     makeDraggable(card);
                 }
             
-            card.style.top = `${topPosition}px`;
+                card.style.top = `${topPosition}px`;
                 card.style.height = `${height}px`;
                 card.innerHTML = cardContent;
 
@@ -2179,7 +2232,9 @@
             const role = document.getElementById('panel-user-role').value;
             
             try {
-                await addDoc(collection(db, "panel_users"), { email: email, role: role, createdAt: new Date() });
+                // Esta é uma implementação simplificada. Uma real precisaria de Cloud Functions
+                // para criar o usuário no Auth a partir do Firestore.
+                await addDoc(collection(db, "panel_users"), { email: email, role: role, createdAt: serverTimestamp(), gestorId: auth.currentUser.uid });
                 addUserFeedback.textContent = `Usuário ${email} convidado com sucesso!`;
                 addUserFeedback.className = 'text-sm h-4 text-green-500';
                 addPanelUserForm.reset();
@@ -2194,8 +2249,9 @@
             }
         });
         
-        function loadPanelUsers() {
-            onSnapshot(collection(db, "panel_users"), (snapshot) => {
+        function loadPanelUsers(userId) {
+            const q = query(collection(db, "panel_users"), where("gestorId", "==", userId));
+            onSnapshot(q, (snapshot) => {
                 loadingPanelUsersP.classList.add('hidden');
                 panelUsersListDiv.innerHTML = '';
                 if(snapshot.empty) {
@@ -2211,7 +2267,7 @@
                             <p class="font-semibold text-white">${user.email}</p>
                             <p class="text-xs text-gray-400 capitalize">${user.role}</p>
                         </div>
-                        <button class="text-xs text-red-500 hover:text-red-400 font-semibold" onclick="deleteDocument('panel_users', '${doc.id}')">Remover</button>
+                        <button class="text-xs text-red-500 hover:text-red-400 font-semibold" onclick="window.deleteDocument('panel_users', '${doc.id}')">Remover</button>
                     `;
                     panelUsersListDiv.appendChild(card);
                 });
@@ -2283,36 +2339,37 @@
                 }
                 
                 // Lógica para todos os links, exceto triggers de submenu
-                if (!isSubmenuTrigger) {
+                if (targetId) {
                     navLinks.forEach(l => l.classList.remove('active'));
                     link.classList.add('active');
                     
                     const parentMenu = link.closest('.submenu');
-                if (parentMenu) {
-                    parentMenu.previousElementSibling.classList.add('active');
-                }
+                    if (parentMenu) {
+                        parentMenu.previousElementSibling.classList.add('active');
+                    }
 
-                // Esconde todos os painéis de conteúdo
-                contentPanels.forEach(panel => panel.classList.add('hidden'));
+                    // Esconde todos os painéis de conteúdo
+                    contentPanels.forEach(panel => panel.classList.add('hidden'));
 
-                // Mostra o painel alvo
-                const targetPanel = document.getElementById(targetId);
-                if (targetPanel) {
-                    // ATUALIZADO: Muda o título no cabeçalho principal
-                    const pageTitle = targetPanel.querySelector('h1')?.textContent || 'Painel';
-                    document.getElementById('main-header-title').textContent = pageTitle.replace('Gerenciar ', '');
-
-                    targetPanel.classList.remove('hidden');
-                     // Carrega os dados da aba, se necessário
-                    const user = auth.currentUser;
-                    if (user && targetId === 'content-agenda') initializeAgenda(user.uid);
-                         if (user && targetId === 'content-servicos') loadServices(user.uid);
-                         if (user && targetId === 'content-profissionais') loadProfessionals(user.uid);
-                         if (user && targetId === 'content-unidades') loadUnits(user.uid);
-                         if (user && targetId === 'content-clientes') loadClients(user.uid);
-                         if (user && targetId === 'content-planos') loadPlans(user.uid);
-                         if (user && targetId === 'content-metas') loadGoals(user.uid);
-                         if (user && targetId === 'content-configuracoes') loadPanelUsers(user.uid);
+                    // Mostra o painel alvo
+                    const targetPanel = document.getElementById(targetId);
+                    if (targetPanel) {
+                        const pageTitle = targetPanel.querySelector('h1')?.textContent || 'Painel';
+                        document.getElementById('main-header-title').textContent = pageTitle.replace('Gerenciar ', '');
+                        targetPanel.classList.remove('hidden');
+                        
+                        const user = auth.currentUser;
+                        if (!user) return;
+                        switch (targetId) {
+                            case 'content-agenda': initializeAgenda(user.uid); break;
+                            case 'content-servicos': loadServices(user.uid); break;
+                            case 'content-profissionais': loadProfessionals(user.uid); break;
+                            case 'content-unidades': loadUnits(user.uid); break;
+                            case 'content-clientes': loadClients(user.uid); break;
+                            case 'content-planos': loadPlans(user.uid); break;
+                            case 'content-metas': loadGoals(user.uid); break;
+                            case 'content-configuracoes': loadPanelUsers(user.uid); break;
+                        }
                     }
                 }
             });
@@ -2328,12 +2385,364 @@
                  document.querySelectorAll('#sidebar .submenu.open').forEach(sub => sub.classList.remove('open'));
              }
         });
+        
+        // --- ADIÇÃO: LÓGICA DOS MODAIS DA AGENDA E FUNCIONALIDADES ---
+        
+        // Elementos dos Modais da Agenda
+        const slotActionModal = document.getElementById('slot-action-modal');
+        const closeSlotActionModalBtn = document.getElementById('close-slot-action-modal');
+        const slotTabAgendar = document.getElementById('slot-tab-agendar');
+        const slotTabBloqueio = document.getElementById('slot-tab-bloqueio');
+        const slotContentAgendar = document.getElementById('slot-content-agendar');
+        const slotContentBloqueio = document.getElementById('slot-content-bloqueio');
+        const slotAppointmentForm = document.getElementById('slot-appointment-form');
+        const slotBlockForm = document.getElementById('slot-block-form');
+        const editAppointmentModal = document.getElementById('edit-appointment-modal');
+        const closeEditAppointmentModalBtn = document.getElementById('close-edit-appointment-modal');
+        const saveEditAppointmentBtn = document.getElementById('save-edit-appointment-button');
+        const deleteAppointmentBtn = document.getElementById('delete-appointment-button');
+        const whatsappReminderBtn = document.getElementById('whatsapp-reminder-button');
+        const editBlockModal = document.getElementById('edit-block-modal');
+        const closeEditBlockModalBtn = document.getElementById('close-edit-block-modal');
+        const saveEditBlockBtn = document.getElementById('save-edit-block-button');
+        const deleteBlockBtn = document.getElementById('delete-block-button');
+        const quickClientModal = document.getElementById('add-quick-client-modal');
+        const cancelQuickClientBtn = document.getElementById('cancel-quick-client-button');
+        const saveQuickClientBtn = document.getElementById('save-quick-client-button');
+        
+        // --- Funções dos Modais ---
+        
+        async function openSlotActionModal(professionalId, dateTime) {
+            slotActionModal.classList.remove('hidden');
+            slotAppointmentForm.reset();
+            slotBlockForm.reset();
+            document.getElementById('slot-recurring-options').classList.add('hidden');
+            
+            const professional = localProfessionalsCache.find(p => p.id === professionalId);
+            const subtitle = document.getElementById('slot-action-subtitle');
+            subtitle.textContent = `${professional.nome} - ${dateTime.toLocaleDateString('pt-BR')} às ${dateTime.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}`;
 
+            document.getElementById('slot-professional-id').value = professionalId;
+            document.getElementById('slot-datetime').value = dateTime.toISOString();
+            
+            // Popular selects
+            const clientSelect = document.getElementById('slot-client-select');
+            clientSelect.innerHTML = '<option value="">Selecione...</option>';
+            localClientsCache.forEach(c => clientSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+
+            const serviceSelect = document.getElementById('slot-service-select');
+            serviceSelect.innerHTML = '<option value="">Selecione...</option>';
+            localServicesCache.forEach(s => serviceSelect.innerHTML += `<option value="${s.id}">${s.nome} - R$${s.valor.toFixed(2)}</option>`);
+        }
+
+        async function openEditAppointmentModal(appointmentId) {
+            const appointment = agendaState.appointments.find(a => a.id === appointmentId);
+            if (!appointment) return;
+            
+            editAppointmentModal.classList.remove('hidden');
+            document.getElementById('edit-appointment-id').value = appointmentId;
+            document.getElementById('edit-appt-status').value = appointment.status;
+            document.getElementById('edit-appt-datetime').value = formatDateTimeForInput(appointment.data.toDate());
+        }
+
+        async function openEditBlockModal(blockId) {
+            const block = agendaState.appointments.find(a => a.id === blockId);
+            if (!block) return;
+
+            editBlockModal.classList.remove('hidden');
+            document.getElementById('edit-block-id').value = blockId;
+            document.getElementById('edit-block-reason').value = block.motivo || 'folga';
+            document.getElementById('edit-block-duration').value = block.duracaoMinutos || 30;
+            const subtitle = document.getElementById('edit-block-subtitle');
+            subtitle.textContent = `Início: ${block.data.toDate().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}`;
+        }
+
+        // --- Event Listeners dos Modais ---
+
+        closeSlotActionModalBtn.addEventListener('click', () => slotActionModal.classList.add('hidden'));
+        slotTabAgendar.addEventListener('click', () => {
+            slotTabAgendar.classList.add('active'); slotTabBloqueio.classList.remove('active');
+            slotContentAgendar.classList.remove('hidden'); slotContentBloqueio.classList.add('hidden');
+        });
+        slotTabBloqueio.addEventListener('click', () => {
+            slotTabBloqueio.classList.add('active'); slotTabAgendar.classList.remove('active');
+            slotContentBloqueio.classList.remove('hidden'); slotContentAgendar.classList.add('hidden');
+        });
+        document.getElementById('slot-recurring-checkbox').addEventListener('change', (e) => {
+            document.getElementById('slot-recurring-options').classList.toggle('hidden', !e.target.checked);
+        });
+
+        slotAppointmentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('save-slot-appointment-button');
+            const btnText = btn.querySelector('.btn-text'); const loader = btn.querySelector('.loader');
+            btnText.classList.add('hidden'); loader.classList.remove('hidden'); btn.disabled = true;
+
+            try {
+                const professionalId = document.getElementById('slot-professional-id').value;
+                const baseDateTime = new Date(document.getElementById('slot-datetime').value);
+                const clientId = document.getElementById('slot-client-select').value;
+                const serviceId = document.getElementById('slot-service-select').value;
+                
+                const client = localClientsCache.find(c => c.id === clientId);
+                const professional = localProfessionalsCache.find(p => p.id === professionalId);
+                const service = localServicesCache.find(s => s.id === serviceId);
+
+                if(!client || !professional || !service) throw new Error("Seleção inválida.");
+
+                const isRecurring = document.getElementById('slot-recurring-checkbox').checked;
+
+                if (isRecurring) {
+                    const frequency = parseInt(document.getElementById('slot-recurring-frequency').value) || 1;
+                    const period = document.getElementById('slot-recurring-period').value;
+                    const count = parseInt(document.getElementById('slot-recurring-count').value) || 4;
+                    const batch = writeBatch(db);
+
+                    for (let i = 0; i < count; i++) {
+                        let newDate = new Date(baseDateTime);
+                        if (period === 'weeks') {
+                            newDate.setDate(newDate.getDate() + (i * frequency * 7));
+                        } else if (period === 'months') {
+                            newDate.setMonth(newDate.getMonth() + (i * frequency));
+                        }
+                        const newDocRef = doc(collection(db, "agendamentos"));
+                        batch.set(newDocRef, {
+                            cliente: { id: client.id, nome: client.name },
+                            barbeiro: { id: professional.id, nome: professional.nome },
+                            servico: { id: service.id, nome: service.nome, duracaoMinutos: service.duracaoMinutos },
+                            data: newDate,
+                            status: 'agendado',
+                            gestorId: auth.currentUser.uid,
+                            createdAt: serverTimestamp()
+                        });
+                    }
+                    await batch.commit();
+
+                } else {
+                    await addDoc(collection(db, "agendamentos"), {
+                        cliente: { id: client.id, nome: client.name },
+                        barbeiro: { id: professional.id, nome: professional.nome },
+                        servico: { id: service.id, nome: service.nome, duracaoMinutos: service.duracaoMinutos },
+                        data: baseDateTime,
+                        status: 'agendado',
+                        gestorId: auth.currentUser.uid,
+                        createdAt: serverTimestamp()
+                    });
+                }
+                
+                slotActionModal.classList.add('hidden');
+            } catch (error) {
+                console.error("Erro ao agendar:", error);
+                document.getElementById('slot-appointment-feedback').textContent = "Erro ao salvar.";
+            } finally {
+                btnText.classList.remove('hidden'); loader.classList.add('hidden'); btn.disabled = false;
+            }
+        });
+
+        slotBlockForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('save-slot-block-button');
+            const btnText = btn.querySelector('.btn-text'); const loader = btn.querySelector('.loader');
+            btnText.classList.add('hidden'); loader.classList.remove('hidden'); btn.disabled = true;
+
+            try {
+                const professionalId = document.getElementById('slot-professional-id').value;
+                const dateTime = new Date(document.getElementById('slot-datetime').value);
+                const reason = document.getElementById('slot-block-reason').value;
+                const duration = parseInt(document.getElementById('slot-block-duration').value);
+                const professional = localProfessionalsCache.find(p => p.id === professionalId);
+
+                await addDoc(collection(db, "agendamentos"), {
+                    barbeiro: { id: professional.id, nome: professional.nome },
+                    data: dateTime,
+                    status: 'bloqueio',
+                    motivo: reason,
+                    duracaoMinutos: duration,
+                    gestorId: auth.currentUser.uid,
+                    createdAt: serverTimestamp()
+                });
+                slotActionModal.classList.add('hidden');
+            } catch (error) {
+                console.error("Erro ao bloquear horário:", error);
+                document.getElementById('slot-block-feedback').textContent = "Erro ao salvar.";
+            } finally {
+                btnText.classList.remove('hidden'); loader.classList.add('hidden'); btn.disabled = false;
+            }
+        });
+        
+        // Modais de Edição
+        closeEditAppointmentModalBtn.addEventListener('click', () => editAppointmentModal.classList.add('hidden'));
+        saveEditAppointmentBtn.addEventListener('click', async () => {
+            const btn = saveEditAppointmentBtn;
+            const btnText = btn.querySelector('.btn-text'); const loader = btn.querySelector('.loader');
+            btnText.classList.add('hidden'); loader.classList.remove('hidden'); btn.disabled = true;
+            
+            try {
+                const appointmentId = document.getElementById('edit-appointment-id').value;
+                const newStatus = document.getElementById('edit-appt-status').value;
+                const newDateTime = new Date(document.getElementById('edit-appt-datetime').value);
+                
+                await updateDoc(doc(db, "agendamentos", appointmentId), {
+                    status: newStatus,
+                    data: newDateTime
+                });
+                editAppointmentModal.classList.add('hidden');
+            } catch (error) {
+                 console.error("Erro ao atualizar agendamento:", error);
+                 document.getElementById('edit-appointment-feedback').textContent = "Erro ao salvar.";
+            } finally {
+                btnText.classList.remove('hidden'); loader.classList.add('hidden'); btn.disabled = false;
+            }
+        });
+        deleteAppointmentBtn.addEventListener('click', () => {
+            const appointmentId = document.getElementById('edit-appointment-id').value;
+            window.deleteDocument('agendamentos', appointmentId);
+            editAppointmentModal.classList.add('hidden');
+        });
+        
+        whatsappReminderBtn.addEventListener('click', () => {
+            const appointmentId = document.getElementById('edit-appointment-id').value;
+            const appt = agendaState.appointments.find(a => a.id === appointmentId);
+            if (!appt || !appt.cliente.nome) return;
+            const client = localClientsCache.find(c => c.id === appt.cliente.id);
+            if (!client || !client.phone) {
+                alert("Este cliente não tem um número de telefone cadastrado.");
+                return;
+            }
+            const dateStr = appt.data.toDate().toLocaleDateString('pt-BR');
+            const timeStr = appt.data.toDate().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+            const message = `Olá, ${appt.cliente.nome}! Passando para lembrar do seu agendamento na VS Barbearia no dia ${dateStr} às ${timeStr}h. Confirma sua presença?`;
+            const whatsappUrl = `https://wa.me/${client.phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        });
+        
+        // Modais de Bloqueio
+        closeEditBlockModalBtn.addEventListener('click', () => editBlockModal.classList.add('hidden'));
+        saveEditBlockBtn.addEventListener('click', async () => {
+             const btn = saveEditBlockBtn;
+            const btnText = btn.querySelector('.btn-text'); const loader = btn.querySelector('.loader');
+            btnText.classList.add('hidden'); loader.classList.remove('hidden'); btn.disabled = true;
+            try {
+                const blockId = document.getElementById('edit-block-id').value;
+                await updateDoc(doc(db, "agendamentos", blockId), {
+                    motivo: document.getElementById('edit-block-reason').value,
+                    duracaoMinutos: parseInt(document.getElementById('edit-block-duration').value)
+                });
+                editBlockModal.classList.add('hidden');
+            } catch (error) {
+                console.error("Erro ao salvar bloqueio:", error);
+            } finally {
+                 btnText.classList.remove('hidden'); loader.classList.add('hidden'); btn.disabled = false;
+            }
+        });
+        deleteBlockBtn.addEventListener('click', () => {
+            const blockId = document.getElementById('edit-block-id').value;
+            window.deleteDocument('agendamentos', blockId);
+            editBlockModal.classList.add('hidden');
+        });
+        
+        // Modal de Cadastro Rápido de Cliente
+        document.getElementById('open-quick-client-modal-btn').addEventListener('click', () => quickClientModal.classList.remove('hidden'));
+        cancelQuickClientBtn.addEventListener('click', () => quickClientModal.classList.add('hidden'));
+        document.getElementById('add-quick-client-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = saveQuickClientBtn;
+            const btnText = btn.querySelector('.btn-text'); const loader = btn.querySelector('.loader');
+            btnText.classList.add('hidden'); loader.classList.remove('hidden'); btn.disabled = true;
+
+            try {
+                const newClient = {
+                    name: document.getElementById('quick-client-name').value,
+                    phone: document.getElementById('quick-client-phone').value,
+                    gestorId: auth.currentUser.uid,
+                    createdAt: serverTimestamp()
+                };
+                const docRef = await addDoc(collection(db, "users"), newClient);
+                const clientForCache = { id: docRef.id, ...newClient };
+                localClientsCache.push(clientForCache); // Atualiza o cache local
+                
+                // Adiciona e seleciona o novo cliente no select principal
+                const clientSelect = document.getElementById('slot-client-select');
+                clientSelect.innerHTML += `<option value="${docRef.id}" selected>${newClient.name}</option>`;
+                
+                quickClientModal.classList.add('hidden');
+            } catch (error) {
+                console.error("Erro no cadastro rápido:", error);
+                document.getElementById('add-quick-client-feedback').textContent = "Erro ao salvar.";
+            } finally {
+                btnText.classList.remove('hidden'); loader.classList.add('hidden'); btn.disabled = false;
+            }
+        });
+
+        // --- LÓGICA DE ARRASTAR E SOLTAR (DRAG AND DROP) ---
+        function makeDraggable(element) {
+            interact(element)
+                .draggable({
+                    inertia: true,
+                    listeners: {
+                        start(event) {
+                            isDragging = true;
+                            event.target.classList.add('dragging');
+                        },
+                        move(event) {
+                            const target = event.target;
+                            const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                            const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+                            target.style.transform = `translate(${x}px, ${y}px)`;
+                            target.setAttribute('data-x', x);
+                            target.setAttribute('data-y', y);
+                        },
+                        end(event) {
+                            const target = event.target;
+                            target.classList.remove('dragging');
+                            target.style.transform = '';
+                            target.removeAttribute('data-x');
+                            target.removeAttribute('data-y');
+
+                            const dropzone = event.target.closest('.professional-column');
+                            if (!dropzone) { isDragging = false; return; }
+
+                            const rect = dropzone.querySelector('div:not(.professional-header)').getBoundingClientRect();
+                            const newTop = event.client.y - rect.top;
+                            
+                            const slotHeight = 40;
+                            const pixelsPerMinute = slotHeight / agendaState.interval;
+                            const minutesFromStart = Math.round(newTop / pixelsPerMinute) * agendaState.interval;
+                            
+                            const startHour = 8;
+                            const newHour = startHour + Math.floor(minutesFromStart / 60);
+                            const newMinute = minutesFromStart % 60;
+
+                            const newDateTime = new Date(agendaState.currentDate);
+                            newDateTime.setHours(newHour, newMinute, 0, 0);
+
+                            const newProfessionalId = dropzone.dataset.professionalId;
+                            const appointmentId = target.dataset.id;
+                            
+                            updateAppointmentOnDrop(appointmentId, newDateTime, newProfessionalId);
+                            // Seta o isDragging para false após um pequeno delay para evitar o click
+                            setTimeout(() => { isDragging = false; }, 100);
+                        }
+                    }
+                })
+                .resizable(false); // Desabilitar redimensionamento por enquanto
+        }
+
+        async function updateAppointmentOnDrop(appointmentId, newDateTime, newProfessionalId) {
+            try {
+                const professional = localProfessionalsCache.find(p => p.id === newProfessionalId);
+                if (!professional) throw new Error("Profissional não encontrado");
+
+                await updateDoc(doc(db, "agendamentos", appointmentId), {
+                    data: newDateTime,
+                    barbeiro: { id: professional.id, nome: professional.nome }
+                });
+            } catch (error) {
+                console.error("Erro ao atualizar agendamento após arrastar:", error);
+                // Opcional: Adicionar um feedback visual para o usuário
+            }
+        }
     </script>
 </body>
 </html>
-
-
-
-
 
