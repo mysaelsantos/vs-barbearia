@@ -700,9 +700,107 @@
                                 </div>
                              </div>
                         </div>
-                        <div id="content-relatorios" class="hidden">
-                             <h1 class="text-2xl font-bold text-primary mb-4">Relatórios</h1>
-                             <p class="text-gray-400">Em breve, esta área trará relatórios detalhados de agendamentos, faturamento por profissional, serviços mais populares e muito mais.</p>
+                        <div id="content-relatorios" class="hidden p-6">
+                             <h1 class="text-2xl font-bold text-primary mb-6">Relatórios</h1>
+
+                            <!-- Abas de Navegação dos Relatórios -->
+                            <div class="border-b border-gray-700 mb-6">
+                                <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                                    <button id="tab-faturamento" class="tab-button active">Faturação</button>
+                                    <button id="tab-servicos" class="tab-button text-gray-400 hover:text-gray-200">Serviços</button>
+                                </nav>
+                            </div>
+
+                            <!-- Conteúdo da Aba Faturamento -->
+                            <div id="content-tab-faturamento">
+                                <!-- Filtros -->
+                                <div class="bg-[#2a2a2a] p-4 rounded-xl shadow-lg border border-gray-800 mb-6 flex flex-wrap items-center justify-between gap-4">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <input type="date" id="report-start-date" class="form-input !p-2">
+                                        <span class="text-gray-400">até</span>
+                                        <input type="date" id="report-end-date" class="form-input !p-2">
+                                        <button id="generate-report-btn" class="btn-primary !py-2">Gerar Relatório</button>
+                                    </div>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <button class="btn-secondary !py-2 text-sm" data-range="today">Hoje</button>
+                                        <button class="btn-secondary !py-2 text-sm" data-range="this_month">Este Mês</button>
+                                        <button class="btn-secondary !py-2 text-sm" data-range="last_month">Mês Passado</button>
+                                    </div>
+                                </div>
+
+                                <!-- Resultados -->
+                                <div id="report-results" class="hidden">
+                                    <!-- Cards de Resumo -->
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                                        <!-- Card Faturação Bruta -->
+                                        <div class="bg-[#2a2a2a] p-5 rounded-xl">
+                                            <p class="text-sm font-medium text-gray-400">Faturação Bruta</p>
+                                            <p id="report-total-bruto" class="text-2xl font-bold text-green-400 mt-1">R$ 0,00</p>
+                                        </div>
+                                        <!-- Card Comissões -->
+                                        <div class="bg-[#2a2a2a] p-5 rounded-xl">
+                                            <p class="text-sm font-medium text-gray-400">Total Comissões</p>
+                                            <p id="report-total-comissao" class="text-2xl font-bold text-red-400 mt-1">R$ 0,00</p>
+                                        </div>
+                                        <!-- Card Descontos -->
+                                        <div class="bg-[#2a2a2a] p-5 rounded-xl">
+                                            <p class="text-sm font-medium text-gray-400">Total Descontos</p>
+                                            <p id="report-total-desconto" class="text-2xl font-bold text-yellow-400 mt-1">R$ 0,00</p>
+                                        </div>
+                                        <!-- Card Faturação Líquida -->
+                                        <div class="bg-[#2a2a2a] p-5 rounded-xl">
+                                            <p class="text-sm font-medium text-gray-400">Faturação Líquida</p>
+                                            <p id="report-total-liquido" class="text-2xl font-bold text-primary mt-1">R$ 0,00</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Tabela por Profissional -->
+                                    <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
+                                        <h3 class="text-lg font-bold text-gray-300 mb-4">Desempenho por Profissional</h3>
+                                        <div class="overflow-x-auto">
+                                            <table class="w-full text-sm text-left text-gray-400">
+                                                <thead class="text-xs text-gray-400 uppercase bg-[#333]">
+                                                    <tr>
+                                                        <th scope="col" class="px-6 py-3">Profissional</th>
+                                                        <th scope="col" class="px-6 py-3">Serviços Realizados</th>
+                                                        <th scope="col" class="px-6 py-3">Faturação Bruta</th>
+                                                        <th scope="col" class="px-6 py-3">Comissão Paga</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="report-by-professional-list">
+                                                    <!-- Linhas geradas via JS -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="report-placeholder" class="text-center py-16 text-gray-500">
+                                    <i class="fas fa-chart-line fa-3x mb-4"></i>
+                                    <p>Selecione um período para gerar o relatório.</p>
+                                </div>
+                            </div>
+
+                             <!-- NOVO: Conteúdo da Aba Serviços -->
+                            <div id="content-tab-servicos" class="hidden">
+                                <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
+                                    <h3 class="text-lg font-bold text-gray-300 mb-4">Ranking de Serviços</h3>
+                                     <div class="overflow-x-auto">
+                                        <table class="w-full text-sm text-left text-gray-400">
+                                            <thead class="text-xs text-gray-400 uppercase bg-[#333]">
+                                                <tr>
+                                                    <th scope="col" class="px-6 py-3">#</th>
+                                                    <th scope="col" class="px-6 py-3">Serviço</th>
+                                                    <th scope="col" class="px-6 py-3">Nº de Vezes Realizado</th>
+                                                    <th scope="col" class="px-6 py-3">Faturação Total (Bruta)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="report-by-service-list">
+                                                <!-- Linhas geradas via JS -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </main>
@@ -781,6 +879,25 @@
                         <span class="btn-text"><i class="fas fa-check-circle mr-2"></i>Confirmar Pagamento</span>
                         <div class="loader hidden"></div>
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOVO: Modal de Histórico do Cliente -->
+    <div id="client-history-modal" class="hidden fixed inset-0 z-[60] overflow-y-auto modal-backdrop flex items-center justify-center p-4">
+        <div class="relative w-full max-w-2xl">
+             <div class="modal-content rounded-lg shadow-xl p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-primary">Histórico do Cliente</h3>
+                        <p id="client-history-name" class="text-sm text-gray-400"></p>
+                    </div>
+                    <button id="close-client-history-modal" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+                </div>
+                <div id="client-history-content" class="max-h-[60vh] overflow-y-auto pr-2">
+                    <!-- Conteúdo do histórico será injetado aqui -->
+                    <p id="loading-client-history" class="text-center text-gray-400 p-8">A carregar histórico...</p>
                 </div>
             </div>
         </div>
@@ -2048,9 +2165,10 @@
                              <p class="text-sm text-gray-400">Créditos</p>
                              <p class="font-bold text-primary text-lg">R$ ${(client.referralCredits || 0).toFixed(2)}</p>
                         </div>
-                        <div class="space-x-2 sm:space-x-4">
-                             <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${doc.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
-                             <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${doc.id}" data-action="delete">
+                        <div class="flex flex-col sm:flex-row gap-2 items-center">
+                             <button class="text-sm text-gray-300 hover:text-primary font-semibold w-full sm:w-auto" data-id="${doc.id}" data-action="history"><i class="fas fa-history mr-1"></i>Histórico</button>
+                             <button class="text-sm text-gray-300 hover:text-primary font-semibold w-full sm:w-auto" data-id="${doc.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
+                             <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center justify-center w-full sm:w-auto mt-2 sm:mt-0" data-id="${doc.id}" data-action="delete">
                                  <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
                              </button>
                         </div>`;
@@ -2081,6 +2199,9 @@
                     editClientModal.classList.remove('hidden');
                 }
             }
+            if (action === 'history') {
+                openClientHistoryModal(id);
+            }
         });
         
         cancelEditClientButton.addEventListener('click', () => editClientModal.classList.add('hidden'));
@@ -2104,118 +2225,203 @@
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditClientButton.disabled = false; cancelEditClientButton.disabled = false; }
         });
 
-        // --- CRUD DE PLANOS ---
-        const addPlanForm = document.getElementById('add-plan-form');
-        const plansListDiv = document.getElementById('plans-list');
-        const loadingPlansP = document.getElementById('loading-plans');
-        const editPlanModal = document.getElementById('edit-plan-modal');
-        const cancelEditPlanButton = document.getElementById('cancel-edit-plan-button');
-        const saveEditPlanButton = document.getElementById('save-edit-plan-button');
-        let unsubscribePlans = null;
-
-        addPlanForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); const user = auth.currentUser; if (!user) return;
-            const submitBtn = addPlanForm.querySelector('button[type="submit"]');
-            const btnText = submitBtn.querySelector('.btn-text');
-            const loader = submitBtn.querySelector('.loader');
-            btnText.classList.add('hidden'); loader.classList.remove('hidden'); submitBtn.disabled = true;
-
-            const data = {
-                title: document.getElementById('plan-title').value,
-                price: document.getElementById('plan-price').value,
-                period: document.getElementById('plan-period').value,
-                features: document.getElementById('plan-features').value.split('\n').filter(f => f.trim() !== ''),
-                popular: document.getElementById('plan-popular').checked,
-                gestorId: user.uid
-            };
-
-            try { await addDoc(collection(db, "planos"), data); addPlanForm.reset(); }
-            catch(error) { console.error("Erro ao adicionar plano:", error); }
-            finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false; }
-        });
-
-        function loadPlans(userId) {
-            if (unsubscribePlans) unsubscribePlans();
-            const q = query(collection(db, "planos"), where("gestorId", "==", userId));
-            unsubscribePlans = onSnapshot(q, (snapshot) => {
-                loadingPlansP.classList.add('hidden');
-                plansListDiv.innerHTML = '';
-                if (snapshot.empty) { plansListDiv.innerHTML = '<p class="text-gray-400">Nenhum plano cadastrado.</p>'; return; }
-                snapshot.forEach(doc => {
-                    const plan = doc.data();
-                    const card = document.createElement('div');
-                    card.className = `p-6 bg-[#2a2a2a] border ${plan.popular ? 'border-primary' : 'border-gray-700'} rounded-lg relative`;
-                    
-                    if (plan.popular) {
-                        card.innerHTML += `<div class="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 bg-primary text-black text-xs font-bold px-3 py-1 rounded-full">MAIS POPULAR</div>`;
-                    }
-
-                    card.innerHTML += `
-                        <div class="flex-grow mt-4">
-                            <h4 class="font-bold text-white text-xl">${plan.title}</h4>
-                            <p class="text-2xl font-bold text-primary my-2">R$${plan.price} <span class="text-base font-medium text-gray-400">${plan.period}</span></p>
-                            <ul class="space-y-2 text-sm text-gray-300 mt-4">
-                                ${plan.features.map(f => `<li class="flex items-start"><i class="fas fa-check text-primary mr-3 mt-1"></i><span>${f}</span></li>`).join('')}
-                            </ul>
-                        </div>
-                        <div class="flex justify-end space-x-4 mt-6 pt-4 border-t border-gray-700">
-                            <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${doc.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
-                            <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${doc.id}" data-action="delete">
-                                <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
-                            </button>
-                        </div>
-                    `;
-                    plansListDiv.appendChild(card);
-                });
+        // --- NOVO: LÓGICA DE RELATÓRIOS ---
+        function initializeReports(userId) {
+            const startDateInput = document.getElementById('report-start-date');
+            const endDateInput = document.getElementById('report-end-date');
+            tabFaturamento.addEventListener('click', () => {
+                tabFaturamento.classList.add('active'); tabServicos.classList.remove('active');
+                contentFaturamento.classList.remove('hidden'); contentServicos.classList.add('hidden');
+            });
+             tabServicos.addEventListener('click', () => {
+                tabServicos.classList.add('active'); tabFaturamento.classList.remove('active');
+                contentServicos.classList.remove('hidden'); contentFaturamento.classList.add('hidden');
+                // Gera o relatório de serviços se ainda não houver dados
+                if(document.getElementById('report-by-service-list').innerHTML === '') {
+                     generateBillingReport(userId);
+                }
             });
         }
 
-        plansListDiv.addEventListener('click', async (e) => {
-            const button = e.target.closest('button');
-            if (!button || !button.dataset.id) return;
-            const id = button.dataset.id;
-            const action = button.dataset.action;
+        async function generateBillingReport(userId) {
+            const resultsDiv = document.getElementById('report-results');
+            const placeholderDiv = document.getElementById('report-placeholder');
+            const professionalTableBody = document.getElementById('report-by-professional-list');
+            const serviceTableBody = document.getElementById('report-by-service-list');
+            
+            placeholderDiv.innerHTML = '<div class="loader mx-auto"></div><p class="mt-4">A gerar relatório...</p>';
+            resultsDiv.classList.add('hidden');
+            placeholderDiv.classList.remove('hidden');
+            
+            try {
+                const startDate = new Date(document.getElementById('report-start-date').value);
+                startDate.setUTCHours(0, 0, 0, 0);
+                
+                const endDate = new Date(document.getElementById('report-end-date').value);
+                endDate.setUTCHours(23, 59, 59, 999);
 
-            if (action === 'delete') {
-                window.deleteDocument('planos', id);
-            }
+                if (isNaN(startDate) || isNaN(endDate)) throw new Error("Datas inválidas.");
 
-            if (action === 'edit') {
-                const planDoc = await getDoc(doc(db, "planos", id));
-                if (planDoc.exists()) {
-                    const data = planDoc.data();
-                    document.getElementById('edit-plan-id').value = id;
-                    document.getElementById('edit-plan-title').value = data.title;
-                    document.getElementById('edit-plan-price').value = data.price;
-                    document.getElementById('edit-plan-period').value = data.period;
-                    document.getElementById('edit-plan-features').value = data.features.join('\n');
-                    document.getElementById('edit-plan-popular').checked = data.popular;
-                    editPlanModal.classList.remove('hidden');
+                const q = query(
+                    collection(db, "agendamentos"),
+                    where("gestorId", "==", userId),
+                    where("status", "==", "finalizado"),
+                    where("dataPagamento", ">=", startDate),
+                    where("dataPagamento", "<=", endDate)
+                );
+                
+                const querySnapshot = await getDocs(q);
+
+                let totalBruto = 0, totalComissao = 0, totalDesconto = 0;
+                const professionalPerformance = {};
+                const servicePerformance = {};
+
+                querySnapshot.forEach(doc => {
+                    const appt = doc.data();
+                    const bruto = appt.valorServico || 0;
+                    const comissao = appt.valorComissao || 0;
+                    const desconto = appt.desconto || 0;
+                    const profId = appt.barbeiro.id;
+                    const serviceId = appt.servico.id;
+
+                    totalBruto += bruto;
+                    totalComissao += comissao;
+                    totalDesconto += desconto;
+                    
+                    // Agrega dados por profissional
+                    if (!professionalPerformance[profId]) { professionalPerformance[profId] = { nome: appt.barbeiro.nome, servicos: 0, faturamento: 0, comissao: 0 }; }
+                    professionalPerformance[profId].servicos++;
+                    professionalPerformance[profId].faturamento += bruto;
+                    professionalPerformance[profId].comissao += comissao;
+                    
+                    // Agrega dados por serviço
+                    if (!servicePerformance[serviceId]) { servicePerformance[serviceId] = { nome: appt.servico.nome, count: 0, faturamento: 0 }; }
+                    servicePerformance[serviceId].count++;
+                    servicePerformance[serviceId].faturamento += bruto;
+                });
+                
+                const totalLiquido = totalBruto - totalComissao;
+
+                // --- Renderiza Relatório de Faturamento ---
+                document.getElementById('report-total-bruto').textContent = `R$ ${totalBruto.toFixed(2).replace('.', ',')}`;
+                document.getElementById('report-total-comissao').textContent = `R$ ${totalComissao.toFixed(2).replace('.', ',')}`;
+                document.getElementById('report-total-desconto').textContent = `R$ ${totalDesconto.toFixed(2).replace('.', ',')}`;
+                document.getElementById('report-total-liquido').textContent = `R$ ${totalLiquido.toFixed(2).replace('.', ',')}`;
+                
+                professionalTableBody.innerHTML = '';
+                if (Object.keys(professionalPerformance).length === 0) {
+                     professionalTableBody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-500">Nenhum dado encontrado para este período.</td></tr>';
+                } else {
+                    for (const profId in professionalPerformance) {
+                        const data = professionalPerformance[profId];
+                        professionalTableBody.innerHTML += `
+                             <tr class="bg-[#1e1e1e] border-b border-gray-700">
+                                <td class="px-6 py-4 font-medium text-white">${data.nome}</td>
+                                <td class="px-6 py-4">${data.servicos}</td>
+                                <td class="px-6 py-4">R$ ${data.faturamento.toFixed(2).replace('.', ',')}</td>
+                                <td class="px-6 py-4 text-red-400">R$ ${data.comissao.toFixed(2).replace('.', ',')}</td>
+                            </tr>`;
+                    }
                 }
+                
+                // --- Renderiza Relatório de Serviços ---
+                serviceTableBody.innerHTML = '';
+                const sortedServices = Object.values(servicePerformance).sort((a, b) => b.count - a.count);
+
+                if (sortedServices.length === 0) {
+                    serviceTableBody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-500">Nenhum serviço encontrado para este período.</td></tr>';
+                } else {
+                    sortedServices.forEach((service, index) => {
+                        serviceTableBody.innerHTML += `
+                            <tr class="bg-[#1e1e1e] border-b border-gray-700">
+                                <td class="px-6 py-4 font-medium text-white">${index + 1}</td>
+                                <td class="px-6 py-4">${service.nome}</td>
+                                <td class="px-6 py-4">${service.count}</td>
+                                <td class="px-6 py-4 font-semibold">R$ ${service.faturamento.toFixed(2).replace('.', ',')}</td>
+                            </tr>`;
+                    });
+                }
+
+                placeholderDiv.classList.add('hidden');
+                resultsDiv.classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Erro ao gerar relatório:", error);
+                placeholderDiv.innerHTML = '<p class="text-red-500">Ocorreu um erro ao gerar o relatório.</p>';
             }
-        });
+        }
 
-        cancelEditPlanButton.addEventListener('click', () => editPlanModal.classList.add('hidden'));
+        // --- NOVO: LÓGICA DO HISTÓRICO DE CLIENTE ---
+        const clientHistoryModal = document.getElementById('client-history-modal');
+        const closeClientHistoryModalBtn = document.getElementById('close-client-history-modal');
 
-        saveEditPlanButton.addEventListener('click', async () => {
-            const btnText = saveEditPlanButton.querySelector('.btn-text'); const loader = saveEditPlanButton.querySelector('.loader');
-            btnText.classList.add('hidden'); loader.classList.remove('hidden'); saveEditPlanButton.disabled = true; cancelEditPlanButton.disabled = true;
+        async function openClientHistoryModal(clientId) {
+            const client = localClientsCache.find(c => c.id === clientId);
+            if (!client) {
+                console.error("Cliente não encontrado no cache.");
+                return;
+            }
 
-            const id = document.getElementById('edit-plan-id').value;
-            const planRef = doc(db, "planos", id);
-            const dataToUpdate = {
-                title: document.getElementById('edit-plan-title').value,
-                price: document.getElementById('edit-plan-price').value,
-                period: document.getElementById('edit-plan-period').value,
-                features: document.getElementById('edit-plan-features').value.split('\n').filter(f => f.trim() !== ''),
-                popular: document.getElementById('edit-plan-popular').checked,
-            };
+            document.getElementById('client-history-name').textContent = client.name;
+            const contentDiv = document.getElementById('client-history-content');
+            const loadingP = document.getElementById('loading-client-history');
+            contentDiv.innerHTML = '';
+            contentDiv.appendChild(loadingP);
+            loadingP.classList.remove('hidden');
+            
+            clientHistoryModal.classList.remove('hidden');
 
-            try { await updateDoc(planRef, dataToUpdate); editPlanModal.classList.add('hidden'); }
-            catch(error) { console.error("Erro ao atualizar plano:", error); }
-            finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditPlanButton.disabled = false; cancelEditPlanButton.disabled = false; }
-        });
-        
+            try {
+                const q = query(
+                    collection(db, "agendamentos"), 
+                    where("cliente.id", "==", clientId),
+                    where("status", "==", "finalizado")
+                );
+                
+                const querySnapshot = await getDocs(q);
+                loadingP.classList.add('hidden');
+
+                if (querySnapshot.empty) {
+                    contentDiv.innerHTML = '<p class="text-center text-gray-500 p-8">Nenhum serviço finalizado encontrado para este cliente.</p>';
+                    return;
+                }
+                
+                let historyHtml = '<div class="space-y-4">';
+                const historyData = querySnapshot.docs.map(doc => doc.data());
+                // Ordena do mais recente para o mais antigo
+                historyData.sort((a,b) => b.data.toDate() - a.data.toDate());
+
+                historyData.forEach(appt => {
+                    const date = appt.data.toDate().toLocaleDateString('pt-BR', {day: '2-digit', month: 'long', year: 'numeric'});
+                    const value = (appt.valorFinal !== undefined) ? appt.valorFinal : (appt.valorServico || 0);
+                    
+                    historyHtml += `
+                        <div class="bg-[#1e1e1e] p-4 rounded-lg border border-gray-700">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="font-bold text-white">${appt.servico.nome}</p>
+                                    <p class="text-sm text-gray-400">com ${appt.barbeiro.nome}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-semibold text-primary">R$ ${value.toFixed(2).replace('.', ',')}</p>
+                                    <p class="text-xs text-gray-500">${date}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                historyHtml += '</div>';
+                contentDiv.innerHTML = historyHtml;
+
+            } catch (error) {
+                console.error("Erro ao buscar histórico do cliente:", error);
+                loadingP.classList.add('hidden');
+                contentDiv.innerHTML = '<p class="text-center text-red-500 p-8">Erro ao carregar o histórico.</p>';
+            }
+        }
+
+        closeClientHistoryModalBtn.addEventListener('click', () => clientHistoryModal.classList.add('hidden'));
+
         // --- CRUD DE METAS ---
         const addGoalForm = document.getElementById('add-goal-form');
         const goalsListDiv = document.getElementById('goals-list');
@@ -2577,11 +2783,11 @@
                         switch (targetId) {
                             case 'content-dashboard': loadDashboardData(user.uid); break;
                             case 'content-agenda': initializeAgenda(user.uid); break;
-                            case 'content-caixa': loadCaixaData(user.uid); break; // NOVO
+                            case 'content-caixa': loadCaixaData(user.uid); break; 
+                            case 'content-relatorios': initializeReports(user.uid); break; // NOVO
                             case 'content-servicos': loadServices(user.uid); break;
                             case 'content-profissionais': loadProfessionals(user.uid); break;
                             case 'content-unidades': loadUnits(user.uid); break;
-                            case 'content-clientes': loadClients(user.uid); break;
                             case 'content-planos': loadPlans(user.uid); break;
                             case 'content-metas': loadGoals(user.uid); break;
                             case 'content-configuracoes': loadPanelUsers(user.uid); break;
@@ -3340,6 +3546,12 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
 
 
 
