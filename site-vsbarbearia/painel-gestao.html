@@ -26,6 +26,7 @@
         .tab-button {
             border-bottom: 3px solid transparent;
             transition: all 0.3s ease;
+            padding-bottom: 8px;
         }
         .tab-button.active {
             border-bottom-color: #fbb62c;
@@ -119,10 +120,8 @@
             flex: 1 1 0px;
             border-left: 1px solid #444;
             position: relative;
-            /* NOVO: Adicionar transição para feedback visual */
             transition: background-color 0.3s ease;
         }
-        /* NOVO: Estilos para feedback de dropzone */
         .professional-column.drop-active {
             background-color: rgba(251, 182, 44, 0.05);
         }
@@ -167,7 +166,6 @@
         .appointment-card:hover {
             opacity: 0.9;
         }
-        /* NOVO: Estilo para arrastar */
         .appointment-card.dragging {
             opacity: 0.6;
             z-index: 20;
@@ -187,7 +185,6 @@
             border-left-color: #ef4444; /* red-500 */
         }
 
-        /* NOVO: Estilo para Folgas e Bloqueios */
         .appointment-card.status-bloqueio {
             background-color: #374151; /* gray-700 */
             border-left-color: #9ca3af; /* gray-400 */
@@ -212,31 +209,31 @@
             text-overflow: ellipsis;
         }
 
-        /* --- NOVOS ESTILOS PARA O MENU LATERAL --- */
+        /* --- ESTILOS PARA O MENU LATERAL --- */
         #main-container {
             display: flex;
-            flex-grow: 1; /* MODIFICADO: para preencher o espaço restante */
-            overflow: hidden; /* MODIFICADO: para conter o scroll */
+            flex-grow: 1; 
+            overflow: hidden;
         }
         #sidebar {
-            width: 250px; /* Largura do menu expandido */
+            width: 250px; 
             background-color: #1e1e1e;
             transition: width 0.3s ease;
-            overflow-x: hidden; /* Evita barra de rolagem horizontal */
+            overflow-x: hidden;
             height: 100%;
             display: flex;
             flex-direction: column;
         }
         #sidebar.collapsed {
-            width: 70px; /* Largura do menu recolhido */
+            width: 70px; 
         }
         #sidebar .nav-link {
             display: flex;
             align-items: center;
             padding: 12px 20px;
-            color: #a0aec0; /* gray-400 */
+            color: #a0aec0;
             transition: background-color 0.2s, color 0.2s;
-            position: relative; /* Para o indicador sutil */
+            position: relative;
         }
          #sidebar .nav-link:hover {
             background-color: rgba(251, 182, 44, 0.1);
@@ -246,7 +243,6 @@
             color: #fbb62c;
             font-weight: 600;
         }
-        /* NOVO: Indicador sutil para item ativo */
         #sidebar .nav-link.active::before {
             content: '';
             position: absolute;
@@ -266,17 +262,17 @@
         }
         #sidebar.collapsed .nav-link .nav-text {
             opacity: 0;
-            pointer-events: none; /* Evita interação com texto invisível */
+            pointer-events: none;
         }
         #sidebar .submenu {
-            padding-left: 40px; /* Indentação do submenu */
+            padding-left: 40px;
             background-color: rgba(0,0,0,0.2);
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease-in-out;
         }
         #sidebar .submenu.open {
-            max-height: 500px; /* Altura suficiente para os itens */
+            max-height: 500px;
         }
         #sidebar .submenu .nav-link {
             padding-left: 25px;
@@ -288,8 +284,43 @@
         #main-content {
             flex-grow: 1;
             overflow-y: auto;
-            height: 100%; /* MODIFICADO: para se ajustar ao container */
+            height: 100%;
         }
+        
+        /* NOVO: Estilos para as notificações (Toasts) */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background-color: #2a2a2a;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border-left: 4px solid #fbb62c;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transform: translateX(100%);
+            animation: slideIn 0.5s forwards;
+        }
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        .toast.success { border-left-color: #22c55e; } /* green-500 */
+        .toast.error { border-left-color: #ef4444; } /* red-500 */
+        .toast.info { border-left-color: #3b82f6; } /* blue-500 */
+
     </style>
 </head>
 <body class="h-full bg-[#111111]">
@@ -443,7 +474,7 @@
                                 <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
                                     <h3 class="text-lg font-bold mb-4">Serviços Cadastrados</h3>
                                     <div id="services-list" class="space-y-4">
-                                        <p id="loading-services" class="text-gray-400">Carregando...</p>
+                                        <p id="loading-services" class="text-gray-400">A carregar serviços...</p>
                                     </div>
                                 </div>
                             </div>
@@ -470,7 +501,7 @@
                                 <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
                                     <h3 class="text-lg font-bold mb-4">Profissionais Cadastrados</h3>
                                     <div id="professionals-list" class="space-y-4">
-                                        <p id="loading-professionals" class="text-gray-400">Carregando...</p>
+                                        <p id="loading-professionals" class="text-gray-400">A carregar profissionais...</p>
                                     </div>
                                 </div>
                             </div>
@@ -496,17 +527,17 @@
                                 <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
                                     <h3 class="text-lg font-bold mb-4">Unidades Cadastradas</h3>
                                     <div id="units-list" class="space-y-4">
-                                        <p id="loading-units" class="text-gray-400">Carregando...</p>
+                                        <p id="loading-units" class="text-gray-400">A carregar unidades...</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
                         <!-- Conteúdo da Aba Agenda -->
-                        <div id="content-agenda" class="hidden">
-                            <div class="bg-[#1e1e1e] p-4 sm:p-6 rounded-lg border border-gray-800">
+                        <div id="content-agenda" class="hidden p-6">
+                            <div class="bg-[#1e1e1e] rounded-lg border border-gray-800">
                                 <!-- Cabeçalho da Agenda -->
-                                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                                <div class="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-gray-700">
                                     <h3 id="agenda-title" class="text-lg font-bold text-primary">Agenda</h3>
                                     <div class="flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
                                         <select id="professional-filter" class="form-select !p-2">
@@ -519,10 +550,10 @@
                                     </div>
                                 </div>
                                 <!-- Container da Grade da Agenda -->
-                                <div id="agenda-container">
+                                <div id="agenda-container" class="p-4">
                                      <div id="loading-agenda" class="text-center p-8">
-                                        <p class="text-gray-400">Carregando agenda...</p>
-                                        <div class="loader mx-auto mt-4" style="width: 30px; height: 30px;"></div>
+                                        <div class="loader mx-auto mb-4" style="width: 30px; height: 30px;"></div>
+                                        <p class="text-gray-400">A carregar agenda...</p>
                                     </div>
                                     <div id="agenda-grid-view" class="hidden">
                                         <!-- A grade será gerada pelo JavaScript aqui -->
@@ -558,7 +589,7 @@
                                 <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
                                     <h3 class="text-lg font-bold mb-4">Clientes Cadastrados</h3>
                                     <div id="clients-list" class="space-y-4">
-                                        <p id="loading-clients" class="text-gray-400">Carregando clientes...</p>
+                                        <p id="loading-clients" class="text-gray-400">A carregar clientes...</p>
                                     </div>
                                 </div>
                             </div>
@@ -590,7 +621,7 @@
                                 <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
                                     <h3 class="text-lg font-bold mb-4">Planos Cadastrados</h3>
                                     <div id="plans-list" class="space-y-4">
-                                        <p id="loading-plans" class="text-gray-400">Carregando planos...</p>
+                                        <p id="loading-plans" class="text-gray-400">A carregar planos...</p>
                                     </div>
                                 </div>
                             </div>
@@ -609,7 +640,6 @@
                                         <label for="referral-credit-value" class="block text-sm font-medium text-gray-300 mb-1">Valor do Crédito por Indicação (R$)</label>
                                         <input type="number" step="0.01" id="referral-credit-value" placeholder="10,00" class="form-input w-full max-w-xs">
                                     </div>
-                                    <p id="referral-settings-feedback" class="text-sm h-4"></p>
                                     <div class="text-left">
                                         <button type="submit" class="btn-primary">
                                             <span class="btn-text">Salvar Configuração</span>
@@ -639,7 +669,7 @@
                                 <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
                                     <h3 class="text-lg font-bold mb-4">Metas Cadastradas</h3>
                                     <div id="goals-list" class="space-y-4">
-                                        <p id="loading-goals" class="text-gray-400">Carregando metas...</p>
+                                        <p id="loading-goals" class="text-gray-400">A carregar metas...</p>
                                     </div>
                                 </div>
                             </div>
@@ -656,7 +686,6 @@
                                         <p class="text-sm text-gray-400">Altere sua senha de acesso ao painel.</p>
                                         <input type="password" id="current-password" required placeholder="Senha Atual" class="form-input w-full">
                                         <input type="password" id="new-password" required placeholder="Nova Senha" class="form-input w-full">
-                                        <p id="change-password-feedback" class="text-sm h-4"></p>
                                         <button type="submit" class="w-full justify-center btn-primary">
                                             <span class="btn-text">Alterar Senha</span>
                                             <div class="loader hidden"></div>
@@ -675,7 +704,6 @@
                                             <option value="profissional">Profissional</option>
                                         </select>
                                         <p class="text-xs text-gray-500">O novo usuário deverá alterar esta senha no primeiro acesso.</p>
-                                        <p id="add-user-feedback" class="text-sm h-4"></p>
                                         <button type="submit" class="w-full justify-center btn-primary">
                                             <span class="btn-text">Criar Usuário</span>
                                             <div class="loader hidden"></div>
@@ -684,7 +712,7 @@
                                     <div class="mt-6 pt-4 border-t border-gray-700">
                                         <h4 class="text-md font-bold mb-4">Usuários Ativos</h4>
                                         <div id="panel-users-list" class="space-y-3">
-                                           <p id="loading-panel-users">Carregando...</p>
+                                           <p id="loading-panel-users">A carregar...</p>
                                         </div>
                                     </div>
                                 </div>
@@ -718,7 +746,7 @@
                                         <tbody id="caixa-list">
                                             <!-- Linhas serão inseridas pelo JavaScript -->
                                             <tr id="loading-caixa">
-                                                <td colspan="6" class="text-center p-8">Carregando comandas...</td>
+                                                <td colspan="6" class="text-center p-8">A carregar comandas...</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -854,8 +882,11 @@
             </div>
         </div>
     </div>
+    
+    <!-- NOVO: Container para as Notificações Toast -->
+    <div id="toast-container"></div>
 
-    <!-- NOVO: Modal de Lançamento de Pagamento -->
+    <!-- Modal de Lançamento de Pagamento -->
     <div id="payment-modal" class="hidden fixed inset-0 z-[60] overflow-y-auto modal-backdrop flex items-center justify-center p-4">
         <div class="relative w-full max-w-lg">
              <div class="modal-content rounded-lg shadow-xl p-6">
@@ -918,8 +949,6 @@
                             <span id="payment-change" class="font-semibold text-white">R$ 0,00</span>
                         </div>
                     </div>
-                    
-                    <p id="payment-feedback" class="text-sm h-4 text-center"></p>
                 </form>
                 <div class="mt-8 flex justify-end">
                     <button id="confirm-payment-button" class="btn-primary w-full sm:w-auto">
@@ -931,7 +960,7 @@
         </div>
     </div>
 
-    <!-- NOVO: Modal de Histórico do Cliente -->
+    <!-- Modal de Histórico do Cliente -->
     <div id="client-history-modal" class="hidden fixed inset-0 z-[60] overflow-y-auto modal-backdrop flex items-center justify-center p-4">
         <div class="relative w-full max-w-2xl">
              <div class="modal-content rounded-lg shadow-xl p-6">
@@ -943,7 +972,6 @@
                     <button id="close-client-history-modal" class="text-gray-400 hover:text-white text-2xl">&times;</button>
                 </div>
                 <div id="client-history-content" class="max-h-[60vh] overflow-y-auto pr-2">
-                    <!-- Conteúdo do histórico será injetado aqui -->
                     <p id="loading-client-history" class="text-center text-gray-400 p-8">A carregar histórico...</p>
                 </div>
             </div>
@@ -1080,7 +1108,6 @@
                     <input type="text" id="edit-client-name" required placeholder="Nome do Cliente" class="form-input w-full">
                     <input type="tel" id="edit-client-phone" required placeholder="Telefone" class="form-input w-full">
                     <input type="email" id="edit-client-email" placeholder="E-mail" class="form-input w-full">
-                    <!-- NOVO: Campo de data de nascimento na edição -->
                     <label for="edit-client-birthdate" class="block text-sm font-medium text-gray-300 -mb-3 pt-2">Data de Nascimento</label>
                     <input type="date" id="edit-client-birthdate" class="form-input w-full">
                     <input type="number" id="edit-client-credits" step="0.01" placeholder="Créditos de Indicação (R$)" class="form-input w-full">
@@ -1134,7 +1161,6 @@
                         <label for="appt-datetime-input" class="block text-sm font-medium text-gray-300 mb-1">Data e Hora</label>
                         <input type="datetime-local" id="appt-datetime-input" required class="form-input w-full">
                     </div>
-                    <p id="add-appointment-feedback" class="text-sm h-4 text-center"></p>
                 </form>
                 <div class="mt-8 flex justify-end space-x-4">
                     <button id="cancel-add-appointment-button" class="btn-secondary">Cancelar</button>
@@ -1170,8 +1196,6 @@
                         <label for="edit-appt-datetime" class="block text-sm font-medium text-gray-300 mb-1">Data e Hora</label>
                         <input type="datetime-local" id="edit-appt-datetime" required class="form-input w-full">
                     </div>
-                    <!-- Mais campos podem ser adicionados aqui para editar cliente, serviço, etc. -->
-                     <p id="edit-appointment-feedback" class="text-sm h-4 text-center"></p>
                 </form>
                 <div class="mt-8 flex flex-wrap justify-between gap-4">
                     <div>
@@ -1240,7 +1264,6 @@
                                 <input type="number" id="slot-recurring-count" value="4" class="form-input" placeholder="Nº de vezes">
                             </div>
                         </div>
-                        <p id="slot-appointment-feedback" class="text-sm h-4 text-center"></p>
                     </form>
                     <div class="mt-8 flex justify-end">
                         <button type="submit" form="slot-appointment-form" id="save-slot-appointment-button" class="btn-primary">
@@ -1267,7 +1290,6 @@
                             <input type="number" id="slot-block-duration" value="30" step="15" min="15" class="form-input w-full">
                         </div>
                         <p class="text-xs text-gray-500">O bloqueio será criado a partir do horário selecionado.</p>
-                        <p id="slot-block-feedback" class="text-sm h-4 text-center"></p>
                     </form>
                     <div class="mt-8 flex justify-end">
                         <button type="submit" form="slot-block-form" id="save-slot-block-button" class="btn-secondary !bg-teal-700 !border-teal-600 hover:!bg-teal-600">
@@ -1307,7 +1329,6 @@
                         <label for="edit-block-duration" class="block text-sm font-medium text-gray-300 mb-1">Duração (em minutos)</label>
                         <input type="number" id="edit-block-duration" value="30" step="15" min="15" class="form-input w-full">
                     </div>
-                     <p id="edit-block-feedback" class="text-sm h-4 text-center"></p>
                 </form>
                 <div class="mt-8 flex justify-between items-center">
                     <button id="delete-block-button" class="btn-secondary !bg-red-800 !border-red-700 hover:!bg-red-700"><i class="fas fa-trash-alt mr-2"></i>Remover Bloqueio</button>
@@ -1334,7 +1355,6 @@
                         <label for="quick-client-phone" class="block text-sm font-medium text-gray-300 mb-1">Telefone</label>
                         <input type="tel" id="quick-client-phone" required class="form-input w-full">
                     </div>
-                    <p id="add-quick-client-feedback" class="text-sm h-4 text-center"></p>
                 </form>
                 <div class="mt-8 flex justify-end space-x-4">
                     <button id="cancel-quick-client-button" class="btn-secondary">Cancelar</button>
@@ -1398,8 +1418,8 @@
                 authSection.classList.add('hidden');
                 panelSection.classList.remove('hidden');
                 userEmailSpan.textContent = user.email;
-                initializeGlobalEventListeners(); // ATIVADO: Garante que os botões funcionem
-                initializeDropzones(); // NOVO: Inicializa as áreas de soltar (dropzones)
+                initializeGlobalEventListeners(); 
+                initializeDropzones(); 
                 document.querySelector('#sidebar .nav-link[data-target="content-dashboard"]').click();
                 loadAgendaSettings(user.uid);
             } else {
@@ -1408,9 +1428,9 @@
             }
         });
         
-        signupButton.addEventListener('click', async () => { /* ... */ const email = emailInput.value; const password = passwordInput.value; authError.textContent = ''; try { await createUserWithEmailAndPassword(auth, email, password); } catch (error) { console.error("Erro no cadastro:", error); authError.textContent = "Erro ao cadastrar. Verifique o email e a senha (mínimo 6 caracteres)."; } });
-        loginButton.addEventListener('click', async () => { /* ... */ const email = emailInput.value; const password = passwordInput.value; authError.textContent = ''; try { await signInWithEmailAndPassword(auth, email, password); } catch (error) { console.error("Erro no login:", error); authError.textContent = "Email ou senha inválidos."; } });
-        logoutButton.addEventListener('click', async () => { /* ... */ try { await signOut(auth); } catch (error) { console.error("Erro no logout:", error); } });
+        signupButton.addEventListener('click', async () => { const email = emailInput.value; const password = passwordInput.value; authError.textContent = ''; try { await createUserWithEmailAndPassword(auth, email, password); } catch (error) { console.error("Erro no cadastro:", error); authError.textContent = "Erro ao cadastrar. Verifique o email e a senha (mínimo 6 caracteres)."; } });
+        loginButton.addEventListener('click', async () => { const email = emailInput.value; const password = passwordInput.value; authError.textContent = ''; try { await signInWithEmailAndPassword(auth, email, password); } catch (error) { console.error("Erro no login:", error); authError.textContent = "Email ou senha inválidos."; } });
+        logoutButton.addEventListener('click', async () => { try { await signOut(auth); } catch (error) { console.error("Erro no logout:", error); } });
 
         // --- CRUD DE SERVIÇOS ---
         const addServiceForm = document.getElementById('add-service-form');
@@ -1435,8 +1455,15 @@
             const serviceDuration = parseInt(document.getElementById('service-duration').value);
             const data = { nome: serviceName, valor: serviceValue, duracaoMinutos: serviceDuration, gestorId: user.uid };
             if (servicePromoValueInput.value) { data.promocao = parseFloat(servicePromoValueInput.value); }
-            try { await addDoc(collection(db, "servicos"), data); addServiceForm.reset(); } 
-            catch (error) { console.error("Erro ao adicionar serviço: ", error); } 
+            try { 
+                await addDoc(collection(db, "servicos"), data); 
+                addServiceForm.reset();
+                showToast('Serviço salvo com sucesso!', 'success');
+            } 
+            catch (error) { 
+                console.error("Erro ao adicionar serviço: ", error); 
+                showToast('Erro ao salvar serviço.', 'error');
+            } 
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false; }
         });
 
@@ -1454,8 +1481,8 @@
                     localServicesCache.push(servico);
                     let priceHtml = '';
                     if (servico.promocao && typeof servico.promocao === 'number') {
-                        priceHtml = `<span class="font-bold text-primary">R$ ${servico.promocao.toFixed(2)}</span> <span class="text-xs line-through text-gray-500">R$ ${servico.valor.toFixed(2)}</span>`;
-                    } else { priceHtml = `R$ ${servico.valor.toFixed(2)}`; }
+                        priceHtml = `<span class="font-bold text-primary">R$ ${servico.promocao.toFixed(2).replace('.',',')}</span> <span class="text-xs line-through text-gray-500">R$ ${servico.valor.toFixed(2).replace('.',',')}</span>`;
+                    } else { priceHtml = `R$ ${servico.valor.toFixed(2).replace('.',',')}`; }
                     const servicoCard = document.createElement('div');
                     servicoCard.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex justify-between items-center';
                     servicoCard.innerHTML = `
@@ -1463,7 +1490,7 @@
                             <p class="font-bold text-white">${servico.nome}</p>
                             <p class="text-sm text-gray-400">${priceHtml} - ${servico.duracaoMinutos} min</p>
                         </div>
-                        <div class="space-x-2 sm:space-x-4">
+                        <div class="flex items-center gap-4">
                             <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${servico.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
                             <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${servico.id}" data-action="delete">
                                 <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
@@ -1510,8 +1537,15 @@
                 duracaoMinutos: parseInt(document.getElementById('edit-service-duration').value),
                 promocao: servicePromoValueInput.value ? parseFloat(servicePromoValueInput.value) : null
             };
-            try { await updateDoc(servicoRef, dataToUpdate); editServiceModal.classList.add('hidden'); } 
-            catch (error) { console.error("Erro ao atualizar serviço:", error); } 
+            try { 
+                await updateDoc(servicoRef, dataToUpdate); 
+                editServiceModal.classList.add('hidden');
+                showToast('Serviço atualizado!', 'success');
+            } 
+            catch (error) { 
+                console.error("Erro ao atualizar serviço:", error);
+                showToast('Erro ao atualizar.', 'error');
+            } 
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditButton.disabled = false; cancelEditButton.disabled = false; }
         });
 
@@ -1545,8 +1579,15 @@
                 gestorId: user.uid 
             };
 
-            try { await addDoc(collection(db, "profissionais"), data); addProfessionalForm.reset(); } 
-            catch (error) { console.error("Erro ao adicionar profissional:", error); }
+            try { 
+                await addDoc(collection(db, "profissionais"), data); 
+                addProfessionalForm.reset(); 
+                showToast('Profissional salvo!', 'success');
+            } 
+            catch (error) { 
+                console.error("Erro ao adicionar profissional:", error); 
+                showToast('Erro ao salvar profissional.', 'error');
+            }
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false; }
         });
 
@@ -1574,7 +1615,7 @@
                                 <span><i class="fas fa-box mr-1 text-primary/70"></i> Prod.: ${professional.comissaoProdutos || 0}%</span>
                             </div>
                         </div>
-                        <div class="space-x-2 sm:space-x-4">
+                        <div class="flex items-center gap-4">
                             <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${doc.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
                             <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${doc.id}" data-action="delete">
                                 <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
@@ -1625,8 +1666,15 @@
                 comissaoProdutos: parseInt(document.getElementById('edit-professional-commission-products').value) || 0,
             };
 
-            try { await updateDoc(professionalRef, dataToUpdate); editProfessionalModal.classList.add('hidden'); }
-            catch(error) { console.error("Erro ao atualizar profissional:", error); }
+            try { 
+                await updateDoc(professionalRef, dataToUpdate); 
+                editProfessionalModal.classList.add('hidden'); 
+                showToast('Profissional atualizado!', 'success');
+            }
+            catch(error) { 
+                console.error("Erro ao atualizar profissional:", error); 
+                showToast('Erro ao atualizar.', 'error');
+            }
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditProfessionalButton.disabled = false; cancelEditProfessionalButton.disabled = false; }
         });
 
@@ -1656,8 +1704,15 @@
                 gestorId: user.uid
             };
 
-            try { await addDoc(collection(db, "planos"), data); addPlanForm.reset(); }
-            catch(error) { console.error("Erro ao adicionar plano:", error); }
+            try { 
+                await addDoc(collection(db, "planos"), data); 
+                addPlanForm.reset(); 
+                showToast('Plano salvo com sucesso!', 'success');
+            }
+            catch(error) { 
+                console.error("Erro ao adicionar plano:", error); 
+                showToast('Erro ao salvar plano.', 'error');
+            }
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false; }
         });
 
@@ -1741,8 +1796,15 @@
                 isPopular: document.getElementById('edit-plan-popular').checked
             };
 
-            try { await updateDoc(planRef, dataToUpdate); editPlanModal.classList.add('hidden'); }
-            catch(error) { console.error("Erro ao atualizar plano:", error); }
+            try { 
+                await updateDoc(planRef, dataToUpdate); 
+                editPlanModal.classList.add('hidden'); 
+                showToast('Plano atualizado!', 'success');
+            }
+            catch(error) { 
+                console.error("Erro ao atualizar plano:", error); 
+                showToast('Erro ao atualizar.', 'error');
+            }
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditPlanButton.disabled = false; cancelEditPlanButton.disabled = false; }
         });
 
@@ -1769,8 +1831,15 @@
             
             const data = { nome: name, endereco: address, imgUrl: photoUrl, mapsUrl: mapsUrl, gestorId: user.uid };
 
-            try { await addDoc(collection(db, "unidades"), data); addUnitForm.reset(); } 
-            catch (error) { console.error("Erro ao adicionar unidade:", error); }
+            try { 
+                await addDoc(collection(db, "unidades"), data); 
+                addUnitForm.reset(); 
+                showToast('Unidade salva!', 'success');
+            } 
+            catch (error) { 
+                console.error("Erro ao adicionar unidade:", error); 
+                showToast('Erro ao salvar unidade.', 'error');
+            }
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false; }
         });
 
@@ -1797,7 +1866,7 @@
                             <p class="font-bold text-white">${unit.nome}</p>
                             <p class="text-sm text-gray-400">${addressHtml}</p>
                         </div>
-                        <div class="space-x-2 sm:space-x-4">
+                        <div class="flex items-center gap-4">
                             <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${doc.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
                             <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${doc.id}" data-action="delete">
                                 <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
@@ -1846,8 +1915,15 @@
                 mapsUrl: document.getElementById('edit-unit-maps').value,
             };
 
-            try { await updateDoc(unitRef, dataToUpdate); editUnitModal.classList.add('hidden'); }
-            catch(error) { console.error("Erro ao atualizar unidade:", error); }
+            try { 
+                await updateDoc(unitRef, dataToUpdate); 
+                editUnitModal.classList.add('hidden'); 
+                showToast('Unidade atualizada!', 'success');
+            }
+            catch(error) { 
+                console.error("Erro ao atualizar unidade:", error); 
+                showToast('Erro ao atualizar.', 'error');
+            }
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditUnitButton.disabled = false; cancelEditUnitButton.disabled = false; }
         });
 
@@ -1885,7 +1961,6 @@
             });
             professionalFilter.addEventListener('change', renderAgendaGrid);
             
-            // NOVO: Event listener delegado para o botão de bloquear dia
             const agendaContainer = document.getElementById('agenda-container');
             agendaContainer.addEventListener('click', (e) => {
                 const blockBtn = e.target.closest('.block-day-btn');
@@ -1898,10 +1973,8 @@
                 }
             });
             
-            // Botão principal de Adicionar Agendamento
             addAppointmentBtn.addEventListener('click', () => openAddAppointmentModal());
             
-            // Botões do modal principal de Adicionar Agendamento
             cancelAddAppointmentButton.addEventListener('click', () => addAppointmentModal.classList.add('hidden'));
             addAppointmentModal.querySelector('form').addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -1934,17 +2007,17 @@
                     
                     await addDoc(collection(db, "agendamentos"), newAppointment);
                     addAppointmentModal.classList.add('hidden');
+                    showToast('Agendamento salvo!', 'success');
 
                 } catch (error) {
                     console.error("Erro ao salvar agendamento manual:", error);
-                    document.getElementById('add-appointment-feedback').textContent = "Erro ao salvar.";
+                    showToast("Erro ao salvar.", 'error');
                 } finally {
                     btnText.classList.remove('hidden'); loader.classList.add('hidden'); btn.disabled = false;
                 }
             });
         }
         
-        // NOVO: Função para bloquear o dia inteiro de um profissional
         function blockEntireDay(professionalId, professionalName) {
             const message = `Tem certeza que deseja bloquear a agenda inteira de ${professionalName} para este dia? Isto irá criar um bloqueio de dia inteiro e não pode ser desfeito facilmente.`;
             showConfirmationModal(message, async () => {
@@ -1959,7 +2032,6 @@
                     const blockDateTime = new Date(agendaState.currentDate);
                     blockDateTime.setHours(startTime, 0, 0, 0);
 
-                    // Adiciona o bloqueio ao banco de dados
                     await addDoc(collection(db, "agendamentos"), {
                         barbeiro: { id: professional.id, nome: professional.nome },
                         data: blockDateTime,
@@ -1970,11 +2042,11 @@
                         createdAt: serverTimestamp()
                     });
                     
-                    // A agenda será atualizada automaticamente pelo listener onSnapshot.
+                    showToast(`Agenda de ${professionalName} bloqueada.`, 'info');
 
                 } catch (error) {
                     console.error("Erro ao bloquear o dia inteiro:", error);
-                    // Futuramente, podemos adicionar um feedback visual de erro aqui.
+                    showToast('Erro ao tentar bloquear a agenda.', 'error');
                 }
             });
         }
@@ -1982,9 +2054,7 @@
         async function openAddAppointmentModal() {
             const form = addAppointmentModal.querySelector('form');
             form.reset();
-            const feedback = document.getElementById('add-appointment-feedback');
-            feedback.textContent = '';
-
+            
             const clientSelect = document.getElementById('appt-client-select');
             const profSelect = document.getElementById('appt-professional-select');
             const serviceSelect = document.getElementById('appt-service-select');
@@ -1996,7 +2066,6 @@
             addAppointmentModal.classList.remove('hidden');
 
             try {
-                // Carrega clientes, profissionais e serviços em paralelo
                 await populateCaches(auth.currentUser.uid);
 
                 clientSelect.innerHTML = '<option value="">Selecione um cliente</option>';
@@ -2015,8 +2084,7 @@
 
             } catch (error) {
                 console.error("Erro ao abrir modal de agendamento:", error);
-                feedback.textContent = "Erro ao carregar dados.";
-                feedback.className = "text-sm h-4 text-center text-red-500";
+                showToast("Erro ao carregar dados.", 'error');
             }
         }
 
@@ -2301,8 +2369,15 @@
                 firstServiceCompleted: false
             };
             
-            try { await addDoc(collection(db, "users"), data); addClientForm.reset(); }
-            catch(error) { console.error("Erro ao adicionar cliente:", error); }
+            try { 
+                await addDoc(collection(db, "users"), data); 
+                addClientForm.reset(); 
+                showToast('Cliente salvo com sucesso!', 'success');
+            }
+            catch(error) { 
+                console.error("Erro ao adicionar cliente:", error); 
+                showToast('Erro ao salvar cliente.', 'error');
+            }
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false; }
         });
 
@@ -2314,8 +2389,8 @@
                 clientsListDiv.innerHTML = '';
                 localClientsCache = [];
                 const referrerSelect = document.getElementById('client-referrer');
-                const currentReferrerValue = referrerSelect.value; // Salva o valor atual se houver
-                referrerSelect.innerHTML = '<option value="">Ninguém</option>'; // Reseta
+                const currentReferrerValue = referrerSelect.value;
+                referrerSelect.innerHTML = '<option value="">Ninguém</option>';
 
                 if (snapshot.empty) {
                     clientsListDiv.innerHTML = '<p class="text-gray-400">Nenhum cliente cadastrado.</p>';
@@ -2325,7 +2400,6 @@
                     const client = {id: doc.id, ...doc.data()};
                     localClientsCache.push(client);
 
-                    // Popula o select de indicação
                     referrerSelect.innerHTML += `<option value="${client.id}">${client.name}</option>`;
 
                     const placeholderImg = `https://placehold.co/100x100/333333/FFFFFF?text=${client.name ? client.name.charAt(0) : 'C'}`;
@@ -2336,16 +2410,15 @@
                         <div class="flex-grow">
                             <p class="font-bold text-white">${client.name || 'Nome não informado'}</p>
                             <p class="text-sm text-gray-400">${client.phone || 'Telefone não informado'}</p>
-                            <p class="text-xs text-gray-500">${client.email || 'Email não informado'}</p>
                         </div>
                         <div class="text-right mr-4">
                              <p class="text-sm text-gray-400">Créditos</p>
-                             <p class="font-bold text-primary text-lg">R$ ${(client.referralCredits || 0).toFixed(2)}</p>
+                             <p class="font-bold text-primary text-lg">R$ ${(client.referralCredits || 0).toFixed(2).replace('.',',')}</p>
                         </div>
-                        <div class="flex flex-col sm:flex-row gap-2 items-center">
-                             <button class="text-sm text-gray-300 hover:text-primary font-semibold w-full sm:w-auto" data-id="${doc.id}" data-action="history"><i class="fas fa-history mr-1"></i>Histórico</button>
-                             <button class="text-sm text-gray-300 hover:text-primary font-semibold w-full sm:w-auto" data-id="${doc.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
-                             <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center justify-center w-full sm:w-auto mt-2 sm:mt-0" data-id="${doc.id}" data-action="delete">
+                        <div class="flex items-center gap-4">
+                             <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${doc.id}" data-action="history"><i class="fas fa-history mr-1"></i>Histórico</button>
+                             <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${doc.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
+                             <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${doc.id}" data-action="delete">
                                  <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
                              </button>
                         </div>`;
@@ -2397,8 +2470,15 @@
                 referralCredits: parseFloat(document.getElementById('edit-client-credits').value) || 0
             };
 
-            try { await updateDoc(clientRef, dataToUpdate); editClientModal.classList.add('hidden'); }
-            catch(error) { console.error("Erro ao atualizar cliente:", error); }
+            try { 
+                await updateDoc(clientRef, dataToUpdate); 
+                editClientModal.classList.add('hidden'); 
+                showToast('Cliente atualizado!', 'success');
+            }
+            catch(error) { 
+                console.error("Erro ao atualizar cliente:", error); 
+                showToast('Erro ao atualizar.', 'error');
+            }
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditClientButton.disabled = false; cancelEditClientButton.disabled = false; }
         });
         
@@ -2413,12 +2493,10 @@
             const submitBtn = referralSettingsForm.querySelector('button[type="submit"]');
             const btnText = submitBtn.querySelector('.btn-text');
             const loader = submitBtn.querySelector('.loader');
-            const feedbackP = document.getElementById('referral-settings-feedback');
             
             btnText.classList.add('hidden');
             loader.classList.remove('hidden');
             submitBtn.disabled = true;
-            feedbackP.textContent = '';
             
             try {
                 const creditValue = parseFloat(document.getElementById('referral-credit-value').value);
@@ -2429,16 +2507,14 @@
                 const settingsRef = doc(db, 'configuracoes', user.uid);
                 await setDoc(settingsRef, { referralCreditValue: creditValue, updatedAt: serverTimestamp() }, { merge: true });
 
-                feedbackP.textContent = 'Configuração salva com sucesso!';
-                feedbackP.className = 'text-sm h-4 text-green-500';
+                showToast('Configuração de indicação salva!', 'success');
 
             } catch (error) {
                 console.error("Erro ao salvar config. de indicação:", error);
-                feedbackP.textContent = 'Erro ao salvar. Verifique o valor.';
-                feedbackP.className = 'text-sm h-4 text-red-500';
+                showToast('Erro ao salvar. Verifique o valor.', 'error');
             } finally {
                 btnText.classList.remove('hidden');
-                loader.classList.add('hidden');
+                loader.classList.remove('hidden');
                 submitBtn.disabled = false;
             }
         });
@@ -2463,12 +2539,29 @@
             const contentServicos = document.getElementById('content-tab-servicos');
             const contentClientes = document.getElementById('content-tab-clientes');
 
-            // Define as datas padrão
             const today = new Date();
             startDateInput.value = formatDateForInput(new Date(today.getFullYear(), today.getMonth(), 1));
+            endDateInput.value = formatDateForInput(today);
+            
+            document.querySelectorAll('[data-range]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const range = button.dataset.range;
+                    const today = new Date();
+                    let start = new Date();
+                    let end = new Date();
+
+                    if (range === 'today') { start = today; end = today; } 
+                    else if (range === 'this_month') { start = new Date(today.getFullYear(), today.getMonth(), 1); end = new Date(today.getFullYear(), today.getMonth() + 1, 0); } 
+                    else if (range === 'last_month') { start = new Date(today.getFullYear(), today.getMonth() - 1, 1); end = new Date(today.getFullYear(), today.getMonth(), 0); }
+                    
+                    startDateInput.value = formatDateForInput(start);
+                    endDateInput.value = formatDateForInput(end);
+                    generateBillingReport(userId);
+                });
+            });
+            
             generateBtn.addEventListener('click', () => generateBillingReport(userId));
             
-            // Listeners para as abas dos relatórios
             const tabs = [tabFaturamento, tabServicos, tabClientes];
             const contents = [contentFaturamento, contentServicos, contentClientes];
 
@@ -2500,11 +2593,12 @@
             placeholderDiv.classList.remove('hidden');
             
             try {
-                const startDate = new Date(document.getElementById('report-start-date').value);
-                startDate.setUTCHours(0, 0, 0, 0);
-                
-                const endDate = new Date(document.getElementById('report-end-date').value);
-                endDate.setUTCHours(23, 59, 59, 999);
+                const startDateValue = document.getElementById('report-start-date').value;
+                const endDateValue = document.getElementById('report-end-date').value;
+
+                const startDate = new Date(`${startDateValue}T00:00:00`);
+                const endDate = new Date(`${endDateValue}T23:59:59`);
+
 
                 if (isNaN(startDate) || isNaN(endDate)) throw new Error("Datas inválidas.");
 
@@ -2536,18 +2630,15 @@
                     totalComissao += comissao;
                     totalDesconto += desconto;
                     
-                    // Agrega dados por profissional
                     if (!professionalPerformance[profId]) { professionalPerformance[profId] = { nome: appt.barbeiro.nome, servicos: 0, faturamento: 0, comissao: 0 }; }
                     professionalPerformance[profId].servicos++;
                     professionalPerformance[profId].faturamento += bruto;
                     professionalPerformance[profId].comissao += comissao;
                     
-                    // Agrega dados por serviço
                     if (!servicePerformance[serviceId]) { servicePerformance[serviceId] = { nome: appt.servico.nome, count: 0, faturamento: 0 }; }
                     servicePerformance[serviceId].count++;
                     servicePerformance[serviceId].faturamento += bruto;
 
-                    // Agrega dados por cliente
                     if (!clientPerformance[clientId]) { clientPerformance[clientId] = { nome: appt.cliente.nome, visits: 0, totalSpent: 0 }; }
                     clientPerformance[clientId].visits++;
                     clientPerformance[clientId].totalSpent += bruto;
@@ -2555,7 +2646,6 @@
                 
                 const totalLiquido = totalBruto - totalComissao;
 
-                // --- Renderiza Relatório de Faturamento ---
                 document.getElementById('report-total-bruto').textContent = `R$ ${totalBruto.toFixed(2).replace('.', ',')}`;
                 document.getElementById('report-total-comissao').textContent = `R$ ${totalComissao.toFixed(2).replace('.', ',')}`;
                 document.getElementById('report-total-desconto').textContent = `R$ ${totalDesconto.toFixed(2).replace('.', ',')}`;
@@ -2577,7 +2667,6 @@
                     }
                 }
                 
-                // --- Renderiza Relatório de Serviços ---
                 serviceTableBody.innerHTML = '';
                 const sortedServices = Object.values(servicePerformance).sort((a, b) => b.count - a.count);
 
@@ -2595,9 +2684,8 @@
                     });
                 }
                 
-                // --- Renderiza Relatório de Clientes ---
                 clientTableBody.innerHTML = '';
-                const sortedClients = Object.values(clientPerformance).sort((a, b) => b.totalSpent - a.count);
+                const sortedClients = Object.values(clientPerformance).sort((a, b) => b.totalSpent - a.totalSpent);
 
                 if (sortedClients.length === 0) {
                     clientTableBody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-500">Nenhum cliente encontrado para este período.</td></tr>';
@@ -2624,7 +2712,7 @@
             }
         }
 
-        // --- NOVO: LÓGICA DO HISTÓRICO DE CLIENTE ---
+        // --- LÓGICA DO HISTÓRICO DE CLIENTE ---
         const clientHistoryModal = document.getElementById('client-history-modal');
         const closeClientHistoryModalBtn = document.getElementById('close-client-history-modal');
 
@@ -2661,7 +2749,6 @@
                 
                 let historyHtml = '<div class="space-y-4">';
                 const historyData = querySnapshot.docs.map(doc => doc.data());
-                // Ordena do mais recente para o mais antigo
                 historyData.sort((a,b) => b.data.toDate() - a.data.toDate());
 
                 historyData.forEach(appt => {
@@ -2719,8 +2806,15 @@
                 gestorId: user.uid
             };
 
-            try { await addDoc(collection(db, "metas"), data); addGoalForm.reset(); }
-            catch(error) { console.error("Erro ao adicionar meta:", error); }
+            try { 
+                await addDoc(collection(db, "metas"), data); 
+                addGoalForm.reset(); 
+                showToast('Nova meta salva!', 'success');
+            }
+            catch(error) { 
+                console.error("Erro ao adicionar meta:", error); 
+                showToast('Erro ao salvar meta.', 'error');
+            }
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false; }
         });
         
@@ -2765,7 +2859,7 @@
                             <p class="font-bold text-white">${goal.prize}</p>
                             <p class="text-sm text-gray-400">Meta: ${goal.target} indicações</p>
                         </div>
-                        <div class="space-x-2 sm:space-x-4">
+                        <div class="flex items-center gap-4">
                             <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${doc.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
                             <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${doc.id}" data-action="delete">
                                 <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
@@ -2815,14 +2909,20 @@
                 serviceId: document.getElementById('edit-goal-service-id').value,
             };
 
-            try { await updateDoc(goalRef, dataToUpdate); editGoalModal.classList.add('hidden'); }
-            catch(error) { console.error("Erro ao atualizar meta:", error); }
+            try { 
+                await updateDoc(goalRef, dataToUpdate); 
+                editGoalModal.classList.add('hidden'); 
+                showToast('Meta atualizada!', 'success');
+            }
+            catch(error) { 
+                console.error("Erro ao atualizar meta:", error); 
+                showToast('Erro ao atualizar.', 'error');
+            }
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditGoalButton.disabled = false; cancelEditGoalButton.disabled = false; }
         });
         
         // --- CONFIGURAÇÕES ---
         const changePasswordForm = document.getElementById('change-password-form');
-        const changePasswordFeedback = document.getElementById('change-password-feedback');
         const agendaSettingsForm = document.getElementById('agenda-settings-form');
         
         changePasswordForm.addEventListener('submit', async (e) => {
@@ -2835,19 +2935,16 @@
             const currentPassword = document.getElementById('current-password').value;
             const newPassword = document.getElementById('new-password').value;
             const user = auth.currentUser;
-            changePasswordFeedback.textContent = '';
 
             try {
                 const credential = EmailAuthProvider.credential(user.email, currentPassword);
                 await reauthenticateWithCredential(user, credential);
                 await updatePassword(user, newPassword);
-                changePasswordFeedback.textContent = 'Senha alterada com sucesso!';
-                changePasswordFeedback.className = 'text-sm h-4 text-green-500';
+                showToast('Senha alterada com sucesso!', 'success');
                 changePasswordForm.reset();
             } catch(error) {
                 console.error("Erro ao alterar senha:", error);
-                changePasswordFeedback.textContent = 'Senha atual incorreta.';
-                changePasswordFeedback.className = 'text-sm h-4 text-red-500';
+                showToast('Senha atual incorreta.', 'error');
             } finally {
                 btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false;
             }
@@ -2859,17 +2956,12 @@
             const submitBtn = agendaSettingsForm.querySelector('button[type="submit"]');
             const btnText = submitBtn.querySelector('.btn-text');
             const loader = submitBtn.querySelector('.loader');
-            const feedbackP = document.getElementById('agenda-settings-feedback'); // Certifique-se que este ID existe no seu HTML
             
             btnText.classList.add('hidden'); loader.classList.remove('hidden'); submitBtn.disabled = true;
-            if(feedbackP) feedbackP.textContent = '';
             
             const newInterval = parseInt(document.getElementById('agenda-interval').value);
             if (isNaN(newInterval) || newInterval <= 0) {
-                 if(feedbackP) {
-                    feedbackP.textContent = 'Por favor, insira um valor válido.';
-                    feedbackP.className = 'text-sm h-4 text-red-500';
-                 }
+                 showToast('Por favor, insira um valor válido.', 'error');
                  btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false;
                  return;
             }
@@ -2878,16 +2970,10 @@
             try {
                 await setDoc(settingsRef, { agendaInterval: newInterval, updatedAt: serverTimestamp() }, { merge: true });
                 agendaState.interval = newInterval;
-                 if(feedbackP) {
-                    feedbackP.textContent = 'Configurações salvas!';
-                    feedbackP.className = 'text-sm h-4 text-green-500';
-                 }
+                showToast('Configurações da agenda salvas!', 'success');
             } catch(error) {
                  console.error("Erro ao salvar configurações:", error);
-                 if(feedbackP) {
-                    feedbackP.textContent = 'Erro ao salvar.';
-                    feedbackP.className = 'text-sm h-4 text-red-500';
-                 }
+                 showToast('Erro ao salvar configurações.', 'error');
             } finally {
                 btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false;
             }
@@ -2899,7 +2985,6 @@
             if (docSnap.exists()) {
                 const settings = docSnap.data();
                 agendaState.interval = settings.agendaInterval || 30;
-                // Certifique-se que este ID 'agenda-interval' existe no seu HTML
                 const intervalInput = document.getElementById('agenda-interval');
                 if (intervalInput) intervalInput.value = agendaState.interval;
             } else {
@@ -2911,7 +2996,6 @@
 
         // --- GESTÃO DE USUÁRIOS DO PAINEL ---
         const addPanelUserForm = document.getElementById('add-panel-user-form');
-        const addUserFeedback = document.getElementById('add-user-feedback');
         const panelUsersListDiv = document.getElementById('panel-users-list');
         const loadingPanelUsersP = document.getElementById('loading-panel-users');
         
@@ -2921,26 +3005,21 @@
             const btnText = submitBtn.querySelector('.btn-text');
             const loader = submitBtn.querySelector('.loader');
             btnText.classList.add('hidden'); loader.classList.remove('hidden'); submitBtn.disabled = true;
-            addUserFeedback.textContent = '';
             
             const email = document.getElementById('panel-user-email').value;
             const password = document.getElementById('panel-user-password').value;
             const role = document.getElementById('panel-user-role').value;
             
             try {
-                // Esta é uma implementação simplificada. Uma real precisaria de Cloud Functions
-                // para criar o usuário no Auth a partir do Firestore.
                 await addDoc(collection(db, "panel_users"), { email: email, role: role, createdAt: serverTimestamp(), gestorId: auth.currentUser.uid });
-                addUserFeedback.textContent = `Usuário ${email} convidado com sucesso!`;
-                addUserFeedback.className = 'text-sm h-4 text-green-500';
+                showToast(`Convite enviado para ${email}!`, 'success');
                 addPanelUserForm.reset();
             } catch (error) {
                 console.error("Erro ao convidar usuário:", error);
-                addUserFeedback.textContent = 'Erro ao convidar usuário.';
-                addUserFeedback.className = 'text-sm h-4 text-red-500';
+                showToast('Erro ao convidar usuário.', 'error');
             } finally {
                 btnText.classList.remove('hidden');
-                loader.classList.add('hidden');
+                loader.classList.remove('hidden');
                 submitBtn.disabled = false;
             }
         });
@@ -3001,11 +3080,32 @@
             showConfirmationModal(message, async () => {
                 try {
                     await deleteDoc(doc(db, collectionName, docId));
+                    showToast('Item excluído com sucesso!', 'success');
                 } catch(e) {
                     console.error("Erro ao deletar:", e);
+                    showToast('Erro ao excluir item.', 'error');
                 }
             });
         };
+        
+        // NOVO: Função para exibir notificações (Toasts)
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let iconClass = 'fas fa-info-circle';
+            if (type === 'success') iconClass = 'fas fa-check-circle';
+            if (type === 'error') iconClass = 'fas fa-exclamation-circle';
+
+            toast.innerHTML = `<i class="${iconClass}"></i><span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.5s forwards';
+                toast.addEventListener('animationend', () => toast.remove());
+            }, 4000);
+        }
 
         // --- LÓGICA DE NAVEGAÇÃO DO MENU LATERAL (ATUALIZADA) ---
         const sidebar = document.getElementById('sidebar');
@@ -3021,44 +3121,35 @@
                 const isSubmenuTrigger = link.classList.contains('has-submenu');
                 const targetId = link.dataset.target;
 
-                // --- Nova Lógica de Expandir/Recolher ---
                 if (sidebarIsCollapsed) {
                     sidebar.classList.remove('collapsed');
                 } else if (isCurrentlyActive && !isSubmenuTrigger) {
-                    // Apenas recolhe se não for um gatilho de submenu, para permitir abrir/fechar o submenu
                     sidebar.classList.add('collapsed');
                     document.querySelectorAll('#sidebar .submenu.open').forEach(sub => sub.classList.remove('open'));
-                    return; // Apenas recolhe, não executa mais nada
+                    return;
                 }
 
-                // --- Lógica de Submenu ---
                 if (isSubmenuTrigger) {
                     const submenu = link.nextElementSibling;
-                    // Fecha outros submenus abertos
                     document.querySelectorAll('#sidebar .submenu.open').forEach(sub => {
                         if (sub !== submenu) sub.classList.remove('open');
                     });
                     submenu.classList.toggle('open');
                 }
                 
-                // --- Lógica de Troca de Conteúdo ---
                 if (targetId) {
                     navLinks.forEach(l => l.classList.remove('active'));
                     link.classList.add('active');
                     
-                    // Mantém o menu pai ativo também
                     const parentMenu = link.closest('.submenu');
                     if (parentMenu) {
                         parentMenu.previousElementSibling.classList.add('active');
                     }
 
-                    // Esconde todos os painéis de conteúdo
                     contentPanels.forEach(panel => panel.classList.add('hidden'));
 
-                    // Mostra o painel alvo
                     const targetPanel = document.getElementById(targetId);
                     if (targetPanel) {
-                        // Título do cabeçalho foi fixado em "Painel de Gestão", conforme solicitado
                         targetPanel.classList.remove('hidden');
                         
                         const user = auth.currentUser;
@@ -3067,7 +3158,7 @@
                             case 'content-dashboard': loadDashboardData(user.uid); break;
                             case 'content-agenda': initializeAgenda(user.uid); break;
                             case 'content-caixa': loadCaixaData(user.uid); break; 
-                            case 'content-relatorios': initializeReports(user.uid); break; // NOVO
+                            case 'content-relatorios': initializeReports(user.uid); break;
                             case 'content-servicos': loadServices(user.uid); break;
                             case 'content-profissionais': loadProfessionals(user.uid); break;
                             case 'content-unidades': loadUnits(user.uid); break;
@@ -3080,12 +3171,9 @@
             });
         });
 
-        // A lógica de expandir/recolher pelo cabeçalho foi removida e integrada nos ícones do menu
-        
         // --- LÓGICA DO DASHBOARD (VISÃO GERAL) ---
         let unsubscribeDashboard = null;
         async function loadDashboardData(userId) {
-            // Garante que os caches estejam populados
             if (localServicesCache.length === 0 || localProfessionalsCache.length === 0 || localClientsCache.length === 0) {
                 await populateCaches(userId);
             }
@@ -3115,7 +3203,6 @@
                 snapshot.forEach(doc => {
                     const agendamento = {id: doc.id, ...doc.data()};
 
-                    // --- Lógica dos KPIs ---
                     if (agendamento.status !== 'cancelado' && agendamento.status !== 'bloqueio') {
                         agendamentosHoje++;
                     }
@@ -3125,35 +3212,27 @@
                         if (servico) { faturacaoDia += servico.promocao || servico.valor || 0; }
                     }
 
-                    // --- Lógica de Próximos Agendamentos ---
                     const apptDate = agendamento.data.toDate();
                     if (apptDate >= now && agendamento.status !== 'finalizado' && agendamento.status !== 'cancelado' && agendamento.status !== 'bloqueio') {
                         proximosAgendamentos.push(agendamento);
                     }
                 });
 
-                // --- Atualizar Interface ---
                 document.getElementById('kpi-faturacao').textContent = `R$ ${faturacaoDia.toFixed(2).replace('.', ',')}`;
                 document.getElementById('kpi-agendamentos').textContent = agendamentosHoje;
                 document.getElementById('kpi-clientes').textContent = clientesAtendidos.size;
 
-                // --- Atualizar Lista de Próximos Agendamentos ---
                 renderProximosAgendamentos(proximosAgendamentos);
                 
-                // --- NOVO: Atualizar Lista de Aniversariantes ---
                 renderAniversariantes();
 
             }, (error) => {
                 console.error("Erro ao carregar dados do dashboard:", error);
-                document.getElementById('kpi-faturacao').textContent = 'Erro';
-                document.getElementById('kpi-agendamentos').textContent = 'Erro';
-                document.getElementById('kpi-clientes').textContent = 'Erro';
-                const listContainer = document.getElementById('proximos-agendamentos-list');
-                if(listContainer) listContainer.innerHTML = '<div class="bg-[#2a2a2a] p-4 rounded-lg text-center text-red-500">Erro ao carregar.</div>';
+                showToast('Erro ao carregar dados do dashboard.', 'error');
             });
         }
         
-        // --- NOVO: LÓGICA DA FRENTE DE CAIXA ---
+        // --- LÓGICA DA FRENTE DE CAIXA ---
         let unsubscribeCaixa = null;
         function loadCaixaData(userId) {
             if (unsubscribeCaixa) unsubscribeCaixa();
@@ -3176,7 +3255,7 @@
             const loadingRow = document.getElementById('loading-caixa');
 
             unsubscribeCaixa = onSnapshot(q, (snapshot) => {
-                caixaListBody.innerHTML = ''; // Limpa a lista
+                caixaListBody.innerHTML = ''; 
                 if (snapshot.empty) {
                     caixaListBody.innerHTML = '<tr><td colspan="6" class="text-center p-8 text-gray-500">Nenhum serviço finalizado hoje.</td></tr>';
                     return;
@@ -3211,7 +3290,6 @@
                     caixaListBody.innerHTML += row;
                 });
 
-                // NOVO: Adiciona os event listeners aos botões de pagamento
                 caixaListBody.querySelectorAll('button[data-id]').forEach(button => {
                     button.addEventListener('click', () => {
                         openPaymentModal(button.dataset.id);
@@ -3220,26 +3298,25 @@
 
             }, (error) => {
                 console.error("Erro ao carregar dados da frente de caixa:", error);
-                caixaListBody.innerHTML = '<tr><td colspan="6" class="text-center p-8 text-red-500">Erro ao carregar dados.</td></tr>';
+                showToast('Erro ao carregar dados da frente de caixa.', 'error');
             });
         }
 
-        // --- NOVO: LÓGICA DO MODAL DE PAGAMENTO ---
+        // --- LÓGICA DO MODAL DE PAGAMENTO ---
         const paymentModal = document.getElementById('payment-modal');
         const closePaymentModalBtn = document.getElementById('close-payment-modal');
         const paymentForm = document.getElementById('payment-form');
         const confirmPaymentBtn = document.getElementById('confirm-payment-button');
         
-        let currentSaleData = {}; // Guarda os dados da venda atual
+        let currentSaleData = {};
 
         async function openPaymentModal(appointmentId) {
             paymentForm.reset();
-            document.getElementById('payment-feedback').textContent = '';
             document.getElementById('payment-cash-section').style.display = 'block';
 
             const appointmentDoc = await getDoc(doc(db, "agendamentos", appointmentId));
             if (!appointmentDoc.exists()) {
-                console.error("Agendamento não encontrado!");
+                showToast("Agendamento não encontrado!", 'error');
                 return;
             }
             const appointment = { id: appointmentDoc.id, ...appointmentDoc.data() };
@@ -3253,12 +3330,10 @@
                 originalValue: appointment.valorServico || 0,
             };
 
-            // Preenche o subtítulo e o resumo
             document.getElementById('payment-subtitle').textContent = `Cliente: ${appointment.cliente.nome}`;
             document.getElementById('payment-summary-service').textContent = appointment.servico.nome;
             document.getElementById('payment-summary-value').textContent = `R$ ${currentSaleData.originalValue.toFixed(2).replace('.', ',')}`;
             
-            // Lida com créditos de cliente
             const creditsSection = document.getElementById('payment-credits-section');
             if (client && client.referralCredits > 0) {
                 document.getElementById('payment-credits-label').textContent = `Usar R$ ${client.referralCredits.toFixed(2).replace('.', ',')} de crédito?`;
@@ -3267,15 +3342,13 @@
                 creditsSection.classList.add('hidden');
             }
 
-            // Define os IDs ocultos
             document.getElementById('payment-appointment-id').value = appointmentId;
             document.getElementById('payment-client-id').value = client ? client.id : '';
 
-            updateTotal(); // Calcula o total inicial
+            updateTotal();
             paymentModal.classList.remove('hidden');
         }
         
-        // Atualiza o total a pagar e o troco
         function updateTotal() {
             let total = currentSaleData.originalValue;
             
@@ -3286,7 +3359,7 @@
             if (useCredits && currentSaleData.client) {
                 total -= currentSaleData.client.referralCredits;
             }
-            total = Math.max(0, total); // O total não pode ser negativo
+            total = Math.max(0, total);
             
             document.getElementById('payment-summary-total').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
 
@@ -3295,7 +3368,6 @@
             document.getElementById('payment-change').textContent = `R$ ${change.toFixed(2).replace('.', ',')}`;
         }
         
-        // Listeners para atualizar os totais dinamicamente
         ['payment-discount', 'payment-use-credits', 'payment-cash-paid'].forEach(id => {
             document.getElementById(id)?.addEventListener('input', updateTotal);
         });
@@ -3337,7 +3409,6 @@
                     dataPagamento: serverTimestamp()
                 };
                 
-                // --- NOVO: LÓGICA DE INDICAÇÃO ---
                 const settingsRef = doc(db, 'configuracoes', auth.currentUser.uid);
                 const settingsSnap = await getDoc(settingsRef);
                 const referralCreditValue = settingsSnap.exists() ? (settingsSnap.data().referralCreditValue || 0) : 0;
@@ -3350,28 +3421,27 @@
                     if(referrerSnap.exists()) {
                         const referrerData = referrerSnap.data();
                         const newCredits = (referrerData.referralCredits || 0) + referralCreditValue;
-                        // Usar um batch para garantir que as duas operações ocorram juntas
                         const batch = writeBatch(db);
                         batch.update(referrerRef, { referralCredits: newCredits });
                         batch.update(doc(db, "users", clientId), { firstServiceCompleted: true });
                         await batch.commit();
+                        showToast(`${referrerData.name} ganhou R$${referralCreditValue.toFixed(2)} em créditos!`, 'info');
                     }
                 }
-                // Fim da lógica de indicação
 
                 await updateDoc(doc(db, "agendamentos", appointmentId), dataToUpdate);
 
-                // Se usou créditos, atualiza o saldo do cliente
                 if (creditsUsed > 0 && clientId) {
                     const newCreditBalance = currentSaleData.client.referralCredits - creditsUsed;
                     await updateDoc(doc(db, "users", clientId), { referralCredits: newCreditBalance });
                 }
 
                 paymentModal.classList.add('hidden');
+                showToast('Pagamento confirmado!', 'success');
                 
             } catch (error) {
                 console.error("Erro ao confirmar pagamento:", error);
-                document.getElementById('payment-feedback').textContent = 'Erro ao salvar. Tente novamente.';
+                showToast('Erro ao salvar pagamento.', 'error');
             } finally {
                 btnText.classList.remove('hidden'); loader.classList.add('hidden'); btn.disabled = false;
             }
@@ -3409,7 +3479,6 @@
             }
         }
 
-        // NOVO: Função para renderizar os aniversariantes
         function renderAniversariantes() {
             const listContainer = document.getElementById('aniversariantes-list');
             listContainer.innerHTML = '';
@@ -3451,9 +3520,7 @@
             }
         }
 
-        // --- ADIÇÃO: LÓGICA DOS MODAIS DA AGENDA E FUNCIONALIDADES ---
-        
-        // Elementos dos Modais da Agenda
+        // --- LÓGICA DOS MODAIS DA AGENDA (RESTABELECIDA) ---
         const slotActionModal = document.getElementById('slot-action-modal');
         const closeSlotActionModalBtn = document.getElementById('close-slot-action-modal');
         const slotTabAgendar = document.getElementById('slot-tab-agendar');
@@ -3474,57 +3541,9 @@
         const quickClientModal = document.getElementById('add-quick-client-modal');
         const cancelQuickClientBtn = document.getElementById('cancel-quick-client-button');
         const saveQuickClientBtn = document.getElementById('save-quick-client-button');
-        
-        // --- Funções dos Modais ---
-        
-        async function openSlotActionModal(professionalId, dateTime) {
-            slotActionModal.classList.remove('hidden');
-            slotAppointmentForm.reset();
-            slotBlockForm.reset();
-            document.getElementById('slot-recurring-options').classList.add('hidden');
-            
-            const professional = localProfessionalsCache.find(p => p.id === professionalId);
-            const subtitle = document.getElementById('slot-action-subtitle');
-            subtitle.textContent = `${professional.nome} - ${dateTime.toLocaleDateString('pt-BR')} às ${dateTime.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}`;
-
-            document.getElementById('slot-professional-id').value = professionalId;
-            document.getElementById('slot-datetime').value = dateTime.toISOString();
-            
-            // Popular selects
-            const clientSelect = document.getElementById('slot-client-select');
-            clientSelect.innerHTML = '<option value="">Selecione...</option>';
-            localClientsCache.forEach(c => clientSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`);
-
-            const serviceSelect = document.getElementById('slot-service-select');
-            serviceSelect.innerHTML = '<option value="">Selecione...</option>';
-            localServicesCache.forEach(s => serviceSelect.innerHTML += `<option value="${s.id}">${s.nome} - R$${s.valor.toFixed(2)}</option>`);
-        }
-
-        async function openEditAppointmentModal(appointmentId) {
-            const appointment = agendaState.appointments.find(a => a.id === appointmentId);
-            if (!appointment) return;
-            
-            editAppointmentModal.classList.remove('hidden');
-            document.getElementById('edit-appointment-id').value = appointmentId;
-            document.getElementById('edit-appt-status').value = appointment.status;
-            document.getElementById('edit-appt-datetime').value = formatDateTimeForInput(appointment.data.toDate());
-        }
-
-        async function openEditBlockModal(blockId) {
-            const block = agendaState.appointments.find(a => a.id === blockId);
-            if (!block) return;
-
-            editBlockModal.classList.remove('hidden');
-            document.getElementById('edit-block-id').value = blockId;
-            document.getElementById('edit-block-reason').value = block.motivo || 'folga';
-            document.getElementById('edit-block-duration').value = block.duracaoMinutos || 30;
-            const subtitle = document.getElementById('edit-block-subtitle');
-            subtitle.textContent = `Início: ${block.data.toDate().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}`;
-        }
-
-        // --- Event Listeners dos Modais ---
 
         closeSlotActionModalBtn.addEventListener('click', () => slotActionModal.classList.add('hidden'));
+
         slotTabAgendar.addEventListener('click', () => {
             slotTabAgendar.classList.add('active'); slotTabBloqueio.classList.remove('active');
             slotContentAgendar.classList.remove('hidden'); slotContentBloqueio.classList.add('hidden');
@@ -3536,7 +3555,7 @@
         document.getElementById('slot-recurring-checkbox').addEventListener('change', (e) => {
             document.getElementById('slot-recurring-options').classList.toggle('hidden', !e.target.checked);
         });
-
+        
         slotAppointmentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('save-slot-appointment-button');
@@ -3548,14 +3567,15 @@
                 const baseDateTime = new Date(document.getElementById('slot-datetime').value);
                 const clientId = document.getElementById('slot-client-select').value;
                 const serviceId = document.getElementById('slot-service-select').value;
-                
+                const isRecurring = document.getElementById('slot-recurring-checkbox').checked;
+
                 const client = localClientsCache.find(c => c.id === clientId);
                 const professional = localProfessionalsCache.find(p => p.id === professionalId);
                 const service = localServicesCache.find(s => s.id === serviceId);
 
-                if(!client || !professional || !service) throw new Error("Seleção inválida.");
-
-                const isRecurring = document.getElementById('slot-recurring-checkbox').checked;
+                if (!client || !professional || !service) {
+                    throw new Error("Cliente, profissional ou serviço inválido.");
+                }
 
                 if (isRecurring) {
                     const frequency = parseInt(document.getElementById('slot-recurring-frequency').value) || 1;
@@ -3582,6 +3602,7 @@
                         });
                     }
                     await batch.commit();
+                    showToast(`${count} agendamentos recorrentes criados!`, 'success');
 
                 } else {
                     await addDoc(collection(db, "agendamentos"), {
@@ -3593,12 +3614,13 @@
                         gestorId: auth.currentUser.uid,
                         createdAt: serverTimestamp()
                     });
+                    showToast('Agendamento criado com sucesso!', 'success');
                 }
                 
                 slotActionModal.classList.add('hidden');
             } catch (error) {
                 console.error("Erro ao agendar:", error);
-                document.getElementById('slot-appointment-feedback').textContent = "Erro ao salvar.";
+                showToast('Erro ao salvar agendamento.', 'error');
             } finally {
                 btnText.classList.remove('hidden'); loader.classList.add('hidden'); btn.disabled = false;
             }
@@ -3627,9 +3649,10 @@
                     createdAt: serverTimestamp()
                 });
                 slotActionModal.classList.add('hidden');
+                showToast('Horário bloqueado com sucesso!', 'info');
             } catch (error) {
                 console.error("Erro ao bloquear horário:", error);
-                document.getElementById('slot-block-feedback').textContent = "Erro ao salvar.";
+                showToast('Erro ao salvar bloqueio.', 'error');
             } finally {
                 btnText.classList.remove('hidden'); loader.classList.add('hidden'); btn.disabled = false;
             }
@@ -3652,7 +3675,6 @@
                     data: newDateTime
                 };
 
-                // NOVO: Lógica de Cálculo de Comissão
                 if (newStatus === 'finalizado') {
                     const appointmentDoc = await getDoc(doc(db, "agendamentos", appointmentId));
                     if (appointmentDoc.exists()) {
@@ -3671,9 +3693,10 @@
                 
                 await updateDoc(doc(db, "agendamentos", appointmentId), dataToUpdate);
                 editAppointmentModal.classList.add('hidden');
+                showToast('Agendamento atualizado!', 'success');
             } catch (error) {
                  console.error("Erro ao atualizar agendamento:", error);
-                 document.getElementById('edit-appointment-feedback').textContent = "Erro ao salvar.";
+                 showToast('Erro ao salvar.', 'error');
             } finally {
                 btnText.classList.remove('hidden'); loader.classList.add('hidden'); btn.disabled = false;
             }
@@ -3687,15 +3710,12 @@
         whatsappReminderBtn.addEventListener('click', () => {
             const appointmentId = document.getElementById('edit-appointment-id').value;
             const appt = agendaState.appointments.find(a => a.id === appointmentId);
-            const feedbackP = document.getElementById('edit-appointment-feedback');
-            feedbackP.textContent = ''; // Limpa a mensagem anterior
 
             if (!appt || !appt.cliente.nome) return;
             
             const client = localClientsCache.find(c => c.id === appt.cliente.id);
             if (!client || !client.phone) {
-                feedbackP.textContent = 'Este cliente não tem um telefone cadastrado.';
-                feedbackP.className = 'text-sm h-4 text-center text-red-500';
+                showToast('Este cliente não tem um telefone cadastrado.', 'error');
                 return;
             }
             const dateStr = appt.data.toDate().toLocaleDateString('pt-BR');
@@ -3718,8 +3738,10 @@
                     duracaoMinutos: parseInt(document.getElementById('edit-block-duration').value)
                 });
                 editBlockModal.classList.add('hidden');
+                showToast('Bloqueio atualizado!', 'info');
             } catch (error) {
                 console.error("Erro ao salvar bloqueio:", error);
+                showToast('Erro ao salvar.', 'error');
             } finally {
                  btnText.classList.remove('hidden'); loader.classList.add('hidden'); btn.disabled = false;
             }
@@ -3748,16 +3770,16 @@
                 };
                 const docRef = await addDoc(collection(db, "users"), newClient);
                 const clientForCache = { id: docRef.id, ...newClient };
-                localClientsCache.push(clientForCache); // Atualiza o cache local
+                localClientsCache.push(clientForCache);
                 
-                // Adiciona e seleciona o novo cliente no select principal
                 const clientSelect = document.getElementById('slot-client-select');
                 clientSelect.innerHTML += `<option value="${docRef.id}" selected>${newClient.name}</option>`;
                 
                 quickClientModal.classList.add('hidden');
+                showToast('Cliente cadastrado com rapidez!', 'success');
             } catch (error) {
                 console.error("Erro no cadastro rápido:", error);
-                document.getElementById('add-quick-client-feedback').textContent = "Erro ao salvar.";
+                showToast('Erro ao salvar cliente.', 'error');
             } finally {
                 btnText.classList.remove('hidden'); loader.classList.add('hidden'); btn.disabled = false;
             }
@@ -3784,30 +3806,25 @@
                         end(event) {
                             const target = event.target;
                             target.classList.remove('dragging');
-                            // A lógica de atualização foi movida para o evento 'ondrop' do dropzone.
-                            // O 'end' agora apenas limpa o estilo de transformação, fazendo o
-                            // card voltar à posição original se não for solto em uma dropzone válida.
                             target.style.transform = '';
                             target.removeAttribute('data-x');
                             target.removeAttribute('data-y');
 
-                            // Seta o isDragging para false após um pequeno delay para evitar o click
                             setTimeout(() => { isDragging = false; }, 100);
                         }
                     }
                 })
-                .resizable(false); // Desabilitar redimensionamento por enquanto
+                .resizable(false);
         }
         
-        // NOVO: Define as colunas dos profissionais como áreas de soltar (dropzones)
         function initializeDropzones() {
             interact('.professional-column').dropzone({
                 accept: '.appointment-card',
-                overlap: 0.25, // Requer 25% de sobreposição
+                overlap: 0.25,
 
                 ondrop: function (event) {
-                    const dropzone = event.target; // a professional-column
-                    const draggableElement = event.relatedTarget; // o appointment-card
+                    const dropzone = event.target;
+                    const draggableElement = event.relatedTarget;
 
                     const rect = dropzone.querySelector('div:not(.professional-header)').getBoundingClientRect();
                     const newTop = event.dragEvent.clientY - rect.top;
@@ -3848,39 +3865,14 @@
                     data: newDateTime,
                     barbeiro: { id: professional.id, nome: professional.nome }
                 });
+                showToast('Agendamento reagendado!', 'info');
             } catch (error) {
                 console.error("Erro ao atualizar agendamento após arrastar:", error);
-                // Opcional: Adicionar um feedback visual para o usuário
+                showToast('Não foi possível reagendar.', 'error');
             }
         }
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
