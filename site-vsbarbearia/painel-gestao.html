@@ -759,7 +759,10 @@
                         <input type="hidden" id="slot-datetime">
                         <div>
                             <label for="slot-client-select" class="block text-sm font-medium text-gray-300 mb-1">Cliente</label>
-                            <select id="slot-client-select" required class="form-select w-full"></select>
+                            <div class="flex items-center gap-2">
+                                <select id="slot-client-select" required class="form-select w-full flex-grow"></select>
+                                <button type="button" id="open-quick-client-modal-btn" class="btn-secondary px-3" title="Cadastrar Novo Cliente"><i class="fas fa-plus"></i></button>
+                            </div>
                         </div>
                         <div>
                             <label for="slot-service-select" class="block text-sm font-medium text-gray-300 mb-1">Serviço</label>
@@ -821,7 +824,7 @@
         </div>
     </div>
 
-    <!-- NOVO Modal de Edição de Bloqueio -->
+    <!-- Modal de Edição de Bloqueio -->
     <div id="edit-block-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4">
         <div class="relative w-full max-w-lg">
              <div class="modal-content rounded-lg shadow-xl p-6">
@@ -853,6 +856,33 @@
                     <button id="delete-block-button" class="btn-secondary !bg-red-800 !border-red-700 hover:!bg-red-700"><i class="fas fa-trash-alt mr-2"></i>Remover Bloqueio</button>
                     <button id="save-edit-block-button" class="btn-primary">
                         <span class="btn-text">Salvar Alterações</span>
+                        <div class="loader hidden"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOVO Modal de Cadastro Rápido de Cliente -->
+    <div id="add-quick-client-modal" class="hidden fixed inset-0 z-[60] overflow-y-auto modal-backdrop flex items-center justify-center p-4">
+        <div class="relative w-full max-w-md">
+             <div class="modal-content rounded-lg shadow-xl p-6">
+                <h3 class="text-xl font-bold text-primary text-center mb-6">Cadastrar Novo Cliente</h3>
+                <form id="add-quick-client-form" class="space-y-4 text-left">
+                    <div>
+                        <label for="quick-client-name" class="block text-sm font-medium text-gray-300 mb-1">Nome do Cliente</label>
+                        <input type="text" id="quick-client-name" required class="form-input w-full">
+                    </div>
+                    <div>
+                        <label for="quick-client-phone" class="block text-sm font-medium text-gray-300 mb-1">Telefone</label>
+                        <input type="tel" id="quick-client-phone" required class="form-input w-full">
+                    </div>
+                    <p id="add-quick-client-feedback" class="text-sm h-4 text-center"></p>
+                </form>
+                <div class="mt-8 flex justify-end space-x-4">
+                    <button id="cancel-quick-client-button" class="btn-secondary">Cancelar</button>
+                    <button id="save-quick-client-button" class="btn-primary">
+                        <span class="btn-text">Salvar Cliente</span>
                         <div class="loader hidden"></div>
                     </button>
                 </div>
@@ -2278,6 +2308,22 @@
         const slotRecurringCheckbox = document.getElementById('slot-recurring-checkbox');
         const slotRecurringOptions = document.getElementById('slot-recurring-options');
 
+        function populateClientSelects(newClientIdToSelect = null) {
+            const clientSelects = document.querySelectorAll('#appt-client-select, #slot-client-select');
+            clientSelects.forEach(select => {
+                select.innerHTML = '<option value="">Selecione um cliente</option>';
+                localClientsCache.forEach(c => {
+                    const option = document.createElement('option');
+                    option.value = c.id;
+                    option.textContent = c.name;
+                    if (c.id === newClientIdToSelect) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+            });
+        }
+
         async function openSlotActionModal(profId, time) {
             slotActionModal.classList.remove('hidden');
             const professional = localProfessionalsCache.find(p => p.id === profId);
@@ -2297,10 +2343,8 @@
             document.getElementById('slot-datetime').value = time.toISOString();
 
             // Popular selects do agendamento
-            const clientSelect = document.getElementById('slot-client-select');
+            populateClientSelects();
             const serviceSelect = document.getElementById('slot-service-select');
-            clientSelect.innerHTML = '<option value="">Selecione um cliente</option>';
-            localClientsCache.forEach(c => clientSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`);
             serviceSelect.innerHTML = '<option value="">Selecione um serviço</option>';
             localServicesCache.forEach(s => serviceSelect.innerHTML += `<option value="${s.id}">${s.nome}</option>`);
         }
@@ -2459,6 +2503,139 @@
             }
         });
 
+        // --- LÓGICA DO MODAL DE EDIÇÃO DE BLOQUEIO ---
+        const editBlockModal = document.getElementById('edit-block-modal');
+        const closeEditBlockModal = document.getElementById('close-edit-block-modal');
+        const saveEditBlockButton = document.getElementById('save-edit-block-button');
+        const deleteBlockButton = document.getElementById('delete-block-button');
+
+        async function openEditBlockModal(blockId) {
+            const docRef = doc(db, "agendamentos", blockId);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const block = docSnap.data();
+                document.getElementById('edit-block-id').value = blockId;
+                document.getElementById('edit-block-reason').value = block.motivo || 'folga';
+                document.getElementById('edit-block-duration').value = block.servico.duracaoMinutos || 30;
+                document.getElementById('edit-block-subtitle').textContent = `Para ${block.barbeiro.nome}`;
+                editBlockModal.classList.remove('hidden');
+            } else {
+                console.error("Bloqueio não encontrado!");
+            }
+        }
+
+        closeEditBlockModal.addEventListener('click', () => editBlockModal.classList.add('hidden'));
+
+        saveEditBlockButton.addEventListener('click', async () => {
+            const btnText = saveEditBlockButton.querySelector('.btn-text');
+            const loader = saveEditBlockButton.querySelector('.loader');
+            const feedback = document.getElementById('edit-block-feedback');
+            feedback.textContent = '';
+
+            const id = document.getElementById('edit-block-id').value;
+            const newReason = document.getElementById('edit-block-reason').value;
+            const newDuration = parseInt(document.getElementById('edit-block-duration').value);
+
+            btnText.classList.add('hidden');
+            loader.classList.remove('hidden');
+            saveEditBlockButton.disabled = true;
+
+            try {
+                const blockRef = doc(db, "agendamentos", id);
+                await updateDoc(blockRef, {
+                    motivo: newReason,
+                    "servico.nome": newReason.charAt(0).toUpperCase() + newReason.slice(1),
+                    "servico.duracaoMinutos": newDuration
+                });
+                editBlockModal.classList.add('hidden');
+            } catch (error) {
+                console.error("Erro ao atualizar bloqueio:", error);
+                feedback.textContent = "Erro ao salvar.";
+                feedback.className = "text-sm h-4 text-center text-red-500";
+            } finally {
+                btnText.classList.remove('hidden');
+                loader.classList.add('hidden');
+                saveEditBlockButton.disabled = false;
+            }
+        });
+
+        deleteBlockButton.addEventListener('click', () => {
+            const id = document.getElementById('edit-block-id').value;
+            showConfirmationModal("Tem certeza que deseja remover este bloqueio da agenda?", async () => {
+                try {
+                    await deleteDoc(doc(db, "agendamentos", id));
+                    editBlockModal.classList.add('hidden');
+                } catch(e) {
+                    console.error("Erro ao remover bloqueio:", e);
+                }
+            });
+        });
+
+        // --- NOVO: LÓGICA DO MODAL DE CADASTRO RÁPIDO DE CLIENTE ---
+        const addQuickClientModal = document.getElementById('add-quick-client-modal');
+        const openQuickClientModalBtn = document.getElementById('open-quick-client-modal-btn');
+        const cancelQuickClientButton = document.getElementById('cancel-quick-client-button');
+        const saveQuickClientButton = document.getElementById('save-quick-client-button');
+        const addQuickClientForm = document.getElementById('add-quick-client-form');
+
+        openQuickClientModalBtn.addEventListener('click', () => {
+            addQuickClientForm.reset();
+            document.getElementById('add-quick-client-feedback').textContent = '';
+            addQuickClientModal.classList.remove('hidden');
+        });
+
+        cancelQuickClientButton.addEventListener('click', () => {
+            addQuickClientModal.classList.add('hidden');
+        });
+
+        saveQuickClientButton.addEventListener('click', async () => {
+            const btnText = saveQuickClientButton.querySelector('.btn-text');
+            const loader = saveQuickClientButton.querySelector('.loader');
+            const feedback = document.getElementById('add-quick-client-feedback');
+            const nameInput = document.getElementById('quick-client-name');
+            const phoneInput = document.getElementById('quick-client-phone');
+            feedback.textContent = '';
+
+            if (!nameInput.value || !phoneInput.value) {
+                feedback.textContent = "Preencha todos os campos.";
+                feedback.className = "text-sm h-4 text-center text-red-500";
+                return;
+            }
+            
+            btnText.classList.add('hidden');
+            loader.classList.remove('hidden');
+            saveQuickClientButton.disabled = true;
+
+            try {
+                const user = auth.currentUser;
+                const newClientData = {
+                    name: nameInput.value,
+                    phone: phoneInput.value,
+                    gestorId: user.uid,
+                    createdAt: serverTimestamp()
+                };
+
+                const docRef = await addDoc(collection(db, "users"), newClientData);
+                
+                // Atualiza o cache local e os selects
+                localClientsCache.push({ id: docRef.id, ...newClientData });
+                populateClientSelects(docRef.id);
+                
+                addQuickClientModal.classList.add('hidden');
+
+            } catch (error) {
+                console.error("Erro ao salvar cliente rápido:", error);
+                feedback.textContent = "Erro ao salvar.";
+                feedback.className = "text-sm h-4 text-center text-red-500";
+            } finally {
+                btnText.classList.remove('hidden');
+                loader.classList.add('hidden');
+                saveQuickClientButton.disabled = false;
+            }
+        });
+
+
         // Lidar com o clique do botão de bloquear o dia
         agendaGridView.addEventListener('click', e => {
             const blockBtn = e.target.closest('.block-day-btn');
@@ -2498,7 +2675,4 @@
     </script>
 </body>
 </html>
-
-
-
 
