@@ -360,14 +360,60 @@
             <!-- Conteúdo Principal -->
             <div id="main-content">
                 
-                <main>
-                    <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
-                        <!-- NOVO: Conteúdo da Aba Visão Geral / Dashboard -->
-                        <div id="content-dashboard">
-                            <h1 class="text-2xl font-bold text-primary mb-4">Visão Geral</h1>
-                            <p class="text-gray-400">Olá! Esta será a sua tela principal (Dashboard), onde você verá os indicadores mais importantes do seu negócio. Em breve adicionaremos gráficos de faturamento, agendamentos do dia e muito mais!</p>
+                <main class="flex-1 overflow-y-auto bg-[#1e1e1e] text-white">
+                    <div class="min-h-full">
+                        
+                        <!-- Conteúdo da Visão Geral -->
+                        <div id="content-dashboard" class="p-6">
+                            <h2 class="text-2xl font-bold mb-6 text-gray-300">Resumo de Hoje</h2>
+                            <!-- Container dos Cards -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                                <!-- Card: Faturação do Dia -->
+                                <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg flex items-center space-x-4">
+                                    <div class="bg-green-500/20 p-3 rounded-full">
+                                        <i class="fas fa-dollar-sign fa-lg text-green-400"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-400">Faturação do Dia</p>
+                                        <p id="kpi-faturacao" class="text-2xl font-bold text-gray-100">R$ 0,00</p>
+                                    </div>
+                                </div>
+
+                                <!-- Card: Agendamentos de Hoje -->
+                                <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg flex items-center space-x-4">
+                                    <div class="bg-blue-500/20 p-3 rounded-full">
+                                        <i class="fas fa-calendar-check fa-lg text-blue-400"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-400">Agendamentos de Hoje</p>
+                                        <p id="kpi-agendamentos" class="text-2xl font-bold text-gray-100">0</p>
+                                    </div>
+                                </div>
+
+                                <!-- Card: Clientes Atendidos -->
+                                <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg flex items-center space-x-4">
+                                    <div class="bg-indigo-500/20 p-3 rounded-full">
+                                        <i class="fas fa-users fa-lg text-indigo-400"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-400">Clientes Atendidos</o>
+                                        <p id="kpi-clientes" class="text-2xl font-bold text-gray-100">0</p>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <!-- NOVO: Lista de Próximos Agendamentos -->
+                            <div class="mt-8">
+                                <h3 class="text-xl font-bold mb-4 text-gray-300">Próximos Agendamentos do Dia</h3>
+                                <div id="proximos-agendamentos-list" class="space-y-3">
+                                    <!-- Itens da lista serão injetados aqui pelo JavaScript -->
+                                    <div class="bg-[#2a2a2a] p-4 rounded-lg text-center text-gray-500">A carregar...</div>
+                                </div>
+                            </div>
                         </div>
-                
+
                         <!-- Conteúdo da Aba Serviços -->
                         <div id="content-servicos" class="hidden">
                             <h1 class="text-2xl font-bold text-primary mb-6">Gerenciar Serviços</h1>
@@ -376,9 +422,9 @@
                                     <h3 class="text-lg font-bold mb-4">Adicionar Novo Serviço</h3>
                                     <form id="add-service-form" class="space-y-4">
                                         <input type="text" id="service-name" required placeholder="Nome do Serviço" class="form-input w-full">
-                                        <input type="number" id="service-value" step="0.01" required placeholder="Valor (R$)" class="form-input w-full">
-                                        <input type="number" id="service-promo-value" step="0.01" placeholder="Valor Promocional (Opcional)" class="form-input w-full">
-                                        <input type="number" id="service-duration" required placeholder="Duração (minutos)" class="form-input w-full">
+                                        <input type="number" step="0.01" id="service-value" required placeholder="Valor (R$)" class="form-input w-full">
+                                        <input type="number" step="0.01" id="service-promo-value" placeholder="Valor Promocional (Opcional)" class="form-input w-full">
+                                        <input type="number" id="service-duration" required placeholder="Duração (min)" class="form-input w-full">
                                         <button type="submit" class="w-full justify-center btn-primary">
                                             <span class="btn-text">Salvar Serviço</span>
                                             <div class="loader hidden"></div>
@@ -388,21 +434,21 @@
                                 <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
                                     <h3 class="text-lg font-bold mb-4">Serviços Cadastrados</h3>
                                     <div id="services-list" class="space-y-4">
-                                        <p id="loading-services" class="text-gray-400">Carregando serviços...</p>
+                                        <p id="loading-services" class="text-gray-400">Carregando...</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
+                        
                         <!-- Conteúdo da Aba Profissionais -->
                         <div id="content-profissionais" class="hidden">
-                             <h1 class="text-2xl font-bold text-primary mb-6">Gerenciar Profissionais</h1>
-                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <h1 class="text-2xl font-bold text-primary mb-6">Gerenciar Profissionais</h1>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                                    <h3 class="text-lg font-bold mb-4">Adicionar Profissional</h3>
+                                    <h3 class="text-lg font-bold mb-4">Adicionar Novo Profissional</h3>
                                     <form id="add-professional-form" class="space-y-4">
                                         <input type="text" id="professional-name" required placeholder="Nome do Profissional" class="form-input w-full">
-                                        <input type="text" id="professional-function" required placeholder="Função (ex: Barbeiro)" class="form-input w-full">
+                                        <input type="text" id="professional-function" required placeholder="Função" class="form-input w-full">
                                         <input type="url" id="professional-photo" placeholder="URL da Foto (Opcional)" class="form-input w-full">
                                         <input type="number" id="professional-commission-services" step="1" min="0" max="100" placeholder="Comissão Serviços (%)" class="form-input w-full">
                                         <input type="number" id="professional-commission-products" step="1" min="0" max="100" placeholder="Comissão Produtos (%)" class="form-input w-full">
@@ -2421,6 +2467,7 @@
                         const user = auth.currentUser;
                         if (!user) return;
                         switch (targetId) {
+                            case 'content-dashboard': loadDashboardData(user.uid); break; // NOVO
                             case 'content-agenda': initializeAgenda(user.uid); break;
                             case 'content-servicos': loadServices(user.uid); break;
                             case 'content-profissionais': loadProfessionals(user.uid); break;
@@ -2436,6 +2483,99 @@
         });
 
         // A lógica de expandir/recolher pelo cabeçalho foi removida e integrada nos ícones do menu
+        
+        // --- LÓGICA DO DASHBOARD (VISÃO GERAL) ---
+        let unsubscribeDashboard = null;
+        async function loadDashboardData(userId) {
+            // Garante que os caches estejam populados
+            if (localServicesCache.length === 0 || localProfessionalsCache.length === 0) {
+                await populateCaches(userId);
+            }
+
+            if (unsubscribeDashboard) unsubscribeDashboard();
+
+            const startOfDay = new Date();
+            startOfDay.setHours(0, 0, 0, 0);
+
+            const endOfDay = new Date();
+            endOfDay.setHours(23, 59, 59, 999);
+
+            const q = query(
+                collection(db, "agendamentos"),
+                where("gestorId", "==", userId),
+                where("data", ">=", startOfDay),
+                where("data", "<=", endOfDay)
+            );
+
+            unsubscribeDashboard = onSnapshot(q, (snapshot) => {
+                let faturacaoDia = 0;
+                let agendamentosHoje = 0;
+                const clientesAtendidos = new Set();
+                const now = new Date();
+                const proximosAgendamentos = [];
+
+                snapshot.forEach(doc => {
+                    const agendamento = {id: doc.id, ...doc.data()};
+
+                    // --- Lógica dos KPIs ---
+                    if (agendamento.status !== 'cancelado' && agendamento.status !== 'bloqueio') {
+                        agendamentosHoje++;
+                    }
+                    if (agendamento.status === 'finalizado' && agendamento.servico?.id) {
+                        clientesAtendidos.add(agendamento.cliente.id);
+                        const servico = localServicesCache.find(s => s.id === agendamento.servico.id);
+                        if (servico) { faturacaoDia += servico.promocao || servico.valor || 0; }
+                    }
+
+                    // --- Lógica de Próximos Agendamentos ---
+                    const apptDate = agendamento.data.toDate();
+                    if (apptDate >= now && agendamento.status !== 'finalizado' && agendamento.status !== 'cancelado' && agendamento.status !== 'bloqueio') {
+                        proximosAgendamentos.push(agendamento);
+                    }
+                });
+
+                // --- Atualizar Interface ---
+                document.getElementById('kpi-faturacao').textContent = `R$ ${faturacaoDia.toFixed(2).replace('.', ',')}`;
+                document.getElementById('kpi-agendamentos').textContent = agendamentosHoje;
+                document.getElementById('kpi-clientes').textContent = clientesAtendidos.size;
+
+                proximosAgendamentos.sort((a, b) => a.data.toDate() - b.data.toDate());
+                const listContainer = document.getElementById('proximos-agendamentos-list');
+                listContainer.innerHTML = '';
+
+                if (proximosAgendamentos.length === 0) {
+                    listContainer.innerHTML = '<div class="bg-[#2a2a2a] p-4 rounded-lg text-center text-gray-500">Nenhum agendamento futuro para hoje.</div>';
+                } else {
+                    proximosAgendamentos.slice(0, 5).forEach(appt => {
+                        const apptDate = appt.data.toDate();
+                        const timeStr = apptDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                        const professional = localProfessionalsCache.find(p => p.id === appt.barbeiro.id) || appt.barbeiro;
+                        const placeholderImg = `https://placehold.co/40x40/333333/FFFFFF?text=${professional.nome.charAt(0)}`;
+                        listContainer.innerHTML += `
+                            <div class="bg-[#2a2a2a] p-3 rounded-lg flex items-center justify-between transition-all hover:bg-[#333]">
+                                <div class="flex items-center space-x-3">
+                                    <img src="${professional.imgUrl || placeholderImg}" alt="${professional.nome}" class="w-10 h-10 rounded-full object-cover" onerror="this.onerror=null;this.src='${placeholderImg}';">
+                                    <div>
+                                        <p class="font-semibold text-white">${appt.cliente.nome}</p>
+                                        <p class="text-xs text-gray-400">${appt.servico.nome}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                     <p class="font-bold text-lg text-primary">${timeStr}</p>
+                                     <p class="text-xs text-gray-500">com ${professional.nome.split(' ')[0]}</p>
+                                </div>
+                            </div>`;
+                    });
+                }
+            }, (error) => {
+                console.error("Erro ao carregar dados do dashboard:", error);
+                document.getElementById('kpi-faturacao').textContent = 'Erro';
+                document.getElementById('kpi-agendamentos').textContent = 'Erro';
+                document.getElementById('kpi-clientes').textContent = 'Erro';
+                const listContainer = document.getElementById('proximos-agendamentos-list');
+                if(listContainer) listContainer.innerHTML = '<div class="bg-[#2a2a2a] p-4 rounded-lg text-center text-red-500">Erro ao carregar.</div>';
+            });
+        }
         
         // --- ADIÇÃO: LÓGICA DOS MODAIS DA AGENDA E FUNCIONALIDADES ---
         
@@ -2818,6 +2958,12 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
 
 
 
