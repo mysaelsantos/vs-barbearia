@@ -541,9 +541,14 @@
                                         <input type="text" id="client-name" required placeholder="Nome do Cliente" class="form-input w-full">
                                         <input type="tel" id="client-phone" required placeholder="Telefone" class="form-input w-full">
                                         <input type="email" id="client-email" placeholder="E-mail (Opcional)" class="form-input w-full">
-                                        <!-- NOVO: Campo de data de nascimento -->
                                         <label for="client-birthdate" class="block text-sm font-medium text-gray-300 -mb-3 pt-2">Data de Nascimento (Opcional)</label>
                                         <input type="date" id="client-birthdate" class="form-input w-full">
+                                        <!-- NOVO: Campo de Indicação -->
+                                        <label for="client-referrer" class="block text-sm font-medium text-gray-300 -mb-3 pt-2">Indicado por (Opcional)</label>
+                                        <select id="client-referrer" class="form-select w-full">
+                                            <option value="">Ninguém</option>
+                                            <!-- Populado via JS -->
+                                        </select>
                                         <button type="submit" class="w-full justify-center btn-primary">
                                             <span class="btn-text">Salvar Cliente</span>
                                             <div class="loader hidden"></div>
@@ -593,10 +598,30 @@
 
                          <!-- Conteúdo da Aba Metas -->
                         <div id="content-metas" class="hidden">
-                             <h1 class="text-2xl font-bold text-primary mb-6">Gerenciar Metas e Fidelidade</h1>
+                             <h1 class="text-2xl font-bold text-primary mb-6">Fidelidade e Metas</h1>
+                            
+                            <!-- NOVO: Seção do Programa de Indicação -->
+                            <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800 mb-8">
+                                <h3 class="text-lg font-bold text-gray-300 mb-4 flex items-center"><i class="fas fa-gift mr-3 text-primary"></i>Programa de Indicação</h3>
+                                <form id="referral-settings-form" class="space-y-4">
+                                    <p class="text-sm text-gray-400">Defina o valor em créditos que um cliente ganha ao indicar um novo cliente que complete um serviço.</p>
+                                    <div>
+                                        <label for="referral-credit-value" class="block text-sm font-medium text-gray-300 mb-1">Valor do Crédito por Indicação (R$)</label>
+                                        <input type="number" step="0.01" id="referral-credit-value" placeholder="10,00" class="form-input w-full max-w-xs">
+                                    </div>
+                                    <p id="referral-settings-feedback" class="text-sm h-4"></p>
+                                    <div class="text-left">
+                                        <button type="submit" class="btn-primary">
+                                            <span class="btn-text">Salvar Configuração</span>
+                                            <div class="loader hidden"></div>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                                    <h3 class="text-lg font-bold mb-4">Adicionar Nova Meta</h3>
+                                    <h3 class="text-lg font-bold mb-4">Adicionar Nova Meta de Indicação</h3>
                                     <form id="add-goal-form" class="space-y-4">
                                         <input type="number" id="goal-target" required placeholder="Nº de Indicações (ex: 5)" class="form-input w-full">
                                         <input type="text" id="goal-prize" required placeholder="Prêmio (ex: Hidratação Grátis)" class="form-input w-full">
@@ -708,6 +733,7 @@
                                 <nav class="-mb-px flex space-x-6" aria-label="Tabs">
                                     <button id="tab-faturamento" class="tab-button active">Faturação</button>
                                     <button id="tab-servicos" class="tab-button text-gray-400 hover:text-gray-200">Serviços</button>
+                                    <button id="tab-clientes" class="tab-button text-gray-400 hover:text-gray-200">Clientes</button>
                                 </nav>
                             </div>
 
@@ -795,6 +821,27 @@
                                                 </tr>
                                             </thead>
                                             <tbody id="report-by-service-list">
+                                                <!-- Linhas geradas via JS -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                             <!-- NOVO: Conteúdo da Aba Clientes -->
+                            <div id="content-tab-clientes" class="hidden">
+                                <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
+                                    <h3 class="text-lg font-bold text-gray-300 mb-4">Ranking de Clientes</h3>
+                                     <div class="overflow-x-auto">
+                                        <table class="w-full text-sm text-left text-gray-400">
+                                            <thead class="text-xs text-gray-400 uppercase bg-[#333]">
+                                                <tr>
+                                                    <th scope="col" class="px-6 py-3">#</th>
+                                                    <th scope="col" class="px-6 py-3">Cliente</th>
+                                                    <th scope="col" class="px-6 py-3">Nº de Visitas</th>
+                                                    <th scope="col" class="px-6 py-3">Gasto Total (Bruto)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="report-by-client-list">
                                                 <!-- Linhas geradas via JS -->
                                             </tbody>
                                         </table>
@@ -2123,13 +2170,19 @@
             const loader = submitBtn.querySelector('.loader');
             btnText.classList.add('hidden'); loader.classList.remove('hidden'); submitBtn.disabled = true;
 
+            const referrerId = document.getElementById('client-referrer').value;
+            const referrer = localClientsCache.find(c => c.id === referrerId);
+
             const data = {
                 name: document.getElementById('client-name').value,
                 phone: document.getElementById('client-phone').value,
                 email: document.getElementById('client-email').value,
                 birthDate: document.getElementById('client-birthdate').value,
                 referralCredits: 0,
-                gestorId: user.uid
+                gestorId: user.uid,
+                createdAt: serverTimestamp(),
+                referrer: referrer ? { id: referrer.id, name: referrer.name } : null,
+                firstServiceCompleted: false
             };
             
             try { await addDoc(collection(db, "users"), data); addClientForm.reset(); }
@@ -2144,6 +2197,10 @@
                 loadingClientsP.classList.add('hidden');
                 clientsListDiv.innerHTML = '';
                 localClientsCache = [];
+                const referrerSelect = document.getElementById('client-referrer');
+                const currentReferrerValue = referrerSelect.value; // Salva o valor atual se houver
+                referrerSelect.innerHTML = '<option value="">Ninguém</option>'; // Reseta
+
                 if (snapshot.empty) {
                     clientsListDiv.innerHTML = '<p class="text-gray-400">Nenhum cliente cadastrado.</p>';
                     return;
@@ -2151,6 +2208,10 @@
                 snapshot.forEach(doc => {
                     const client = {id: doc.id, ...doc.data()};
                     localClientsCache.push(client);
+
+                    // Popula o select de indicação
+                    referrerSelect.innerHTML += `<option value="${client.id}">${client.name}</option>`;
+
                     const placeholderImg = `https://placehold.co/100x100/333333/FFFFFF?text=${client.name ? client.name.charAt(0) : 'C'}`;
                     const card = document.createElement('div');
                     card.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex items-center';
@@ -2224,22 +2285,89 @@
             catch(error) { console.error("Erro ao atualizar cliente:", error); }
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditClientButton.disabled = false; cancelEditClientButton.disabled = false; }
         });
+        
+        // --- LÓGICA DE FIDELIDADE ---
+        const referralSettingsForm = document.getElementById('referral-settings-form');
+        
+        referralSettingsForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const submitBtn = referralSettingsForm.querySelector('button[type="submit"]');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const loader = submitBtn.querySelector('.loader');
+            const feedbackP = document.getElementById('referral-settings-feedback');
+            
+            btnText.classList.add('hidden');
+            loader.classList.remove('hidden');
+            submitBtn.disabled = true;
+            feedbackP.textContent = '';
+            
+            try {
+                const creditValue = parseFloat(document.getElementById('referral-credit-value').value);
+                if (isNaN(creditValue) || creditValue < 0) {
+                    throw new Error("Valor inválido.");
+                }
+                
+                const settingsRef = doc(db, 'configuracoes', user.uid);
+                await setDoc(settingsRef, { referralCreditValue: creditValue, updatedAt: serverTimestamp() }, { merge: true });
+
+                feedbackP.textContent = 'Configuração salva com sucesso!';
+                feedbackP.className = 'text-sm h-4 text-green-500';
+
+            } catch (error) {
+                console.error("Erro ao salvar config. de indicação:", error);
+                feedbackP.textContent = 'Erro ao salvar. Verifique o valor.';
+                feedbackP.className = 'text-sm h-4 text-red-500';
+            } finally {
+                btnText.classList.remove('hidden');
+                loader.classList.add('hidden');
+                submitBtn.disabled = false;
+            }
+        });
+
+        async function loadReferralSettings(userId) {
+            const settingsRef = doc(db, 'configuracoes', userId);
+            const docSnap = await getDoc(settingsRef);
+            if (docSnap.exists() && docSnap.data().referralCreditValue) {
+                document.getElementById('referral-credit-value').value = docSnap.data().referralCreditValue.toFixed(2);
+            }
+        }
 
         // --- NOVO: LÓGICA DE RELATÓRIOS ---
         function initializeReports(userId) {
             const startDateInput = document.getElementById('report-start-date');
             const endDateInput = document.getElementById('report-end-date');
-            tabFaturamento.addEventListener('click', () => {
-                tabFaturamento.classList.add('active'); tabServicos.classList.remove('active');
-                contentFaturamento.classList.remove('hidden'); contentServicos.classList.add('hidden');
-            });
-             tabServicos.addEventListener('click', () => {
-                tabServicos.classList.add('active'); tabFaturamento.classList.remove('active');
-                contentServicos.classList.remove('hidden'); contentFaturamento.classList.add('hidden');
-                // Gera o relatório de serviços se ainda não houver dados
-                if(document.getElementById('report-by-service-list').innerHTML === '') {
-                     generateBillingReport(userId);
-                }
+            const generateBtn = document.getElementById('generate-report-btn');
+            const tabFaturamento = document.getElementById('tab-faturamento');
+            const tabServicos = document.getElementById('tab-servicos');
+            const tabClientes = document.getElementById('tab-clientes');
+            const contentFaturamento = document.getElementById('content-tab-faturamento');
+            const contentServicos = document.getElementById('content-tab-servicos');
+            const contentClientes = document.getElementById('content-tab-clientes');
+
+            // Define as datas padrão
+            const today = new Date();
+            startDateInput.value = formatDateForInput(new Date(today.getFullYear(), today.getMonth(), 1));
+            generateBtn.addEventListener('click', () => generateBillingReport(userId));
+            
+            // Listeners para as abas dos relatórios
+            const tabs = [tabFaturamento, tabServicos, tabClientes];
+            const contents = [contentFaturamento, contentServicos, contentClientes];
+
+            tabs.forEach((clickedTab, index) => {
+                clickedTab.addEventListener('click', () => {
+                    tabs.forEach(tab => tab.classList.remove('active'));
+                    contents.forEach(content => content.classList.add('hidden'));
+                    
+                    clickedTab.classList.add('active');
+                    contents[index].classList.remove('hidden');
+
+                    if(document.getElementById('report-by-professional-list').innerHTML === '') {
+                         generateBillingReport(userId);
+                    }
+                });
             });
         }
 
@@ -2248,9 +2376,11 @@
             const placeholderDiv = document.getElementById('report-placeholder');
             const professionalTableBody = document.getElementById('report-by-professional-list');
             const serviceTableBody = document.getElementById('report-by-service-list');
+            const clientTableBody = document.getElementById('report-by-client-list');
             
             placeholderDiv.innerHTML = '<div class="loader mx-auto"></div><p class="mt-4">A gerar relatório...</p>';
             resultsDiv.classList.add('hidden');
+            [serviceTableBody.parentElement.parentElement.parentElement, clientTableBody.parentElement.parentElement.parentElement].forEach(el => el.classList.add('hidden'));
             placeholderDiv.classList.remove('hidden');
             
             try {
@@ -2275,6 +2405,7 @@
                 let totalBruto = 0, totalComissao = 0, totalDesconto = 0;
                 const professionalPerformance = {};
                 const servicePerformance = {};
+                const clientPerformance = {};
 
                 querySnapshot.forEach(doc => {
                     const appt = doc.data();
@@ -2283,6 +2414,7 @@
                     const desconto = appt.desconto || 0;
                     const profId = appt.barbeiro.id;
                     const serviceId = appt.servico.id;
+                    const clientId = appt.cliente.id;
 
                     totalBruto += bruto;
                     totalComissao += comissao;
@@ -2298,6 +2430,11 @@
                     if (!servicePerformance[serviceId]) { servicePerformance[serviceId] = { nome: appt.servico.nome, count: 0, faturamento: 0 }; }
                     servicePerformance[serviceId].count++;
                     servicePerformance[serviceId].faturamento += bruto;
+
+                    // Agrega dados por cliente
+                    if (!clientPerformance[clientId]) { clientPerformance[clientId] = { nome: appt.cliente.nome, visits: 0, totalSpent: 0 }; }
+                    clientPerformance[clientId].visits++;
+                    clientPerformance[clientId].totalSpent += bruto;
                 });
                 
                 const totalLiquido = totalBruto - totalComissao;
@@ -2341,9 +2478,29 @@
                             </tr>`;
                     });
                 }
+                
+                // --- Renderiza Relatório de Clientes ---
+                clientTableBody.innerHTML = '';
+                const sortedClients = Object.values(clientPerformance).sort((a, b) => b.totalSpent - a.count);
+
+                if (sortedClients.length === 0) {
+                    clientTableBody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-500">Nenhum cliente encontrado para este período.</td></tr>';
+                } else {
+                    sortedClients.forEach((client, index) => {
+                        clientTableBody.innerHTML += `
+                            <tr class="bg-[#1e1e1e] border-b border-gray-700">
+                                <td class="px-6 py-4 font-medium text-white">${index + 1}</td>
+                                <td class="px-6 py-4">${client.nome}</td>
+                                <td class="px-6 py-4">${client.visits}</td>
+                                <td class="px-6 py-4 font-semibold text-primary">R$ ${client.totalSpent.toFixed(2).replace('.', ',')}</td>
+                            </tr>`;
+                    });
+                }
 
                 placeholderDiv.classList.add('hidden');
                 resultsDiv.classList.remove('hidden');
+                [serviceTableBody.parentElement.parentElement.parentElement, clientTableBody.parentElement.parentElement.parentElement].forEach(el => el.classList.remove('hidden'));
+
 
             } catch (error) {
                 console.error("Erro ao gerar relatório:", error);
@@ -2789,7 +2946,7 @@
                             case 'content-profissionais': loadProfessionals(user.uid); break;
                             case 'content-unidades': loadUnits(user.uid); break;
                             case 'content-planos': loadPlans(user.uid); break;
-                            case 'content-metas': loadGoals(user.uid); break;
+                            case 'content-metas': loadGoals(user.uid); loadReferralSettings(user.uid); break;
                             case 'content-configuracoes': loadPanelUsers(user.uid); break;
                         }
                     }
@@ -3053,6 +3210,28 @@
                     creditosUsados: creditsUsed,
                     dataPagamento: serverTimestamp()
                 };
+                
+                // --- NOVO: LÓGICA DE INDICAÇÃO ---
+                const settingsRef = doc(db, 'configuracoes', auth.currentUser.uid);
+                const settingsSnap = await getDoc(settingsRef);
+                const referralCreditValue = settingsSnap.exists() ? (settingsSnap.data().referralCreditValue || 0) : 0;
+                
+                if (referralCreditValue > 0 && currentSaleData.client && !currentSaleData.client.firstServiceCompleted && currentSaleData.client.referrer?.id) {
+                    
+                    const referrerRef = doc(db, "users", currentSaleData.client.referrer.id);
+                    const referrerSnap = await getDoc(referrerRef);
+                    
+                    if(referrerSnap.exists()) {
+                        const referrerData = referrerSnap.data();
+                        const newCredits = (referrerData.referralCredits || 0) + referralCreditValue;
+                        // Usar um batch para garantir que as duas operações ocorram juntas
+                        const batch = writeBatch(db);
+                        batch.update(referrerRef, { referralCredits: newCredits });
+                        batch.update(doc(db, "users", clientId), { firstServiceCompleted: true });
+                        await batch.commit();
+                    }
+                }
+                // Fim da lógica de indicação
 
                 await updateDoc(doc(db, "agendamentos", appointmentId), dataToUpdate);
 
@@ -3546,6 +3725,9 @@
     </script>
 </body>
 </html>
+
+
+
 
 
 
