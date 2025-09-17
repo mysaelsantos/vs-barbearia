@@ -307,8 +307,7 @@
         <header class="bg-[#1e1e1e] shadow-lg z-40">
             <div class="mx-auto max-w-full px-4 py-3 sm:px-6 lg:px-8 flex justify-between items-center">
                  <div class="flex items-center space-x-4">
-                     <img src="https://i.postimg.cc/5yBSjg1F/Bigode-3.png" alt="Logo VS Barbearia" class="w-10 h-10">
-                    <h1 class="text-2xl font-bold tracking-tight text-white hidden sm:block">Painel de Gestão</h1>
+                    <h1 id="main-header-title" class="text-2xl font-bold tracking-tight text-white">Visão Geral</h1>
                 </div>
                 <div class="flex items-center">
                     <span id="user-email" class="text-sm text-gray-400 mr-4 hidden sm:block"></span>
@@ -320,7 +319,7 @@
         <div id="main-container">
             <!-- NOVO: Menu Lateral -->
             <aside id="sidebar">
-                <div class="p-4 flex items-center justify-center border-b border-gray-700 h-[61px]">
+                <div class="p-4 flex items-center justify-center border-b border-gray-700 h-[61px] flex-shrink-0">
                     <img src="https://i.postimg.cc/5yBSjg1F/Bigode-3.png" alt="Logo VS Barbearia" class="w-10 h-10">
                     <span class="nav-text text-xl font-bold ml-2">VS Barbearia</span>
                 </div>
@@ -1080,7 +1079,7 @@
                 authSection.classList.add('hidden');
                 panelSection.classList.remove('hidden');
                 userEmailSpan.textContent = user.email;
-                // CORRIGIDO: Inicia o painel na Visão Geral (Dashboard)
+                initializeGlobalEventListeners(); // ATIVADO: Garante que os botões funcionem
                 document.querySelector('#sidebar .nav-link[data-target="content-dashboard"]').click();
                 loadAgendaSettings(user.uid);
             } else {
@@ -1431,6 +1430,26 @@
         const saveAddAppointmentButton = document.getElementById('save-add-appointment-button');
         let unsubscribeAgenda = null;
 
+        function initializeGlobalEventListeners() {
+            prevDayBtn.addEventListener('click', () => {
+                agendaState.currentDate.setDate(agendaState.currentDate.getDate() - 1);
+                updateDateDisplay();
+                loadAgendaData(auth.currentUser.uid);
+            });
+            nextDayBtn.addEventListener('click', () => {
+                agendaState.currentDate.setDate(agendaState.currentDate.getDate() + 1);
+                updateDateDisplay();
+                loadAgendaData(auth.currentUser.uid);
+            });
+            datePicker.addEventListener('change', () => {
+                const [year, month, day] = datePicker.value.split('-').map(Number);
+                agendaState.currentDate = new Date(year, month - 1, day);
+                updateDateDisplay();
+                loadAgendaData(auth.currentUser.uid);
+            });
+            professionalFilter.addEventListener('change', renderAgendaGrid);
+        }
+
         async function populateCaches(userId) {
             // Garante que os dados locais (clientes, serviços, etc.) estejam carregados antes de usar a agenda.
             try {
@@ -1463,23 +1482,6 @@
             agendaTitle.textContent = `Agenda - ${agendaState.currentDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}`;
         }
 
-        prevDayBtn.addEventListener('click', () => {
-            agendaState.currentDate.setDate(agendaState.currentDate.getDate() - 1);
-            updateDateDisplay();
-            loadAgendaData(auth.currentUser.uid);
-        });
-        nextDayBtn.addEventListener('click', () => {
-            agendaState.currentDate.setDate(agendaState.currentDate.getDate() + 1);
-            updateDateDisplay();
-            loadAgendaData(auth.currentUser.uid);
-        });
-        datePicker.addEventListener('change', () => {
-            const [year, month, day] = datePicker.value.split('-').map(Number);
-            agendaState.currentDate = new Date(year, month - 1, day);
-            updateDateDisplay();
-            loadAgendaData(auth.currentUser.uid);
-        });
-        
         async function initializeAgenda(userId) {
             await populateCaches(userId);
             updateDateDisplay();
@@ -2236,17 +2238,24 @@
                     link.classList.add('active');
                     
                     const parentMenu = link.closest('.submenu');
-                    if (parentMenu) {
-                        parentMenu.previousElementSibling.classList.add('active');
-                    }
+                if (parentMenu) {
+                    parentMenu.previousElementSibling.classList.add('active');
+                }
 
-                    contentPanels.forEach(panel => panel.classList.add('hidden'));
-                    const targetPanel = document.getElementById(targetId);
-                    if (targetPanel) {
-                        targetPanel.classList.remove('hidden');
-                        const user = auth.currentUser;
-                        // Carrega os dados da aba, se necessário
-                         if (user && targetId === 'content-agenda') initializeAgenda(user.uid);
+                // Esconde todos os painéis de conteúdo
+                contentPanels.forEach(panel => panel.classList.add('hidden'));
+
+                // Mostra o painel alvo
+                const targetPanel = document.getElementById(targetId);
+                if (targetPanel) {
+                    // ATUALIZADO: Muda o título no cabeçalho principal
+                    const pageTitle = targetPanel.querySelector('h1')?.textContent || 'Painel';
+                    document.getElementById('main-header-title').textContent = pageTitle.replace('Gerenciar ', '');
+
+                    targetPanel.classList.remove('hidden');
+                     // Carrega os dados da aba, se necessário
+                    const user = auth.currentUser;
+                    if (user && targetId === 'content-agenda') initializeAgenda(user.uid);
                          if (user && targetId === 'content-servicos') loadServices(user.uid);
                          if (user && targetId === 'content-profissionais') loadProfessionals(user.uid);
                          if (user && targetId === 'content-unidades') loadUnits(user.uid);
@@ -2273,4 +2282,6 @@
     </script>
 </body>
 </html>
+
+
 
