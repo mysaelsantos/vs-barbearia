@@ -1448,6 +1448,56 @@
                 loadAgendaData(auth.currentUser.uid);
             });
             professionalFilter.addEventListener('change', renderAgendaGrid);
+             addAppointmentBtn.addEventListener('click', async () => {
+                const form = addAppointmentModal.querySelector('form');
+                form.reset();
+                const feedback = document.getElementById('add-appointment-feedback');
+                feedback.textContent = '';
+
+                const clientSelect = document.getElementById('appt-client-select');
+                const profSelect = document.getElementById('appt-professional-select');
+                const serviceSelect = document.getElementById('appt-service-select');
+                
+                clientSelect.innerHTML = '<option value="">Carregando...</option>';
+                profSelect.innerHTML = '<option value="">Carregando...</option>';
+                serviceSelect.innerHTML = '<option value="">Carregando...</option>';
+
+                addAppointmentModal.classList.remove('hidden');
+
+                try {
+                    // Carrega clientes, profissionais e serviços em paralelo
+                    const [clientsSnapshot, profsSnapshot] = await Promise.all([
+                        getDocs(query(collection(db, "users"), where("gestorId", "==", auth.currentUser.uid))),
+                        getDocs(query(collection(db, "profissionais"), where("gestorId", "==", auth.currentUser.uid)))
+                    ]);
+
+                    localClientsCache = clientsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    clientSelect.innerHTML = '<option value="">Selecione um cliente</option>';
+                    localClientsCache.forEach(c => clientSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+
+                    localProfessionalsCache = profsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    profSelect.innerHTML = '<option value="">Selecione um profissional</option>';
+                    localProfessionalsCache.forEach(p => profSelect.innerHTML += `<option value="${p.id}">${p.nome}</option>`);
+
+                    serviceSelect.innerHTML = '<option value="">Selecione um serviço</option>';
+                    localServicesCache.forEach(s => serviceSelect.innerHTML += `<option value="${s.id}">${s.nome}</option>`);
+
+                    const dateTimeInput = document.getElementById('appt-datetime-input');
+                    const now = new Date(agendaState.currentDate);
+                    now.setHours(9, 0, 0, 0);
+                    const year = now.getFullYear();
+                    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+                    const day = now.getDate().toString().padStart(2, '0');
+                    const hours = now.getHours().toString().padStart(2, '0');
+                    const minutes = now.getMinutes().toString().padStart(2, '0');
+                    dateTimeInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+                } catch (error) {
+                    console.error("Erro ao abrir modal de agendamento:", error);
+                    feedback.textContent = "Erro ao carregar dados.";
+                    feedback.className = "text-sm h-4 text-center text-red-500";
+                }
+            });
         }
 
         async function populateCaches(userId) {
@@ -2282,6 +2332,7 @@
     </script>
 </body>
 </html>
+
 
 
 
