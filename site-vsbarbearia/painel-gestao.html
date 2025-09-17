@@ -205,7 +205,8 @@
         /* --- NOVOS ESTILOS PARA O MENU LATERAL --- */
         #main-container {
             display: flex;
-            height: 100vh;
+            flex-grow: 1; /* MODIFICADO: para preencher o espaço restante */
+            overflow: hidden; /* MODIFICADO: para conter o scroll */
         }
         #sidebar {
             width: 250px; /* Largura do menu expandido */
@@ -265,7 +266,7 @@
         #main-content {
             flex-grow: 1;
             overflow-y: auto;
-            height: 100vh;
+            height: 100%; /* MODIFICADO: para se ajustar ao container */
         }
     </style>
 </head>
@@ -289,14 +290,25 @@
     </div>
 
     <!-- Painel Principal (Visível quando logado) -->
-    <div id="panel-section" class="hidden">
+    <div id="panel-section" class="hidden flex flex-col h-screen">
+        <!-- NOVO: Cabeçalho Global -->
+        <header class="bg-[#1e1e1e] shadow-lg z-40">
+            <div class="mx-auto max-w-full px-4 py-3 sm:px-6 lg:px-8 flex justify-between items-center">
+                 <div class="flex items-center space-x-4">
+                     <img src="https://i.postimg.cc/5yBSjg1F/Bigode-3.png" alt="Logo VS Barbearia" class="w-10 h-10">
+                    <h1 class="text-2xl font-bold tracking-tight text-white hidden sm:block">Painel de Gestão</h1>
+                </div>
+                <div class="flex items-center">
+                    <span id="user-email" class="text-sm text-gray-400 mr-4 hidden sm:block"></span>
+                    <button id="logout-button" class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">Sair</button>
+                </div>
+            </div>
+        </header>
+
         <div id="main-container">
             <!-- NOVO: Menu Lateral -->
             <aside id="sidebar">
-                <div class="p-4 flex items-center justify-center border-b border-gray-700">
-                    <img src="https://i.postimg.cc/5yBSjg1F/Bigode-3.png" alt="Logo VS Barbearia" class="w-10 h-10">
-                    <span class="nav-text text-xl font-bold ml-2">VS Barbearia</span>
-                </div>
+                
                 <nav class="flex-grow py-4">
                     <ul>
                         <li><a href="#" class="nav-link" data-target="content-dashboard"><i class="fas fa-home nav-icon"></i><span class="nav-text">Visão Geral</span></a></li>
@@ -332,14 +344,7 @@
 
             <!-- Conteúdo Principal -->
             <div id="main-content">
-                <header class="bg-[#1e1e1e] shadow-lg sticky top-0 z-40">
-                    <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 flex justify-end items-center">
-                        <div class="flex items-center">
-                            <span id="user-email" class="text-sm text-gray-400 mr-4 hidden sm:block"></span>
-                            <button id="logout-button" class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">Sair</button>
-                        </div>
-                    </div>
-                </header>
+                
                 <main>
                     <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
                         <!-- NOVO: Conteúdo da Aba Visão Geral / Dashboard -->
@@ -2255,6 +2260,7 @@
     </script>
 </body>
 </html>
+
 
 
 
