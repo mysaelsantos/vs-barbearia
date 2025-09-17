@@ -404,12 +404,21 @@
 
                             </div>
 
-                            <!-- NOVO: Lista de Próximos Agendamentos -->
-                            <div class="mt-8">
-                                <h3 class="text-xl font-bold mb-4 text-gray-300">Próximos Agendamentos do Dia</h3>
-                                <div id="proximos-agendamentos-list" class="space-y-3">
-                                    <!-- Itens da lista serão injetados aqui pelo JavaScript -->
-                                    <div class="bg-[#2a2a2a] p-4 rounded-lg text-center text-gray-500">A carregar...</div>
+                            <!-- ATUALIZADO: Layout de duas colunas para as listas -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                                <!-- Coluna Próximos Agendamentos -->
+                                <div>
+                                    <h3 class="text-xl font-bold mb-4 text-gray-300">Próximos Agendamentos do Dia</h3>
+                                    <div id="proximos-agendamentos-list" class="space-y-3">
+                                        <div class="bg-[#2a2a2a] p-4 rounded-lg text-center text-gray-500">A carregar...</div>
+                                    </div>
+                                </div>
+                                <!-- NOVO: Coluna Aniversariantes do Dia -->
+                                <div>
+                                    <h3 class="text-xl font-bold mb-4 text-gray-300">Aniversariantes do Dia</h3>
+                                    <div id="aniversariantes-list" class="space-y-3">
+                                        <div class="bg-[#2a2a2a] p-4 rounded-lg text-center text-gray-500">A carregar...</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -532,6 +541,9 @@
                                         <input type="text" id="client-name" required placeholder="Nome do Cliente" class="form-input w-full">
                                         <input type="tel" id="client-phone" required placeholder="Telefone" class="form-input w-full">
                                         <input type="email" id="client-email" placeholder="E-mail (Opcional)" class="form-input w-full">
+                                        <!-- NOVO: Campo de data de nascimento -->
+                                        <label for="client-birthdate" class="block text-sm font-medium text-gray-300 -mb-3 pt-2">Data de Nascimento (Opcional)</label>
+                                        <input type="date" id="client-birthdate" class="form-input w-full">
                                         <button type="submit" class="w-full justify-center btn-primary">
                                             <span class="btn-text">Salvar Cliente</span>
                                             <div class="loader hidden"></div>
@@ -814,6 +826,9 @@
                     <input type="text" id="edit-client-name" required placeholder="Nome do Cliente" class="form-input w-full">
                     <input type="tel" id="edit-client-phone" required placeholder="Telefone" class="form-input w-full">
                     <input type="email" id="edit-client-email" placeholder="E-mail" class="form-input w-full">
+                    <!-- NOVO: Campo de data de nascimento na edição -->
+                    <label for="edit-client-birthdate" class="block text-sm font-medium text-gray-300 -mb-3 pt-2">Data de Nascimento</label>
+                    <input type="date" id="edit-client-birthdate" class="form-input w-full">
                     <input type="number" id="edit-client-credits" step="0.01" placeholder="Créditos de Indicação (R$)" class="form-input w-full">
                 </form>
                 <div class="mt-8 flex justify-end space-x-4">
@@ -1905,6 +1920,7 @@
                 name: document.getElementById('client-name').value,
                 phone: document.getElementById('client-phone').value,
                 email: document.getElementById('client-email').value,
+                birthDate: document.getElementById('client-birthdate').value,
                 referralCredits: 0,
                 gestorId: user.uid
             };
@@ -1970,6 +1986,7 @@
                     document.getElementById('edit-client-name').value = data.name || '';
                     document.getElementById('edit-client-phone').value = data.phone || '';
                     document.getElementById('edit-client-email').value = data.email || '';
+                    document.getElementById('edit-client-birthdate').value = data.birthDate || '';
                     document.getElementById('edit-client-credits').value = data.referralCredits || '';
                     editClientModal.classList.remove('hidden');
                 }
@@ -1988,6 +2005,7 @@
                 name: document.getElementById('edit-client-name').value,
                 phone: document.getElementById('edit-client-phone').value,
                 email: document.getElementById('edit-client-email').value,
+                birthDate: document.getElementById('edit-client-birthdate').value,
                 referralCredits: parseFloat(document.getElementById('edit-client-credits').value) || 0
             };
 
@@ -2488,7 +2506,7 @@
         let unsubscribeDashboard = null;
         async function loadDashboardData(userId) {
             // Garante que os caches estejam populados
-            if (localServicesCache.length === 0 || localProfessionalsCache.length === 0) {
+            if (localServicesCache.length === 0 || localProfessionalsCache.length === 0 || localClientsCache.length === 0) {
                 await populateCaches(userId);
             }
 
@@ -2539,34 +2557,12 @@
                 document.getElementById('kpi-agendamentos').textContent = agendamentosHoje;
                 document.getElementById('kpi-clientes').textContent = clientesAtendidos.size;
 
-                proximosAgendamentos.sort((a, b) => a.data.toDate() - b.data.toDate());
-                const listContainer = document.getElementById('proximos-agendamentos-list');
-                listContainer.innerHTML = '';
+                // --- Atualizar Lista de Próximos Agendamentos ---
+                renderProximosAgendamentos(proximosAgendamentos);
+                
+                // --- NOVO: Atualizar Lista de Aniversariantes ---
+                renderAniversariantes();
 
-                if (proximosAgendamentos.length === 0) {
-                    listContainer.innerHTML = '<div class="bg-[#2a2a2a] p-4 rounded-lg text-center text-gray-500">Nenhum agendamento futuro para hoje.</div>';
-                } else {
-                    proximosAgendamentos.slice(0, 5).forEach(appt => {
-                        const apptDate = appt.data.toDate();
-                        const timeStr = apptDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                        const professional = localProfessionalsCache.find(p => p.id === appt.barbeiro.id) || appt.barbeiro;
-                        const placeholderImg = `https://placehold.co/40x40/333333/FFFFFF?text=${professional.nome.charAt(0)}`;
-                        listContainer.innerHTML += `
-                            <div class="bg-[#2a2a2a] p-3 rounded-lg flex items-center justify-between transition-all hover:bg-[#333]">
-                                <div class="flex items-center space-x-3">
-                                    <img src="${professional.imgUrl || placeholderImg}" alt="${professional.nome}" class="w-10 h-10 rounded-full object-cover" onerror="this.onerror=null;this.src='${placeholderImg}';">
-                                    <div>
-                                        <p class="font-semibold text-white">${appt.cliente.nome}</p>
-                                        <p class="text-xs text-gray-400">${appt.servico.nome}</p>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                     <p class="font-bold text-lg text-primary">${timeStr}</p>
-                                     <p class="text-xs text-gray-500">com ${professional.nome.split(' ')[0]}</p>
-                                </div>
-                            </div>`;
-                    });
-                }
             }, (error) => {
                 console.error("Erro ao carregar dados do dashboard:", error);
                 document.getElementById('kpi-faturacao').textContent = 'Erro';
@@ -2577,6 +2573,79 @@
             });
         }
         
+        function renderProximosAgendamentos(proximosAgendamentos) {
+            proximosAgendamentos.sort((a, b) => a.data.toDate() - b.data.toDate());
+            const listContainer = document.getElementById('proximos-agendamentos-list');
+            listContainer.innerHTML = '';
+
+            if (proximosAgendamentos.length === 0) {
+                listContainer.innerHTML = '<div class="bg-[#2a2a2a] p-4 rounded-lg text-center text-gray-500">Nenhum agendamento futuro para hoje.</div>';
+            } else {
+                proximosAgendamentos.slice(0, 5).forEach(appt => {
+                    const apptDate = appt.data.toDate();
+                    const timeStr = apptDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    const professional = localProfessionalsCache.find(p => p.id === appt.barbeiro.id) || appt.barbeiro;
+                    const placeholderImg = `https://placehold.co/40x40/333333/FFFFFF?text=${professional.nome.charAt(0)}`;
+                    listContainer.innerHTML += `
+                        <div class="bg-[#2a2a2a] p-3 rounded-lg flex items-center justify-between transition-all hover:bg-[#333]">
+                            <div class="flex items-center space-x-3">
+                                <img src="${professional.imgUrl || placeholderImg}" alt="${professional.nome}" class="w-10 h-10 rounded-full object-cover" onerror="this.onerror=null;this.src='${placeholderImg}';">
+                                <div>
+                                    <p class="font-semibold text-white">${appt.cliente.nome}</p>
+                                    <p class="text-xs text-gray-400">${appt.servico.nome}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                 <p class="font-bold text-lg text-primary">${timeStr}</p>
+                                 <p class="text-xs text-gray-500">com ${professional.nome.split(' ')[0]}</p>
+                            </div>
+                        </div>`;
+                });
+            }
+        }
+
+        // NOVO: Função para renderizar os aniversariantes
+        function renderAniversariantes() {
+            const listContainer = document.getElementById('aniversariantes-list');
+            listContainer.innerHTML = '';
+            const today = new Date();
+            const todayMonth = today.getMonth() + 1;
+            const todayDay = today.getDate();
+
+            const aniversariantesDoDia = localClientsCache.filter(client => {
+                if (!client.birthDate || typeof client.birthDate !== 'string') return false;
+                
+                const parts = client.birthDate.split('-');
+                if (parts.length !== 3) return false;
+                
+                const birthMonth = parseInt(parts[1], 10);
+                const birthDay = parseInt(parts[2], 10);
+
+                return birthMonth === todayMonth && birthDay === todayDay;
+            });
+
+            if (aniversariantesDoDia.length === 0) {
+                listContainer.innerHTML = '<div class="bg-[#2a2a2a] p-4 rounded-lg text-center text-gray-500">Nenhum aniversariante hoje.</div>';
+            } else {
+                aniversariantesDoDia.forEach(client => {
+                    const placeholderImg = `https://placehold.co/40x40/333333/FFFFFF?text=${client.name.charAt(0)}`;
+                    listContainer.innerHTML += `
+                        <div class="bg-[#2a2a2a] p-3 rounded-lg flex items-center justify-between transition-all hover:bg-[#333]">
+                            <div class="flex items-center space-x-3">
+                                <img src="${client.profilePic || placeholderImg}" alt="${client.name}" class="w-10 h-10 rounded-full object-cover" onerror="this.onerror=null;this.src='${placeholderImg}';">
+                                <div>
+                                    <p class="font-semibold text-white">${client.name}</p>
+                                    <p class="text-xs text-gray-400">${client.phone || 'Sem telefone'}</p>
+                                </div>
+                            </div>
+                            <div class="text-right text-primary">
+                                 <i class="fas fa-birthday-cake fa-lg"></i>
+                            </div>
+                        </div>`;
+                });
+            }
+        }
+
         // --- ADIÇÃO: LÓGICA DOS MODAIS DA AGENDA E FUNCIONALIDADES ---
         
         // Elementos dos Modais da Agenda
@@ -2958,6 +3027,7 @@
     </script>
 </body>
 </html>
+
 
 
 
