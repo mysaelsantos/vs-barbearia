@@ -201,9 +201,75 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+        /* --- NOVOS ESTILOS PARA O MENU LATERAL --- */
+        #main-container {
+            display: flex;
+            height: 100vh;
+        }
+        #sidebar {
+            width: 250px; /* Largura do menu expandido */
+            background-color: #1e1e1e;
+            transition: width 0.3s ease;
+            overflow: hidden;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        #sidebar.collapsed {
+            width: 70px; /* Largura do menu recolhido */
+        }
+        #sidebar .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #a0aec0; /* gray-400 */
+            transition: background-color 0.2s, color 0.2s;
+        }
+         #sidebar .nav-link:hover {
+            background-color: rgba(251, 182, 44, 0.1);
+            color: #fbb62c;
+        }
+        #sidebar .nav-link.active {
+            background-color: #fbb62c;
+            color: #111111;
+            font-weight: 600;
+        }
+        #sidebar .nav-link .nav-text {
+            margin-left: 15px;
+            white-space: nowrap;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+        #sidebar.collapsed .nav-link .nav-text {
+            opacity: 0;
+            display: none;
+        }
+        #sidebar .submenu {
+            padding-left: 40px; /* Indentação do submenu */
+            background-color: rgba(0,0,0,0.2);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+        }
+        #sidebar .submenu.open {
+            max-height: 500px; /* Altura suficiente para os itens */
+        }
+        #sidebar .submenu .nav-link {
+            padding-left: 25px;
+        }
+        #sidebar .nav-icon {
+            width: 25px;
+            text-align: center;
+        }
+        #main-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            height: 100vh;
+        }
     </style>
 </head>
-<body class="h-full">
+<body class="h-full bg-[#111111]">
 
     <!-- Seção de Login e Cadastro (Visível quando deslogado) -->
     <div id="auth-section" class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
@@ -224,285 +290,333 @@
 
     <!-- Painel Principal (Visível quando logado) -->
     <div id="panel-section" class="hidden">
-        <header class="bg-[#1e1e1e] shadow-lg">
-            <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-                <div class="flex items-center space-x-4">
-                     <img src="https://i.postimg.cc/5yBSjg1F/Bigode-3.png" alt="Logo VS Barbearia" class="w-10 h-10">
-                    <h1 class="text-2xl font-bold tracking-tight text-white">Painel de Gestão</h1>
+        <div id="main-container">
+            <!-- NOVO: Menu Lateral -->
+            <aside id="sidebar">
+                <div class="p-4 flex items-center justify-center border-b border-gray-700">
+                    <img src="https://i.postimg.cc/5yBSjg1F/Bigode-3.png" alt="Logo VS Barbearia" class="w-10 h-10">
+                    <span class="nav-text text-xl font-bold ml-2">VS Barbearia</span>
                 </div>
-                <div class="flex items-center">
-                    <span id="user-email" class="text-sm text-gray-400 mr-4 hidden sm:block"></span>
-                    <button id="logout-button" class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">Sair</button>
-                </div>
-            </div>
-        </header>
-        <main>
-            <!-- Abas de Navegação -->
-            <div class="border-b border-gray-800 bg-[#1e1e1e]">
-                <nav id="main-tabs-nav" class="-mb-px flex space-x-8 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 overflow-x-auto" aria-label="Tabs">
-                    <button id="tab-servicos" class="tab-button active whitespace-nowrap py-4 px-1 text-sm font-medium">Serviços</button>
-                    <button id="tab-profissionais" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Profissionais</button>
-                    <button id="tab-unidades" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Unidades</button>
-                    <button id="tab-agenda" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Agenda</button>
-                    <button id="tab-clientes" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Clientes</button>
-                    <button id="tab-planos" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Planos</button>
-                    <button id="tab-metas" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Metas</button>
-                    <button id="tab-configuracoes" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Configurações</button>
+                <nav class="flex-grow py-4">
+                    <ul>
+                        <li><a href="#" class="nav-link active" data-target="content-dashboard"><i class="fas fa-home nav-icon"></i><span class="nav-text">Visão Geral</span></a></li>
+                        <li>
+                            <a href="#" class="nav-link has-submenu" data-target="content-agenda"><i class="fas fa-calendar-alt nav-icon"></i><span class="nav-text">Agenda</span></a>
+                            <ul class="submenu">
+                                <li><a href="#" class="nav-link" data-target="content-agenda">Agenda Diária</a></li>
+                                <li><a href="#" class="nav-link" data-target="content-caixa">Frente de Caixa</a></li>
+                                <li><a href="#" class="nav-link" data-target="content-relatorios">Relatórios</a></li>
+                            </ul>
+                        </li>
+                         <li>
+                            <a href="#" class="nav-link has-submenu"><i class="fas fa-archive nav-icon"></i><span class="nav-text">Cadastros</span></a>
+                            <ul class="submenu">
+                                <li><a href="#" class="nav-link" data-target="content-servicos">Serviços</a></li>
+                                <li><a href="#" class="nav-link" data-target="content-profissionais">Profissionais</a></li>
+                                <li><a href="#" class="nav-link" data-target="content-unidades">Unidades</a></li>
+                                <li><a href="#" class="nav-link" data-target="content-clientes">Clientes</a></li>
+                                <li><a href="#" class="nav-link" data-target="content-planos">Planos</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="#" class="nav-link" data-target="content-metas"><i class="fas fa-bullseye nav-icon"></i><span class="nav-text">Metas & Fidelidade</span></a></li>
+                        <li><a href="#" class="nav-link" data-target="content-configuracoes"><i class="fas fa-cog nav-icon"></i><span class="nav-text">Configurações</span></a></li>
+                    </ul>
                 </nav>
-            </div>
+                 <div class="p-4 border-t border-gray-700">
+                    <button id="toggle-sidebar-btn" class="text-gray-400 hover:text-white w-full flex items-center justify-center">
+                        <i class="fas fa-chevron-left nav-icon"></i>
+                        <span class="nav-text ml-2">Recolher</span>
+                    </button>
+                </div>
+            </aside>
 
-            <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
-                <!-- Conteúdo da Aba Serviços -->
-                <div id="content-servicos">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                            <h3 class="text-lg font-bold text-primary mb-4">Adicionar Novo Serviço</h3>
-                            <form id="add-service-form" class="space-y-4">
-                                <input type="text" id="service-name" required placeholder="Nome do Serviço" class="form-input w-full">
-                                <input type="number" id="service-value" step="0.01" required placeholder="Valor (R$)" class="form-input w-full">
-                                <input type="number" id="service-promo-value" step="0.01" placeholder="Valor Promocional (Opcional)" class="form-input w-full">
-                                <input type="number" id="service-duration" required placeholder="Duração (minutos)" class="form-input w-full">
-                                <button type="submit" class="w-full justify-center btn-primary">
-                                    <span class="btn-text">Salvar Serviço</span>
-                                    <div class="loader hidden"></div>
-                                </button>
-                            </form>
-                        </div>
-                        <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                            <h3 class="text-lg font-bold text-primary mb-4">Serviços Cadastrados</h3>
-                            <div id="services-list" class="space-y-4">
-                                <p id="loading-services" class="text-gray-400">Carregando serviços...</p>
-                            </div>
+            <!-- Conteúdo Principal -->
+            <div id="main-content">
+                <header class="bg-[#1e1e1e] shadow-lg sticky top-0 z-40">
+                    <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 flex justify-end items-center">
+                        <div class="flex items-center">
+                            <span id="user-email" class="text-sm text-gray-400 mr-4 hidden sm:block"></span>
+                            <button id="logout-button" class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">Sair</button>
                         </div>
                     </div>
-                </div>
-
-                <!-- Conteúdo da Aba Profissionais (inicialmente escondido) -->
-                <div id="content-profissionais" class="hidden">
-                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                            <h3 class="text-lg font-bold text-primary mb-4">Adicionar Profissional</h3>
-                            <form id="add-professional-form" class="space-y-4">
-                                <input type="text" id="professional-name" required placeholder="Nome do Profissional" class="form-input w-full">
-                                <input type="text" id="professional-function" required placeholder="Função (ex: Barbeiro)" class="form-input w-full">
-                                <input type="url" id="professional-photo" placeholder="URL da Foto (Opcional)" class="form-input w-full">
-                                <input type="number" id="professional-commission-services" step="1" min="0" max="100" placeholder="Comissão Serviços (%)" class="form-input w-full">
-                                <input type="number" id="professional-commission-products" step="1" min="0" max="100" placeholder="Comissão Produtos (%)" class="form-input w-full">
-                                <button type="submit" class="w-full justify-center btn-primary">
-                                    <span class="btn-text">Salvar Profissional</span>
-                                    <div class="loader hidden"></div>
-                                </button>
-                            </form>
+                </header>
+                <main>
+                    <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+                        <!-- NOVO: Conteúdo da Aba Visão Geral / Dashboard -->
+                        <div id="content-dashboard">
+                            <h1 class="text-2xl font-bold text-primary mb-4">Visão Geral</h1>
+                            <p class="text-gray-400">Olá! Esta será a sua tela principal (Dashboard), onde você verá os indicadores mais importantes do seu negócio. Em breve adicionaremos gráficos de faturamento, agendamentos do dia e muito mais!</p>
                         </div>
-                        <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                            <h3 class="text-lg font-bold text-primary mb-4">Profissionais Cadastrados</h3>
-                            <div id="professionals-list" class="space-y-4">
-                                <p id="loading-professionals" class="text-gray-400">Carregando...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Conteúdo da Aba Unidades (inicialmente escondido) -->
-                <div id="content-unidades" class="hidden">
-                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                            <h3 class="text-lg font-bold text-primary mb-4">Adicionar Unidade</h3>
-                            <form id="add-unit-form" class="space-y-4">
-                                <input type="text" id="unit-name" required placeholder="Nome da Unidade" class="form-input w-full">
-                                <input type="text" id="unit-address" required placeholder="Endereço" class="form-input w-full">
-                                <input type="url" id="unit-photo" placeholder="URL da Foto (Opcional)" class="form-input w-full">
-                                <input type="url" id="unit-maps" placeholder="Link do Google Maps (Opcional)" class="form-input w-full">
-                                <button type="submit" class="w-full justify-center btn-primary">
-                                    <span class="btn-text">Salvar Unidade</span>
-                                    <div class="loader hidden"></div>
-                                </button>
-                            </form>
-                        </div>
-                        <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                            <h3 class="text-lg font-bold text-primary mb-4">Unidades Cadastradas</h3>
-                            <div id="units-list" class="space-y-4">
-                                <p id="loading-units" class="text-gray-400">Carregando...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 
-                <!-- Conteúdo da Aba Agenda -->
-                <div id="content-agenda" class="hidden">
-                    <div class="bg-[#1e1e1e] p-4 sm:p-6 rounded-lg border border-gray-800">
-                        <!-- Cabeçalho da Agenda -->
-                        <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                            <h3 id="agenda-title" class="text-lg font-bold text-primary">Agenda</h3>
-                            <div class="flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
-                                <select id="professional-filter" class="form-select !p-2">
-                                    <option value="all">Todos Profissionais</option>
-                                </select>
-                                <button id="prev-day-btn" class="btn-secondary px-3 py-2"><i class="fas fa-chevron-left"></i></button>
-                                <input type="date" id="date-picker" class="form-input !p-2 text-center">
-                                <button id="next-day-btn" class="btn-secondary px-3 py-2"><i class="fas fa-chevron-right"></i></button>
-                                <button id="add-appointment-btn" class="btn-primary"><i class="fas fa-plus mr-2"></i>Agendamento</button>
-                            </div>
-                        </div>
-                        <!-- Container da Grade da Agenda -->
-                        <div id="agenda-container">
-                             <div id="loading-agenda" class="text-center p-8">
-                                <p class="text-gray-400">Carregando agenda...</p>
-                                <div class="loader mx-auto mt-4" style="width: 30px; height: 30px;"></div>
-                            </div>
-                            <div id="agenda-grid-view" class="hidden">
-                                <!-- A grade será gerada pelo JavaScript aqui -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Conteúdo da Aba Clientes (inicialmente escondido) -->
-                <div id="content-clientes" class="hidden">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                            <h3 class="text-lg font-bold text-primary mb-4">Adicionar Novo Cliente</h3>
-                            <form id="add-client-form" class="space-y-4">
-                                <input type="text" id="client-name" required placeholder="Nome do Cliente" class="form-input w-full">
-                                <input type="tel" id="client-phone" required placeholder="Telefone" class="form-input w-full">
-                                <input type="email" id="client-email" placeholder="E-mail (Opcional)" class="form-input w-full">
-                                <button type="submit" class="w-full justify-center btn-primary">
-                                    <span class="btn-text">Salvar Cliente</span>
-                                    <div class="loader hidden"></div>
-                                </button>
-                            </form>
-                        </div>
-                        <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                            <h3 class="text-lg font-bold text-primary mb-4">Clientes Cadastrados</h3>
-                            <div id="clients-list" class="space-y-4">
-                                <p id="loading-clients" class="text-gray-400">Carregando clientes...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Conteúdo da Aba Planos (inicialmente escondido) -->
-                <div id="content-planos" class="hidden">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                            <h3 class="text-lg font-bold text-primary mb-4">Adicionar Novo Plano</h3>
-                            <form id="add-plan-form" class="space-y-4">
-                                <input type="text" id="plan-title" required placeholder="Título do Plano" class="form-input w-full">
-                                <div class="grid grid-cols-2 gap-4">
-                                    <input type="text" id="plan-price" required placeholder="Preço (ex: 129,90)" class="form-input w-full">
-                                    <input type="text" id="plan-period" required placeholder="Período (ex: /mês)" class="form-input w-full">
+                        <!-- Conteúdo da Aba Serviços -->
+                        <div id="content-servicos" class="hidden">
+                            <h1 class="text-2xl font-bold text-primary mb-6">Gerenciar Serviços</h1>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-lg font-bold mb-4">Adicionar Novo Serviço</h3>
+                                    <form id="add-service-form" class="space-y-4">
+                                        <input type="text" id="service-name" required placeholder="Nome do Serviço" class="form-input w-full">
+                                        <input type="number" id="service-value" step="0.01" required placeholder="Valor (R$)" class="form-input w-full">
+                                        <input type="number" id="service-promo-value" step="0.01" placeholder="Valor Promocional (Opcional)" class="form-input w-full">
+                                        <input type="number" id="service-duration" required placeholder="Duração (minutos)" class="form-input w-full">
+                                        <button type="submit" class="w-full justify-center btn-primary">
+                                            <span class="btn-text">Salvar Serviço</span>
+                                            <div class="loader hidden"></div>
+                                        </button>
+                                    </form>
                                 </div>
-                                <textarea id="plan-features" required placeholder="Características (uma por linha)" rows="4" class="form-textarea w-full"></textarea>
-                                <div class="flex items-center">
-                                    <input id="plan-popular" type="checkbox" class="h-4 w-4 rounded border-gray-600 bg-gray-700 text-primary focus:ring-primary">
-                                    <label for="plan-popular" class="ml-2 block text-sm text-gray-300">Marcar como "Mais Popular"?</label>
+                                <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-lg font-bold mb-4">Serviços Cadastrados</h3>
+                                    <div id="services-list" class="space-y-4">
+                                        <p id="loading-services" class="text-gray-400">Carregando serviços...</p>
+                                    </div>
                                 </div>
-                                <button type="submit" class="w-full justify-center btn-primary">
-                                    <span class="btn-text">Salvar Plano</span>
-                                    <div class="loader hidden"></div>
-                                </button>
-                            </form>
-                        </div>
-                        <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                            <h3 class="text-lg font-bold text-primary mb-4">Planos Cadastrados</h3>
-                            <div id="plans-list" class="space-y-4">
-                                <p id="loading-plans" class="text-gray-400">Carregando planos...</p>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                 <!-- Conteúdo da Aba Metas (inicialmente escondido) -->
-                <div id="content-metas" class="hidden">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                            <h3 class="text-lg font-bold text-primary mb-4">Adicionar Nova Meta</h3>
-                            <form id="add-goal-form" class="space-y-4">
-                                <input type="number" id="goal-target" required placeholder="Nº de Indicações (ex: 5)" class="form-input w-full">
-                                <input type="text" id="goal-prize" required placeholder="Prêmio (ex: Hidratação Grátis)" class="form-input w-full">
-                                <input type="text" id="goal-icon" required placeholder="Ícone (ex: fas fa-tint)" class="form-input w-full">
-                                <select id="goal-service-id" class="form-select w-full">
-                                    <option value="">Prêmio sem serviço vinculado</option>
-                                    <!-- Opções de serviços serão populadas aqui -->
-                                </select>
-                                <button type="submit" class="w-full justify-center btn-primary">
-                                    <span class="btn-text">Salvar Meta</span>
-                                    <div class="loader hidden"></div>
-                                </button>
-                            </form>
-                        </div>
-                        <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                            <h3 class="text-lg font-bold text-primary mb-4">Metas Cadastradas</h3>
-                            <div id="goals-list" class="space-y-4">
-                                <p id="loading-goals" class="text-gray-400">Carregando metas...</p>
+                        <!-- Conteúdo da Aba Profissionais -->
+                        <div id="content-profissionais" class="hidden">
+                             <h1 class="text-2xl font-bold text-primary mb-6">Gerenciar Profissionais</h1>
+                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-lg font-bold mb-4">Adicionar Profissional</h3>
+                                    <form id="add-professional-form" class="space-y-4">
+                                        <input type="text" id="professional-name" required placeholder="Nome do Profissional" class="form-input w-full">
+                                        <input type="text" id="professional-function" required placeholder="Função (ex: Barbeiro)" class="form-input w-full">
+                                        <input type="url" id="professional-photo" placeholder="URL da Foto (Opcional)" class="form-input w-full">
+                                        <input type="number" id="professional-commission-services" step="1" min="0" max="100" placeholder="Comissão Serviços (%)" class="form-input w-full">
+                                        <input type="number" id="professional-commission-products" step="1" min="0" max="100" placeholder="Comissão Produtos (%)" class="form-input w-full">
+                                        <button type="submit" class="w-full justify-center btn-primary">
+                                            <span class="btn-text">Salvar Profissional</span>
+                                            <div class="loader hidden"></div>
+                                        </button>
+                                    </form>
+                                </div>
+                                <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-lg font-bold mb-4">Profissionais Cadastrados</h3>
+                                    <div id="professionals-list" class="space-y-4">
+                                        <p id="loading-professionals" class="text-gray-400">Carregando...</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                 <!-- Conteúdo da Aba Configurações -->
-                <div id="content-configuracoes" class="hidden">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Seção Minha Conta -->
-                        <div class="bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                            <h3 class="text-lg font-bold text-primary mb-4">Minha Conta</h3>
-                            <form id="change-password-form" class="space-y-4">
-                                <p class="text-sm text-gray-400">Altere sua senha de acesso ao painel.</p>
-                                <input type="password" id="current-password" required placeholder="Senha Atual" class="form-input w-full">
-                                <input type="password" id="new-password" required placeholder="Nova Senha" class="form-input w-full">
-                                <p id="change-password-feedback" class="text-sm h-4"></p>
-                                <button type="submit" class="w-full justify-center btn-primary">
-                                    <span class="btn-text">Alterar Senha</span>
-                                    <div class="loader hidden"></div>
-                                </button>
-                            </form>
+                        <!-- Conteúdo da Aba Unidades -->
+                        <div id="content-unidades" class="hidden">
+                            <h1 class="text-2xl font-bold text-primary mb-6">Gerenciar Unidades</h1>
+                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-lg font-bold mb-4">Adicionar Unidade</h3>
+                                    <form id="add-unit-form" class="space-y-4">
+                                        <input type="text" id="unit-name" required placeholder="Nome da Unidade" class="form-input w-full">
+                                        <input type="text" id="unit-address" required placeholder="Endereço" class="form-input w-full">
+                                        <input type="url" id="unit-photo" placeholder="URL da Foto (Opcional)" class="form-input w-full">
+                                        <input type="url" id="unit-maps" placeholder="Link do Google Maps (Opcional)" class="form-input w-full">
+                                        <button type="submit" class="w-full justify-center btn-primary">
+                                            <span class="btn-text">Salvar Unidade</span>
+                                            <div class="loader hidden"></div>
+                                        </button>
+                                    </form>
+                                </div>
+                                <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-lg font-bold mb-4">Unidades Cadastradas</h3>
+                                    <div id="units-list" class="space-y-4">
+                                        <p id="loading-units" class="text-gray-400">Carregando...</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
-                        <!-- Seção Usuários do Painel -->
-                        <div class="bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                            <h3 class="text-lg font-bold text-primary mb-4">Usuários do Painel</h3>
-                            <form id="add-panel-user-form" class="space-y-4">
-                                <input type="email" id="panel-user-email" required placeholder="Email do novo usuário" class="form-input w-full">
-                                <input type="password" id="panel-user-password" required placeholder="Senha provisória" class="form-input w-full">
-                                <select id="panel-user-role" class="form-select w-full">
-                                    <option value="gestor">Gestor</option>
-                                    <option value="profissional">Profissional</option>
-                                </select>
-                                <p class="text-xs text-gray-500">O novo usuário deverá alterar esta senha no primeiro acesso.</p>
-                                <p id="add-user-feedback" class="text-sm h-4"></p>
-                                <button type="submit" class="w-full justify-center btn-primary">
-                                    <span class="btn-text">Criar Usuário</span>
-                                    <div class="loader hidden"></div>
-                                </button>
-                            </form>
-                            <div class="mt-6 pt-4 border-t border-gray-700">
-                                <h4 class="text-md font-bold text-primary mb-4">Usuários Ativos</h4>
-                                <div id="panel-users-list" class="space-y-3">
-                                   <p id="loading-panel-users">Carregando...</p>
+                        <!-- Conteúdo da Aba Agenda -->
+                        <div id="content-agenda" class="hidden">
+                            <div class="bg-[#1e1e1e] p-4 sm:p-6 rounded-lg border border-gray-800">
+                                <!-- Cabeçalho da Agenda -->
+                                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                                    <h3 id="agenda-title" class="text-lg font-bold text-primary">Agenda</h3>
+                                    <div class="flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
+                                        <select id="professional-filter" class="form-select !p-2">
+                                            <option value="all">Todos Profissionais</option>
+                                        </select>
+                                        <button id="prev-day-btn" class="btn-secondary px-3 py-2"><i class="fas fa-chevron-left"></i></button>
+                                        <input type="date" id="date-picker" class="form-input !p-2 text-center">
+                                        <button id="next-day-btn" class="btn-secondary px-3 py-2"><i class="fas fa-chevron-right"></i></button>
+                                        <button id="add-appointment-btn" class="btn-primary"><i class="fas fa-plus mr-2"></i>Agendamento</button>
+                                    </div>
+                                </div>
+                                <!-- Container da Grade da Agenda -->
+                                <div id="agenda-container">
+                                     <div id="loading-agenda" class="text-center p-8">
+                                        <p class="text-gray-400">Carregando agenda...</p>
+                                        <div class="loader mx-auto mt-4" style="width: 30px; height: 30px;"></div>
+                                    </div>
+                                    <div id="agenda-grid-view" class="hidden">
+                                        <!-- A grade será gerada pelo JavaScript aqui -->
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Seção Configurações da Agenda -->
-                        <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                             <h3 class="text-lg font-bold text-primary mb-4">Configurações da Agenda</h3>
-                             <form id="agenda-settings-form" class="space-y-4">
-                                <label for="agenda-interval" class="block text-sm font-medium text-gray-300">Intervalo padrão dos serviços (minutos)</label>
-                                <input type="number" id="agenda-interval" value="30" class="form-input w-full max-w-xs" placeholder="Ex: 30">
-                                <p class="text-xs text-gray-500">Este valor define a grade de horários da agenda. Agendamentos com durações diferentes irão se ajustar.</p>
-                                <p id="agenda-settings-feedback" class="text-sm h-4"></p>
-                                <div>
-                                    <button type="submit" class="btn-primary">
-                                        <span class="btn-text">Salvar Configurações</span>
-                                        <div class="loader hidden"></div>
-                                    </button>
+                        <!-- Conteúdo da Aba Clientes -->
+                        <div id="content-clientes" class="hidden">
+                            <h1 class="text-2xl font-bold text-primary mb-6">Gerenciar Clientes</h1>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-lg font-bold mb-4">Adicionar Novo Cliente</h3>
+                                    <form id="add-client-form" class="space-y-4">
+                                        <input type="text" id="client-name" required placeholder="Nome do Cliente" class="form-input w-full">
+                                        <input type="tel" id="client-phone" required placeholder="Telefone" class="form-input w-full">
+                                        <input type="email" id="client-email" placeholder="E-mail (Opcional)" class="form-input w-full">
+                                        <button type="submit" class="w-full justify-center btn-primary">
+                                            <span class="btn-text">Salvar Cliente</span>
+                                            <div class="loader hidden"></div>
+                                        </button>
+                                    </form>
                                 </div>
-                             </form>
+                                <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-lg font-bold mb-4">Clientes Cadastrados</h3>
+                                    <div id="clients-list" class="space-y-4">
+                                        <p id="loading-clients" class="text-gray-400">Carregando clientes...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Conteúdo da Aba Planos -->
+                        <div id="content-planos" class="hidden">
+                             <h1 class="text-2xl font-bold text-primary mb-6">Gerenciar Planos</h1>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-lg font-bold mb-4">Adicionar Novo Plano</h3>
+                                    <form id="add-plan-form" class="space-y-4">
+                                        <input type="text" id="plan-title" required placeholder="Título do Plano" class="form-input w-full">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <input type="text" id="plan-price" required placeholder="Preço (ex: 129,90)" class="form-input w-full">
+                                            <input type="text" id="plan-period" required placeholder="Período (ex: /mês)" class="form-input w-full">
+                                        </div>
+                                        <textarea id="plan-features" required placeholder="Características (uma por linha)" rows="4" class="form-textarea w-full"></textarea>
+                                        <div class="flex items-center">
+                                            <input id="plan-popular" type="checkbox" class="h-4 w-4 rounded border-gray-600 bg-gray-700 text-primary focus:ring-primary">
+                                            <label for="plan-popular" class="ml-2 block text-sm text-gray-300">Marcar como "Mais Popular"?</label>
+                                        </div>
+                                        <button type="submit" class="w-full justify-center btn-primary">
+                                            <span class="btn-text">Salvar Plano</span>
+                                            <div class="loader hidden"></div>
+                                        </button>
+                                    </form>
+                                </div>
+                                <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-lg font-bold mb-4">Planos Cadastrados</h3>
+                                    <div id="plans-list" class="space-y-4">
+                                        <p id="loading-plans" class="text-gray-400">Carregando planos...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                         <!-- Conteúdo da Aba Metas -->
+                        <div id="content-metas" class="hidden">
+                             <h1 class="text-2xl font-bold text-primary mb-6">Gerenciar Metas e Fidelidade</h1>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-lg font-bold mb-4">Adicionar Nova Meta</h3>
+                                    <form id="add-goal-form" class="space-y-4">
+                                        <input type="number" id="goal-target" required placeholder="Nº de Indicações (ex: 5)" class="form-input w-full">
+                                        <input type="text" id="goal-prize" required placeholder="Prêmio (ex: Hidratação Grátis)" class="form-input w-full">
+                                        <input type="text" id="goal-icon" required placeholder="Ícone (ex: fas fa-tint)" class="form-input w-full">
+                                        <select id="goal-service-id" class="form-select w-full">
+                                            <option value="">Prêmio sem serviço vinculado</option>
+                                            <!-- Opções de serviços serão populadas aqui -->
+                                        </select>
+                                        <button type="submit" class="w-full justify-center btn-primary">
+                                            <span class="btn-text">Salvar Meta</span>
+                                            <div class="loader hidden"></div>
+                                        </button>
+                                    </form>
+                                </div>
+                                <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-lg font-bold mb-4">Metas Cadastradas</h3>
+                                    <div id="goals-list" class="space-y-4">
+                                        <p id="loading-goals" class="text-gray-400">Carregando metas...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                         <!-- Conteúdo da Aba Configurações -->
+                        <div id="content-configuracoes" class="hidden">
+                            <h1 class="text-2xl font-bold text-primary mb-6">Configurações</h1>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Seção Minha Conta -->
+                                <div class="bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-lg font-bold mb-4">Minha Conta</h3>
+                                    <form id="change-password-form" class="space-y-4">
+                                        <p class="text-sm text-gray-400">Altere sua senha de acesso ao painel.</p>
+                                        <input type="password" id="current-password" required placeholder="Senha Atual" class="form-input w-full">
+                                        <input type="password" id="new-password" required placeholder="Nova Senha" class="form-input w-full">
+                                        <p id="change-password-feedback" class="text-sm h-4"></p>
+                                        <button type="submit" class="w-full justify-center btn-primary">
+                                            <span class="btn-text">Alterar Senha</span>
+                                            <div class="loader hidden"></div>
+                                        </button>
+                                    </form>
+                                </div>
+                                
+                                <!-- Seção Usuários do Painel -->
+                                <div class="bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-lg font-bold mb-4">Usuários do Painel</h3>
+                                    <form id="add-panel-user-form" class="space-y-4">
+                                        <input type="email" id="panel-user-email" required placeholder="Email do novo usuário" class="form-input w-full">
+                                        <input type="password" id="panel-user-password" required placeholder="Senha provisória" class="form-input w-full">
+                                        <select id="panel-user-role" class="form-select w-full">
+                                            <option value="gestor">Gestor</option>
+                                            <option value="profissional">Profissional</option>
+                                        </select>
+                                        <p class="text-xs text-gray-500">O novo usuário deverá alterar esta senha no primeiro acesso.</p>
+                                        <p id="add-user-feedback" class="text-sm h-4"></p>
+                                        <button type="submit" class="w-full justify-center btn-primary">
+                                            <span class="btn-text">Criar Usuário</span>
+                                            <div class="loader hidden"></div>
+                                        </button>
+                                    </form>
+                                    <div class="mt-6 pt-4 border-t border-gray-700">
+                                        <h4 class="text-md font-bold mb-4">Usuários Ativos</h4>
+                                        <div id="panel-users-list" class="space-y-3">
+                                           <p id="loading-panel-users">Carregando...</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Seção Configurações da Agenda -->
+                                <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                                     <h3 class="text-lg font-bold mb-4">Configurações da Agenda</h3>
+                                     <form id="agenda-settings-form" class="space-y-4">
+                                        <label for="agenda-interval" class="block text-sm font-medium text-gray-300">Intervalo padrão dos serviços (minutos)</label>
+                                        <input type="number" id="agenda-interval" value="30" class="form-input w-full max-w-xs" placeholder="Ex: 30">
+                                        <p class="text-xs text-gray-500">Este valor define a grade de horários da agenda. Agendamentos com durações diferentes irão se ajustar.</p>
+                                        <p id="agenda-settings-feedback" class="text-sm h-4"></p>
+                                        <div>
+                                            <button type="submit" class="btn-primary">
+                                                <span class="btn-text">Salvar Configurações</span>
+                                                <div class="loader hidden"></div>
+                                            </button>
+                                        </div>
+                                     </form>
+                                </div>
+                            </div>
+                        </div>
+                         <!-- NOVAS PÁGINAS EM BRANCO -->
+                        <div id="content-caixa" class="hidden">
+                             <h1 class="text-2xl font-bold text-primary mb-4">Frente de Caixa</h1>
+                             <p class="text-gray-400">Em breve, aqui você poderá lançar comandas, registrar vendas de produtos e serviços, e fechar o caixa do dia.</p>
+                        </div>
+                        <div id="content-relatorios" class="hidden">
+                             <h1 class="text-2xl font-bold text-primary mb-4">Relatórios</h1>
+                             <p class="text-gray-400">Em breve, esta área trará relatórios detalhados de agendamentos, faturamento por profissional, serviços mais populares e muito mais.</p>
                         </div>
                     </div>
-                </div>
+                </main>
             </div>
-        </main>
+        </div>
     </div>
 
     <!-- Modais de Edição -->
@@ -960,41 +1074,6 @@
         signupButton.addEventListener('click', async () => { /* ... */ const email = emailInput.value; const password = passwordInput.value; authError.textContent = ''; try { await createUserWithEmailAndPassword(auth, email, password); } catch (error) { console.error("Erro no cadastro:", error); authError.textContent = "Erro ao cadastrar. Verifique o email e a senha (mínimo 6 caracteres)."; } });
         loginButton.addEventListener('click', async () => { /* ... */ const email = emailInput.value; const password = passwordInput.value; authError.textContent = ''; try { await signInWithEmailAndPassword(auth, email, password); } catch (error) { console.error("Erro no login:", error); authError.textContent = "Email ou senha inválidos."; } });
         logoutButton.addEventListener('click', async () => { /* ... */ try { await signOut(auth); } catch (error) { console.error("Erro no logout:", error); } });
-
-        // --- Lógica de Navegação por Abas ---
-        const tabs = document.querySelectorAll('#main-tabs-nav .tab-button');
-        const contents = { 
-            'tab-servicos': document.getElementById('content-servicos'), 
-            'tab-profissionais': document.getElementById('content-profissionais'), 
-            'tab-unidades': document.getElementById('content-unidades'),
-            'tab-agenda': document.getElementById('content-agenda'),
-            'tab-clientes': document.getElementById('content-clientes'),
-            'tab-planos': document.getElementById('content-planos'),
-            'tab-metas': document.getElementById('content-metas'),
-            'tab-configuracoes': document.getElementById('content-configuracoes')
-        };
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(item => item.classList.remove('active', 'text-white'));
-                tab.classList.add('active', 'text-white');
-                
-                Object.values(contents).forEach(content => content.classList.add('hidden'));
-                const activeContent = contents[tab.id];
-                activeContent.classList.remove('hidden');
-
-                const user = auth.currentUser;
-                if (!user) return;
-
-                if (tab.id === 'tab-servicos') loadServices(user.uid);
-                if (tab.id === 'tab-profissionais') loadProfessionals(user.uid);
-                if (tab.id === 'tab-unidades') loadUnits(user.uid);
-                if (tab.id === 'tab-agenda') initializeAgenda(user.uid);
-                if (tab.id === 'tab-clientes') loadClients(user.uid);
-                if (tab.id === 'tab-planos') loadPlans(user.uid);
-                if (tab.id === 'tab-metas') loadGoals(user.uid);
-                if (tab.id === 'tab-configuracoes') loadPanelUsers(user.uid);
-            });
-        });
 
         // --- CRUD DE SERVIÇOS ---
         const addServiceForm = document.getElementById('add-service-form');
@@ -2039,7 +2118,9 @@
                 addUserFeedback.textContent = 'Erro ao convidar usuário.';
                 addUserFeedback.className = 'text-sm h-4 text-red-500';
             } finally {
-                btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false;
+                btnText.classList.remove('hidden');
+                loader.classList.add('hidden');
+                submitBtn.disabled = false;
             }
         });
         
@@ -2067,7 +2148,7 @@
             });
         }
 
-        // --- MODAIS E FUNÇÕES GLOBAIS ---
+        // --- FUNÇÕES GLOBAIS ---
         const confirmationModal = document.getElementById('confirmation-modal');
         const confirmationMessage = document.getElementById('confirmation-message');
         const cancelConfirmationButton = document.getElementById('cancel-confirmation-button');
@@ -2079,7 +2160,7 @@
             confirmationCallback = callback;
             confirmationModal.classList.remove('hidden');
         }
-        
+
         cancelConfirmationButton.addEventListener('click', () => {
             confirmationModal.classList.add('hidden');
             confirmationCallback = null;
@@ -2096,701 +2177,82 @@
         window.deleteDocument = (collectionName, docId) => {
             const message = `Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.`;
             showConfirmationModal(message, async () => {
-                try { 
-                    await deleteDoc(doc(db, collectionName, docId)); 
-                } catch(e) { 
+                try {
+                    await deleteDoc(doc(db, collectionName, docId));
+                } catch(e) {
                     console.error("Erro ao deletar:", e);
                 }
             });
         };
 
-        // --- LÓGICA DO MODAL DE AGENDAMENTO ---
-        addAppointmentBtn.addEventListener('click', async () => {
-            const form = addAppointmentModal.querySelector('form');
-            form.reset();
-            const feedback = document.getElementById('add-appointment-feedback');
-            feedback.textContent = '';
+        // --- NOVA LÓGICA DE NAVEGAÇÃO DO MENU LATERAL ---
+        const sidebar = document.getElementById('sidebar');
+        const navLinks = document.querySelectorAll('#sidebar .nav-link');
+        const contentPanels = document.querySelectorAll('#main-content main > div > div');
+        const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
 
-            const clientSelect = document.getElementById('appt-client-select');
-            const profSelect = document.getElementById('appt-professional-select');
-            const serviceSelect = document.getElementById('appt-service-select');
-            
-            clientSelect.innerHTML = '<option value="">Carregando...</option>';
-            profSelect.innerHTML = '<option value="">Carregando...</option>';
-            serviceSelect.innerHTML = '<option value="">Carregando...</option>';
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
 
-            addAppointmentModal.classList.remove('hidden');
+                const targetId = link.dataset.target;
 
-            try {
-                const [clientsSnapshot, profsSnapshot] = await Promise.all([
-                    getDocs(query(collection(db, "users"), where("gestorId", "==", auth.currentUser.uid))),
-                    getDocs(query(collection(db, "profissionais"), where("gestorId", "==", auth.currentUser.uid)))
-                ]);
-
-                localClientsCache = clientsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                clientSelect.innerHTML = '<option value="">Selecione um cliente</option>';
-                localClientsCache.forEach(c => clientSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`);
-
-                localProfessionalsCache = profsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                profSelect.innerHTML = '<option value="">Selecione um profissional</option>';
-                localProfessionalsCache.forEach(p => profSelect.innerHTML += `<option value="${p.id}">${p.nome}</option>`);
-
-                serviceSelect.innerHTML = '<option value="">Selecione um serviço</option>';
-                localServicesCache.forEach(s => serviceSelect.innerHTML += `<option value="${s.id}">${s.nome}</option>`);
-
-                const dateTimeInput = document.getElementById('appt-datetime-input');
-                const now = new Date(agendaState.currentDate);
-                now.setHours(9, 0, 0, 0);
-                const year = now.getFullYear();
-                const month = (now.getMonth() + 1).toString().padStart(2, '0');
-                const day = now.getDate().toString().padStart(2, '0');
-                const hours = now.getHours().toString().padStart(2, '0');
-                const minutes = now.getMinutes().toString().padStart(2, '0');
-                dateTimeInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
-
-            } catch (error) {
-                console.error("Erro ao abrir modal de agendamento:", error);
-                feedback.textContent = "Erro ao carregar dados.";
-                feedback.className = "text-sm h-4 text-center text-red-500";
-            }
-        });
-
-        cancelAddAppointmentButton.addEventListener('click', () => addAppointmentModal.classList.add('hidden'));
-
-        saveAddAppointmentButton.addEventListener('click', async () => {
-            const btnText = saveAddAppointmentButton.querySelector('.btn-text');
-            const loader = saveAddAppointmentButton.querySelector('.loader');
-            const feedback = document.getElementById('add-appointment-feedback');
-            feedback.textContent = '';
-            
-            const clientId = document.getElementById('appt-client-select').value;
-            const profId = document.getElementById('appt-professional-select').value;
-            const serviceId = document.getElementById('appt-service-select').value;
-            const datetime = document.getElementById('appt-datetime-input').value;
-
-            if (!clientId || !profId || !serviceId || !datetime) {
-                feedback.textContent = "Preencha todos os campos.";
-                feedback.className = "text-sm h-4 text-center text-red-500";
-                return;
-            }
-
-            btnText.classList.add('hidden');
-            loader.classList.remove('hidden');
-            saveAddAppointmentButton.disabled = true;
-            cancelAddAppointmentButton.disabled = true;
-
-            try {
-                const clientData = localClientsCache.find(c => c.id === clientId);
-                const profData = localProfessionalsCache.find(p => p.id === profId);
-                const serviceData = localServicesCache.find(s => s.id === serviceId);
-
-                const unitsQuery = query(collection(db, "unidades"), where("gestorId", "==", auth.currentUser.uid));
-                const unitsSnapshot = await getDocs(unitsQuery);
-                if (unitsSnapshot.empty) {
-                    throw new Error("Cadastre pelo menos uma unidade antes de criar agendamentos.");
+                // Lida com submenus
+                if (link.classList.contains('has-submenu')) {
+                    const submenu = link.nextElementSibling;
+                    submenu.classList.toggle('open');
+                    return; // Evita o comportamento de troca de aba
                 }
-                const firstUnit = { id: unitsSnapshot.docs[0].id, ...unitsSnapshot.docs[0].data() };
-
-                const appointmentData = {
-                    barbeiro: { id: profData.id, nome: profData.nome },
-                    cliente: { id: clientData.id, nome: clientData.name },
-                    data: new Date(datetime),
-                    gestorId: auth.currentUser.uid,
-                    servico: { id: serviceData.id, nome: serviceData.nome, valor: serviceData.valor, duracaoMinutos: serviceData.duracaoMinutos },
-                    unidade: { id: firstUnit.id, nome: firstUnit.nome },
-                    createdAt: serverTimestamp(),
-                    status: 'agendado' // NOVO: status padrão
-                };
-
-                await addDoc(collection(db, "agendamentos"), appointmentData);
-                addAppointmentModal.classList.add('hidden');
-            
-            } catch (error) {
-                console.error("Erro ao salvar agendamento:", error);
-                feedback.textContent = error.message || "Erro ao salvar.";
-                feedback.className = "text-sm h-4 text-center text-red-500";
-            } finally {
-                btnText.classList.remove('hidden');
-                loader.classList.add('hidden');
-                saveAddAppointmentButton.disabled = false;
-                cancelAddAppointmentButton.disabled = false;
-            }
-        });
-
-        // --- LÓGICA DO MODAL DE EDIÇÃO DE AGENDAMENTO ---
-        const editAppointmentModal = document.getElementById('edit-appointment-modal');
-        const closeEditAppointmentModal = document.getElementById('close-edit-appointment-modal');
-        const saveEditAppointmentButton = document.getElementById('save-edit-appointment-button');
-        const deleteAppointmentButton = document.getElementById('delete-appointment-button');
-        const whatsappReminderButton = document.getElementById('whatsapp-reminder-button');
-
-        async function openEditAppointmentModal(appointmentId) {
-            const docRef = doc(db, "agendamentos", appointmentId);
-            const docSnap = await getDoc(docRef);
-
-            if (docSnap.exists()) {
-                const appointment = docSnap.data();
-                document.getElementById('edit-appointment-id').value = appointmentId;
-                document.getElementById('edit-appt-status').value = appointment.status || 'agendado';
                 
-                const apptDate = appointment.data.toDate();
-                const year = apptDate.getFullYear();
-                const month = (apptDate.getMonth() + 1).toString().padStart(2, '0');
-                const day = apptDate.getDate().toString().padStart(2, '0');
-                const hours = apptDate.getHours().toString().padStart(2, '0');
-                const minutes = apptDate.getMinutes().toString().padStart(2, '0');
-                document.getElementById('edit-appt-datetime').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                // Remove 'active' de todos
+                navLinks.forEach(l => l.classList.remove('active'));
+                
+                // Adiciona 'active' ao clicado
+                link.classList.add('active');
+                
+                // Ativa o link pai se for um item de submenu
+                const parentMenu = link.closest('.submenu');
+                if (parentMenu) {
+                    parentMenu.previousElementSibling.classList.add('active');
+                }
 
-                editAppointmentModal.classList.remove('hidden');
-            } else {
-                console.error("Agendamento não encontrado!");
-            }
-        }
+                // Esconde todos os painéis de conteúdo
+                contentPanels.forEach(panel => panel.classList.add('hidden'));
 
-        closeEditAppointmentModal.addEventListener('click', () => editAppointmentModal.classList.add('hidden'));
-
-        saveEditAppointmentButton.addEventListener('click', async () => {
-            const btnText = saveEditAppointmentButton.querySelector('.btn-text');
-            const loader = saveEditAppointmentButton.querySelector('.loader');
-            const feedback = document.getElementById('edit-appointment-feedback');
-            feedback.textContent = '';
-
-            const id = document.getElementById('edit-appointment-id').value;
-            const newStatus = document.getElementById('edit-appt-status').value;
-            const newDatetime = document.getElementById('edit-appt-datetime').value;
-
-            btnText.classList.add('hidden');
-            loader.classList.remove('hidden');
-            saveEditAppointmentButton.disabled = true;
-
-            try {
-                const appointmentRef = doc(db, "agendamentos", id);
-                await updateDoc(appointmentRef, {
-                    status: newStatus,
-                    data: new Date(newDatetime)
-                });
-                editAppointmentModal.classList.add('hidden');
-            } catch (error) {
-                console.error("Erro ao atualizar agendamento:", error);
-                feedback.textContent = "Erro ao salvar.";
-                feedback.className = "text-sm h-4 text-center text-red-500";
-            } finally {
-                btnText.classList.remove('hidden');
-                loader.classList.add('hidden');
-                saveEditAppointmentButton.disabled = false;
-            }
-        });
-
-        deleteAppointmentButton.addEventListener('click', () => {
-            const id = document.getElementById('edit-appointment-id').value;
-            showConfirmationModal("Tem certeza que deseja remover este agendamento?", async () => {
-                try {
-                    await deleteDoc(doc(db, "agendamentos", id));
-                    editAppointmentModal.classList.add('hidden');
-                } catch(e) {
-                    console.error("Erro ao remover agendamento:", e);
+                // Mostra o painel alvo
+                const targetPanel = document.getElementById(targetId);
+                if (targetPanel) {
+                    targetPanel.classList.remove('hidden');
+                     // Carrega os dados da aba, se necessário
+                    const user = auth.currentUser;
+                    if (user && targetId === 'content-agenda') initializeAgenda(user.uid);
+                    if (user && targetId === 'content-servicos') loadServices(user.uid);
+                    if (user && targetId === 'content-profissionais') loadProfessionals(user.uid);
+                    if (user && targetId === 'content-unidades') loadUnits(user.uid);
+                    if (user && targetId === 'content-clientes') loadClients(user.uid);
+                    if (user && targetId === 'content-planos') loadPlans(user.uid);
+                    if (user && targetId === 'content-metas') loadGoals(user.uid);
+                    if (user && targetId === 'content-configuracoes') loadPanelUsers(user.uid);
                 }
             });
         });
 
-        whatsappReminderButton.addEventListener('click', async () => {
-            const id = document.getElementById('edit-appointment-id').value;
-            const docRef = doc(db, "agendamentos", id);
-            const docSnap = await getDoc(docRef);
-
-            if(docSnap.exists()){
-                const appt = docSnap.data();
-                const clientRef = doc(db, "users", appt.cliente.id);
-                const clientSnap = await getDoc(clientRef);
-                if(clientSnap.exists() && clientSnap.data().phone) {
-                    const phone = clientSnap.data().phone.replace(/\D/g, '');
-                    const date = appt.data.toDate().toLocaleDateString('pt-BR');
-                    const time = appt.data.toDate().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-                    const message = encodeURIComponent(`Olá ${appt.cliente.nome}! Lembrete do seu agendamento na VS Barbearia para o serviço de ${appt.servico.nome} no dia ${date} às ${time}. Estamos te esperando!`);
-                    window.open(`https://wa.me/55${phone}?text=${message}`, '_blank');
-                } else {
-                    alert("Cliente não possui telefone cadastrado para enviar lembrete.");
-                }
-            }
-        });
-
-        // --- NOVA LÓGICA DO MODAL DE AÇÃO DE SLOT ---
-        const slotActionModal = document.getElementById('slot-action-modal');
-        const closeSlotActionModal = document.getElementById('close-slot-action-modal');
-        const slotActionSubtitle = document.getElementById('slot-action-subtitle');
-        const slotTabAgendar = document.getElementById('slot-tab-agendar');
-        const slotTabBloqueio = document.getElementById('slot-tab-bloqueio');
-        const slotContentAgendar = document.getElementById('slot-content-agendar');
-        const slotContentBloqueio = document.getElementById('slot-content-bloqueio');
-        const slotRecurringCheckbox = document.getElementById('slot-recurring-checkbox');
-        const slotRecurringOptions = document.getElementById('slot-recurring-options');
-
-        function populateClientSelects(newClientIdToSelect = null) {
-            const clientSelects = document.querySelectorAll('#appt-client-select, #slot-client-select');
-            clientSelects.forEach(select => {
-                select.innerHTML = '<option value="">Selecione um cliente</option>';
-                localClientsCache.forEach(c => {
-                    const option = document.createElement('option');
-                    option.value = c.id;
-                    option.textContent = c.name;
-                    if (c.id === newClientIdToSelect) {
-                        option.selected = true;
-                    }
-                    select.appendChild(option);
-                });
-            });
-        }
-
-        async function openSlotActionModal(profId, time) {
-            slotActionModal.classList.remove('hidden');
-            const professional = localProfessionalsCache.find(p => p.id === profId);
-            slotActionSubtitle.textContent = `Para ${professional.nome} às ${time.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}`;
-
-            // Resetar abas e formulários para o padrão
-            document.getElementById('slot-appointment-form').reset();
-            document.getElementById('slot-block-form').reset();
-            slotRecurringCheckbox.checked = false;
-            slotRecurringOptions.classList.add('hidden');
-            slotTabAgendar.classList.add('active');
-            slotContentAgendar.classList.remove('hidden');
-            slotTabBloqueio.classList.remove('active');
-            slotContentBloqueio.classList.add('hidden');
-
-            document.getElementById('slot-professional-id').value = profId;
-            document.getElementById('slot-datetime').value = time.toISOString();
-
-            // Popular selects do agendamento
-            populateClientSelects();
-            const serviceSelect = document.getElementById('slot-service-select');
-            serviceSelect.innerHTML = '<option value="">Selecione um serviço</option>';
-            localServicesCache.forEach(s => serviceSelect.innerHTML += `<option value="${s.id}">${s.nome}</option>`);
-        }
-
-        closeSlotActionModal.addEventListener('click', () => slotActionModal.classList.add('hidden'));
-
-        slotTabAgendar.addEventListener('click', () => {
-            slotTabAgendar.classList.add('active');
-            slotContentAgendar.classList.remove('hidden');
-            slotTabBloqueio.classList.remove('active');
-            slotContentBloqueio.classList.add('hidden');
-        });
-
-        slotTabBloqueio.addEventListener('click', () => {
-            slotTabBloqueio.classList.add('active');
-            slotContentBloqueio.classList.remove('hidden');
-            slotTabAgendar.classList.remove('active');
-            slotContentAgendar.classList.add('hidden');
-        });
-
-        slotRecurringCheckbox.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                slotRecurringOptions.classList.remove('hidden');
+        toggleSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            const icon = toggleSidebarBtn.querySelector('i');
+            const text = toggleSidebarBtn.querySelector('span');
+            if (sidebar.classList.contains('collapsed')) {
+                icon.className = 'fas fa-chevron-right nav-icon';
+                text.textContent = '';
             } else {
-                slotRecurringOptions.classList.add('hidden');
+                icon.className = 'fas fa-chevron-left nav-icon';
+                text.textContent = 'Recolher';
             }
         });
 
-        // Salvar agendamento a partir do slot
-        const slotAppointmentForm = document.getElementById('slot-appointment-form');
-        slotAppointmentForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const saveSlotAppointmentButton = document.getElementById('save-slot-appointment-button');
-            const btnText = saveSlotAppointmentButton.querySelector('.btn-text');
-            const loader = saveSlotAppointmentButton.querySelector('.loader');
-            const feedback = document.getElementById('slot-appointment-feedback');
-            feedback.textContent = '';
-            
-            const clientId = document.getElementById('slot-client-select').value;
-            const serviceId = document.getElementById('slot-service-select').value;
-            const profId = document.getElementById('slot-professional-id').value;
-            const datetime = document.getElementById('slot-datetime').value;
-            const isRecurring = document.getElementById('slot-recurring-checkbox').checked;
-
-            if (!clientId || !serviceId) {
-                feedback.textContent = "Preencha cliente e serviço.";
-                feedback.className = "text-sm h-4 text-center text-red-500";
-                return;
-            }
-
-            btnText.classList.add('hidden');
-            loader.classList.remove('hidden');
-            saveSlotAppointmentButton.disabled = true;
-
-            try {
-                const clientData = localClientsCache.find(c => c.id === clientId);
-                const profData = localProfessionalsCache.find(p => p.id === profId);
-                const serviceData = localServicesCache.find(s => s.id === serviceId);
-                const unitsQuery = query(collection(db, "unidades"), where("gestorId", "==", auth.currentUser.uid));
-                const unitsSnapshot = await getDocs(unitsQuery);
-                if (unitsSnapshot.empty) throw new Error("Cadastre uma unidade primeiro.");
-                const firstUnit = { id: unitsSnapshot.docs[0].id, ...unitsSnapshot.docs[0].data() };
-
-                const batch = writeBatch(db);
-                
-                const createAppointmentData = (date) => ({
-                    barbeiro: { id: profData.id, nome: profData.nome },
-                    cliente: { id: clientData.id, nome: clientData.name },
-                    data: date,
-                    gestorId: auth.currentUser.uid,
-                    servico: { id: serviceData.id, nome: serviceData.nome, valor: serviceData.valor, duracaoMinutos: serviceData.duracaoMinutos },
-                    unidade: { id: firstUnit.id, nome: firstUnit.nome },
-                    createdAt: serverTimestamp(),
-                    status: 'agendado'
-                });
-
-                const firstAppointmentDate = new Date(datetime);
-                const firstAppointmentRef = doc(collection(db, "agendamentos"));
-                batch.set(firstAppointmentRef, createAppointmentData(firstAppointmentDate));
-
-                if (isRecurring) {
-                    const frequency = parseInt(document.getElementById('slot-recurring-frequency').value);
-                    const period = document.getElementById('slot-recurring-period').value;
-                    const count = parseInt(document.getElementById('slot-recurring-count').value);
-
-                    let currentDate = new Date(firstAppointmentDate);
-                    for (let i = 1; i < count; i++) {
-                        if (period === 'weeks') {
-                            currentDate.setDate(currentDate.getDate() + 7 * frequency);
-                        } else if (period === 'months') {
-                            currentDate.setMonth(currentDate.getMonth() + frequency);
-                        }
-                        const newAppointmentRef = doc(collection(db, "agendamentos"));
-                        batch.set(newAppointmentRef, createAppointmentData(new Date(currentDate)));
-                    }
-                }
-
-                await batch.commit();
-                slotActionModal.classList.add('hidden');
-            
-            } catch (error) {
-                console.error("Erro ao salvar agendamento:", error);
-                feedback.textContent = error.message || "Erro ao salvar.";
-                feedback.className = "text-sm h-4 text-center text-red-500";
-            } finally {
-                btnText.classList.remove('hidden');
-                loader.classList.add('hidden');
-                saveSlotAppointmentButton.disabled = false;
-            }
-        });
-
-        // Salvar folga/bloqueio a partir do slot
-        const slotBlockForm = document.getElementById('slot-block-form');
-        slotBlockForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const saveSlotBlockButton = document.getElementById('save-slot-block-button');
-            const btnText = saveSlotBlockButton.querySelector('.btn-text');
-            const loader = saveSlotBlockButton.querySelector('.loader');
-            const feedback = document.getElementById('slot-block-feedback');
-            feedback.textContent = '';
-            
-            const duration = parseInt(document.getElementById('slot-block-duration').value);
-            const reason = document.getElementById('slot-block-reason').value;
-            const profId = document.getElementById('slot-professional-id').value;
-            const datetime = document.getElementById('slot-datetime').value;
-
-            if (!duration || duration <= 0) {
-                feedback.textContent = "Duração inválida.";
-                feedback.className = "text-sm h-4 text-center text-red-500";
-                return;
-            }
-            btnText.classList.add('hidden');
-            loader.classList.remove('hidden');
-            saveSlotBlockButton.disabled = true;
-            try {
-                const profData = localProfessionalsCache.find(p => p.id === profId);
-                const blockData = {
-                    barbeiro: { id: profData.id, nome: profData.nome },
-                    data: new Date(datetime),
-                    gestorId: auth.currentUser.uid,
-                    servico: { nome: reason.charAt(0).toUpperCase() + reason.slice(1), duracaoMinutos: duration },
-                    status: 'bloqueio',
-                    motivo: reason,
-                    createdAt: serverTimestamp()
-                };
-                await addDoc(collection(db, "agendamentos"), blockData);
-                slotActionModal.classList.add('hidden');
-            } catch (error) {
-                console.error("Erro ao salvar bloqueio:", error);
-                feedback.textContent = "Erro ao salvar.";
-                feedback.className = "text-sm h-4 text-center text-red-500";
-            } finally {
-                btnText.classList.remove('hidden');
-                loader.classList.add('hidden');
-                saveSlotBlockButton.disabled = false;
-            }
-        });
-
-        // --- LÓGICA DO MODAL DE EDIÇÃO DE BLOQUEIO ---
-        const editBlockModal = document.getElementById('edit-block-modal');
-        const closeEditBlockModal = document.getElementById('close-edit-block-modal');
-        const saveEditBlockButton = document.getElementById('save-edit-block-button');
-        const deleteBlockButton = document.getElementById('delete-block-button');
-
-        async function openEditBlockModal(blockId) {
-            const docRef = doc(db, "agendamentos", blockId);
-            const docSnap = await getDoc(docRef);
-
-            if (docSnap.exists()) {
-                const block = docSnap.data();
-                document.getElementById('edit-block-id').value = blockId;
-                document.getElementById('edit-block-reason').value = block.motivo || 'folga';
-                document.getElementById('edit-block-duration').value = block.servico.duracaoMinutos || 30;
-                document.getElementById('edit-block-subtitle').textContent = `Para ${block.barbeiro.nome}`;
-                editBlockModal.classList.remove('hidden');
-            } else {
-                console.error("Bloqueio não encontrado!");
-            }
-        }
-
-        closeEditBlockModal.addEventListener('click', () => editBlockModal.classList.add('hidden'));
-
-        saveEditBlockButton.addEventListener('click', async () => {
-            const btnText = saveEditBlockButton.querySelector('.btn-text');
-            const loader = saveEditBlockButton.querySelector('.loader');
-            const feedback = document.getElementById('edit-block-feedback');
-            feedback.textContent = '';
-
-            const id = document.getElementById('edit-block-id').value;
-            const newReason = document.getElementById('edit-block-reason').value;
-            const newDuration = parseInt(document.getElementById('edit-block-duration').value);
-
-            btnText.classList.add('hidden');
-            loader.classList.remove('hidden');
-            saveEditBlockButton.disabled = true;
-
-            try {
-                const blockRef = doc(db, "agendamentos", id);
-                await updateDoc(blockRef, {
-                    motivo: newReason,
-                    "servico.nome": newReason.charAt(0).toUpperCase() + newReason.slice(1),
-                    "servico.duracaoMinutos": newDuration
-                });
-                editBlockModal.classList.add('hidden');
-            } catch (error) {
-                console.error("Erro ao atualizar bloqueio:", error);
-                feedback.textContent = "Erro ao salvar.";
-                feedback.className = "text-sm h-4 text-center text-red-500";
-            } finally {
-                btnText.classList.remove('hidden');
-                loader.classList.add('hidden');
-                saveEditBlockButton.disabled = false;
-            }
-        });
-
-        deleteBlockButton.addEventListener('click', () => {
-            const id = document.getElementById('edit-block-id').value;
-            showConfirmationModal("Tem certeza que deseja remover este bloqueio da agenda?", async () => {
-                try {
-                    await deleteDoc(doc(db, "agendamentos", id));
-                    editBlockModal.classList.add('hidden');
-                } catch(e) {
-                    console.error("Erro ao remover bloqueio:", e);
-                }
-            });
-        });
-
-        // --- LÓGICA DE DRAG AND DROP ---
-        function makeDraggable(element) {
-            interact(element)
-                .draggable({
-                    inertia: true,
-                    modifiers: [
-                        interact.modifiers.restrictRect({
-                            restriction: '#agenda-grid-view', // CORRIGIDO: Restringe ao container da grade
-                            endOnly: true
-                        })
-                    ],
-                    autoScroll: true,
-                    listeners: {
-                        start(event) {
-                            isDragging = true; // ATIVADO: Inicia o arrasto
-                            event.target.classList.add('dragging');
-                        },
-                        move(event) {
-                            const target = event.target;
-                            const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-                            const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-
-                            target.style.transform = `translate(${x}px, ${y}px)`;
-                            target.setAttribute('data-x', x);
-                            target.setAttribute('data-y', y);
-                        },
-                        end(event) {
-                            event.target.classList.remove('dragging');
-                            // A lógica de resetar a posição visual agora é feita no ondropdeactivate
-                            // para garantir que funcione mesmo se soltar fora de um dropzone.
-
-                            // Usa um timeout para garantir que o evento de 'click' seja processado antes de resetar o flag
-                            setTimeout(() => {
-                                isDragging = false;
-                            }, 100);
-                        }
-                    }
-                });
-        }
-
-        interact('.professional-column .time-slot-line').dropzone({
-            accept: '.appointment-card',
-            overlap: 0.5, // Pelo menos 50% de sobreposição para ativar
-
-            ondrop: async function (event) {
-                const draggedElement = event.relatedTarget;
-                const dropzoneElement = event.target;
-                const dropzoneContainer = dropzoneElement.parentElement.parentElement; // A .professional-column
-
-                const appointmentId = draggedElement.dataset.id;
-                const newProfessionalId = dropzoneContainer.dataset.professionalId;
-                
-                // Calcula a nova hora
-                const gridTop = agendaGridView.querySelector('.time-slots-container')?.offsetTop || 0;
-                const dropzoneTop = dropzoneElement.offsetTop;
-                const totalMinutesFromStart = (dropzoneTop / 40) * agendaState.interval;
-                
-                const newDate = new Date(agendaState.currentDate);
-                newDate.setHours(8, 0, 0, 0); // Começa às 8:00
-                newDate.setMinutes(newDate.getMinutes() + totalMinutesFromStart);
-
-                // Atualiza o Firestore
-                try {
-                    const appointmentRef = doc(db, "agendamentos", appointmentId);
-                    const newProfessional = localProfessionalsCache.find(p => p.id === newProfessionalId);
-
-                    await updateDoc(appointmentRef, {
-                        data: newDate,
-                        barbeiro: {
-                            id: newProfessional.id,
-                            nome: newProfessional.nome
-                        }
-                    });
-                } catch (error) {
-                    console.error("Erro ao mover agendamento:", error);
-                    // Reverte visualmente se der erro
-                    draggedElement.style.transform = 'none';
-                    draggedElement.setAttribute('data-x', 0);
-                    draggedElement.setAttribute('data-y', 0);
-                }
-            },
-            ondragenter: function (event) {
-                event.target.style.background = 'rgba(251, 182, 44, 0.2)';
-            },
-            ondragleave: function (event) {
-                event.target.style.background = '';
-            },
-            ondropdeactivate: function (event) {
-                event.target.style.background = '';
-                // Reseta o elemento arrastado após o drop
-                const draggedElement = event.relatedTarget;
-                draggedElement.style.transform = 'none';
-                draggedElement.setAttribute('data-x', 0);
-                draggedElement.setAttribute('data-y', 0);
-            }
-        });
-
-        // --- NOVO: LÓGICA DO MODAL DE CADASTRO RÁPIDO DE CLIENTE ---
-        const addQuickClientModal = document.getElementById('add-quick-client-modal');
-        const openQuickClientModalBtn = document.getElementById('open-quick-client-modal-btn');
-        const cancelQuickClientButton = document.getElementById('cancel-quick-client-button');
-        const saveQuickClientButton = document.getElementById('save-quick-client-button');
-        const addQuickClientForm = document.getElementById('add-quick-client-form');
-
-        openQuickClientModalBtn.addEventListener('click', () => {
-            addQuickClientForm.reset();
-            document.getElementById('add-quick-client-feedback').textContent = '';
-            addQuickClientModal.classList.remove('hidden');
-        });
-
-        cancelQuickClientButton.addEventListener('click', () => {
-            addQuickClientModal.classList.add('hidden');
-        });
-
-        saveQuickClientButton.addEventListener('click', async () => {
-            const btnText = saveQuickClientButton.querySelector('.btn-text');
-            const loader = saveQuickClientButton.querySelector('.loader');
-            const feedback = document.getElementById('add-quick-client-feedback');
-            const nameInput = document.getElementById('quick-client-name');
-            const phoneInput = document.getElementById('quick-client-phone');
-            feedback.textContent = '';
-
-            if (!nameInput.value || !phoneInput.value) {
-                feedback.textContent = "Preencha todos os campos.";
-                feedback.className = "text-sm h-4 text-center text-red-500";
-                return;
-            }
-            
-            btnText.classList.add('hidden');
-            loader.classList.remove('hidden');
-            saveQuickClientButton.disabled = true;
-
-            try {
-                const user = auth.currentUser;
-                const newClientData = {
-                    name: nameInput.value,
-                    phone: phoneInput.value,
-                    gestorId: user.uid,
-                    createdAt: serverTimestamp()
-                };
-
-                const docRef = await addDoc(collection(db, "users"), newClientData);
-                
-                // Atualiza o cache local e os selects
-                localClientsCache.push({ id: docRef.id, ...newClientData });
-                populateClientSelects(docRef.id);
-                
-                addQuickClientModal.classList.add('hidden');
-
-            } catch (error) {
-                console.error("Erro ao salvar cliente rápido:", error);
-                feedback.textContent = "Erro ao salvar.";
-                feedback.className = "text-sm h-4 text-center text-red-500";
-            } finally {
-                btnText.classList.remove('hidden');
-                loader.classList.add('hidden');
-                saveQuickClientButton.disabled = false;
-            }
-        });
-
-
-        // Lidar com o clique do botão de bloquear o dia
-        agendaGridView.addEventListener('click', e => {
-            const blockBtn = e.target.closest('.block-day-btn');
-            if (blockBtn) {
-                const profId = blockBtn.dataset.profId;
-                const professional = localProfessionalsCache.find(p => p.id === profId);
-                showConfirmationModal(`Tem certeza que deseja bloquear o dia inteiro para ${professional.nome}?`, () => {
-                    handleBlockDay(profId);
-                });
-            }
-        });
-
-        async function handleBlockDay(profId) {
-            const startTime = 8;
-            const endTime = 20;
-            const duration = (endTime - startTime) * 60; // Duração em minutos
-            const date = new Date(agendaState.currentDate);
-            date.setHours(startTime, 0, 0, 0);
-
-            try {
-                const profData = localProfessionalsCache.find(p => p.id === profId);
-                const blockData = {
-                    barbeiro: { id: profData.id, nome: profData.nome },
-                    data: date,
-                    gestorId: auth.currentUser.uid,
-                    servico: { nome: 'Dia Bloqueado', duracaoMinutos: duration },
-                    status: 'bloqueio',
-                    motivo: 'folga',
-                    createdAt: serverTimestamp()
-                };
-                await addDoc(collection(db, "agendamentos"), blockData);
-            } catch (error) {
-                console.error("Erro ao bloquear o dia:", error);
-            }
-        }
 
     </script>
 </body>
 </html>
-
-
-
 
 
