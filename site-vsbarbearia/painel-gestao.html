@@ -212,7 +212,7 @@
             width: 250px; /* Largura do menu expandido */
             background-color: #1e1e1e;
             transition: width 0.3s ease;
-            overflow: hidden;
+            overflow-x: hidden; /* Evita barra de rolagem horizontal */
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -226,15 +226,27 @@
             padding: 12px 20px;
             color: #a0aec0; /* gray-400 */
             transition: background-color 0.2s, color 0.2s;
+            position: relative; /* Para o indicador sutil */
         }
          #sidebar .nav-link:hover {
             background-color: rgba(251, 182, 44, 0.1);
             color: #fbb62c;
         }
         #sidebar .nav-link.active {
-            background-color: #fbb62c;
-            color: #111111;
+            color: #fbb62c;
             font-weight: 600;
+        }
+        /* NOVO: Indicador sutil para item ativo */
+        #sidebar .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 60%;
+            width: 4px;
+            background-color: #fbb62c;
+            border-radius: 0 4px 4px 0;
         }
         #sidebar .nav-link .nav-text {
             margin-left: 15px;
@@ -244,7 +256,7 @@
         }
         #sidebar.collapsed .nav-link .nav-text {
             opacity: 0;
-            display: none;
+            pointer-events: none; /* Evita interação com texto invisível */
         }
         #sidebar .submenu {
             padding-left: 40px; /* Indentação do submenu */
@@ -308,7 +320,10 @@
         <div id="main-container">
             <!-- NOVO: Menu Lateral -->
             <aside id="sidebar">
-                
+                <div class="p-4 flex items-center justify-center border-b border-gray-700 h-[61px]">
+                    <img src="https://i.postimg.cc/5yBSjg1F/Bigode-3.png" alt="Logo VS Barbearia" class="w-10 h-10">
+                    <span class="nav-text text-xl font-bold ml-2">VS Barbearia</span>
+                </div>
                 <nav class="flex-grow py-4">
                     <ul>
                         <li><a href="#" class="nav-link" data-target="content-dashboard"><i class="fas fa-home nav-icon"></i><span class="nav-text">Visão Geral</span></a></li>
@@ -335,10 +350,7 @@
                     </ul>
                 </nav>
                  <div class="p-4 border-t border-gray-700">
-                    <button id="toggle-sidebar-btn" class="text-gray-400 hover:text-white w-full flex items-center justify-center">
-                        <i class="fas fa-chevron-left nav-icon"></i>
-                        <span class="nav-text ml-2">Recolher</span>
-                    </button>
+                    <!-- O botão de recolher foi removido para dar lugar à nova interação -->
                 </div>
             </aside>
 
@@ -2191,76 +2203,74 @@
             });
         };
 
-        // --- NOVA LÓGICA DE NAVEGAÇÃO DO MENU LATERAL ---
+        // --- LÓGICA DE NAVEGAÇÃO DO MENU LATERAL (ATUALIZADA) ---
         const sidebar = document.getElementById('sidebar');
         const navLinks = document.querySelectorAll('#sidebar .nav-link');
         const contentPanels = document.querySelectorAll('#main-content main > div > div');
-        const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
 
         navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
 
                 const targetId = link.dataset.target;
+                const isSubmenuTrigger = link.classList.contains('has-submenu');
+                
+                // Se o menu já está recolhido e o usuário clica em um item com submenu
+                if (sidebar.classList.contains('collapsed') && isSubmenuTrigger) {
+                    sidebar.classList.remove('collapsed'); // Expande o menu
+                }
 
-                // Lida com submenus
-                if (link.classList.contains('has-submenu')) {
+                // Se for um item com submenu, abre/fecha o submenu
+                if (isSubmenuTrigger) {
                     const submenu = link.nextElementSibling;
+                    // Fecha outros submenus abertos para não poluir a tela
+                    document.querySelectorAll('#sidebar .submenu.open').forEach(sub => {
+                        if (sub !== submenu) sub.classList.remove('open');
+                    });
                     submenu.classList.toggle('open');
-                    return; // Evita o comportamento de troca de aba
                 }
                 
-                // Remove 'active' de todos
-                navLinks.forEach(l => l.classList.remove('active'));
-                
-                // Adiciona 'active' ao clicado
-                link.classList.add('active');
-                
-                // Ativa o link pai se for um item de submenu
-                const parentMenu = link.closest('.submenu');
-                if (parentMenu) {
-                    parentMenu.previousElementSibling.classList.add('active');
-                }
+                // Lógica para todos os links, exceto triggers de submenu
+                if (!isSubmenuTrigger) {
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                    
+                    const parentMenu = link.closest('.submenu');
+                    if (parentMenu) {
+                        parentMenu.previousElementSibling.classList.add('active');
+                    }
 
-                // Esconde todos os painéis de conteúdo
-                contentPanels.forEach(panel => panel.classList.add('hidden'));
-
-                // Mostra o painel alvo
-                const targetPanel = document.getElementById(targetId);
-                if (targetPanel) {
-                    targetPanel.classList.remove('hidden');
-                     // Carrega os dados da aba, se necessário
-                    const user = auth.currentUser;
-                    if (user && targetId === 'content-agenda') initializeAgenda(user.uid);
-                    if (user && targetId === 'content-servicos') loadServices(user.uid);
-                    if (user && targetId === 'content-profissionais') loadProfessionals(user.uid);
-                    if (user && targetId === 'content-unidades') loadUnits(user.uid);
-                    if (user && targetId === 'content-clientes') loadClients(user.uid);
-                    if (user && targetId === 'content-planos') loadPlans(user.uid);
-                    if (user && targetId === 'content-metas') loadGoals(user.uid);
-                    if (user && targetId === 'content-configuracoes') loadPanelUsers(user.uid);
+                    contentPanels.forEach(panel => panel.classList.add('hidden'));
+                    const targetPanel = document.getElementById(targetId);
+                    if (targetPanel) {
+                        targetPanel.classList.remove('hidden');
+                        const user = auth.currentUser;
+                        // Carrega os dados da aba, se necessário
+                         if (user && targetId === 'content-agenda') initializeAgenda(user.uid);
+                         if (user && targetId === 'content-servicos') loadServices(user.uid);
+                         if (user && targetId === 'content-profissionais') loadProfessionals(user.uid);
+                         if (user && targetId === 'content-unidades') loadUnits(user.uid);
+                         if (user && targetId === 'content-clientes') loadClients(user.uid);
+                         if (user && targetId === 'content-planos') loadPlans(user.uid);
+                         if (user && targetId === 'content-metas') loadGoals(user.uid);
+                         if (user && targetId === 'content-configuracoes') loadPanelUsers(user.uid);
+                    }
                 }
             });
         });
 
-        toggleSidebarBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('collapsed');
-            const icon = toggleSidebarBtn.querySelector('i');
-            const text = toggleSidebarBtn.querySelector('span');
-            if (sidebar.classList.contains('collapsed')) {
-                icon.className = 'fas fa-chevron-right nav-icon';
-                text.textContent = '';
-            } else {
-                icon.className = 'fas fa-chevron-left nav-icon';
-                text.textContent = 'Recolher';
-            }
+        // Lógica para recolher/expandir o menu clicando no logo/nome
+        const sidebarHeader = document.querySelector('#sidebar > div:first-child');
+        sidebarHeader.style.cursor = 'pointer';
+        sidebarHeader.addEventListener('click', () => {
+             sidebar.classList.toggle('collapsed');
+             // Fecha todos os submenus ao recolher
+             if(sidebar.classList.contains('collapsed')) {
+                 document.querySelectorAll('#sidebar .submenu.open').forEach(sub => sub.classList.remove('open'));
+             }
         });
-
 
     </script>
 </body>
 </html>
-
-
-
 
