@@ -317,7 +317,8 @@
         <header class="bg-[#1e1e1e] shadow-lg z-40">
             <div class="mx-auto max-w-full px-4 py-3 sm:px-6 lg:px-8 flex justify-between items-center">
                  <div class="flex items-center space-x-4">
-                    <h1 id="main-header-title" class="text-2xl font-bold tracking-tight text-white">Visão Geral</h1>
+                    <img src="https://i.postimg.cc/5yBSjg1F/Bigode-3.png" alt="Logo VS Barbearia" class="w-8 h-8">
+                    <h1 id="main-header-title" class="text-xl font-semibold tracking-tight text-white">Painel de Gestão</h1>
                 </div>
                 <div class="flex items-center">
                     <span id="user-email" class="text-sm text-gray-400 mr-4 hidden sm:block"></span>
@@ -329,9 +330,8 @@
         <div id="main-container">
             <!-- NOVO: Menu Lateral -->
             <aside id="sidebar">
-                <div class="p-4 flex items-center justify-center border-b border-gray-700 h-[61px] flex-shrink-0">
-                    <img src="https://i.postimg.cc/5yBSjg1F/Bigode-3.png" alt="Logo VS Barbearia" class="w-10 h-10">
-                    <span class="nav-text text-xl font-bold ml-2">VS Barbearia</span>
+                <div class="border-b border-gray-700 h-[61px] flex-shrink-0">
+                    <!-- Conteúdo removido para um design mais limpo -->
                 </div>
                 <nav class="flex-grow py-4">
                     <ul>
@@ -2379,29 +2379,37 @@
             link.addEventListener('click', (e) => {
                 e.preventDefault();
 
-                const targetId = link.dataset.target;
+                const isCurrentlyActive = link.classList.contains('active');
+                const sidebarIsCollapsed = sidebar.classList.contains('collapsed');
                 const isSubmenuTrigger = link.classList.contains('has-submenu');
-                
-                // Se o menu já está recolhido e o usuário clica em um item com submenu
-                if (sidebar.classList.contains('collapsed') && isSubmenuTrigger) {
-                    sidebar.classList.remove('collapsed'); // Expande o menu
+                const targetId = link.dataset.target;
+
+                // --- Nova Lógica de Expandir/Recolher ---
+                if (sidebarIsCollapsed) {
+                    sidebar.classList.remove('collapsed');
+                } else if (isCurrentlyActive && !isSubmenuTrigger) {
+                    // Apenas recolhe se não for um gatilho de submenu, para permitir abrir/fechar o submenu
+                    sidebar.classList.add('collapsed');
+                    document.querySelectorAll('#sidebar .submenu.open').forEach(sub => sub.classList.remove('open'));
+                    return; // Apenas recolhe, não executa mais nada
                 }
 
-                // Se for um item com submenu, abre/fecha o submenu
+                // --- Lógica de Submenu ---
                 if (isSubmenuTrigger) {
                     const submenu = link.nextElementSibling;
-                    // Fecha outros submenus abertos para não poluir a tela
+                    // Fecha outros submenus abertos
                     document.querySelectorAll('#sidebar .submenu.open').forEach(sub => {
                         if (sub !== submenu) sub.classList.remove('open');
                     });
                     submenu.classList.toggle('open');
                 }
                 
-                // Lógica para todos os links, exceto triggers de submenu
+                // --- Lógica de Troca de Conteúdo ---
                 if (targetId) {
                     navLinks.forEach(l => l.classList.remove('active'));
                     link.classList.add('active');
                     
+                    // Mantém o menu pai ativo também
                     const parentMenu = link.closest('.submenu');
                     if (parentMenu) {
                         parentMenu.previousElementSibling.classList.add('active');
@@ -2413,8 +2421,7 @@
                     // Mostra o painel alvo
                     const targetPanel = document.getElementById(targetId);
                     if (targetPanel) {
-                        const pageTitle = targetPanel.querySelector('h1')?.textContent || 'Painel';
-                        document.getElementById('main-header-title').textContent = pageTitle.replace('Gerenciar ', '');
+                        // Título do cabeçalho foi fixado em "Painel de Gestão", conforme solicitado
                         targetPanel.classList.remove('hidden');
                         
                         const user = auth.currentUser;
@@ -2434,16 +2441,7 @@
             });
         });
 
-        // Lógica para recolher/expandir o menu clicando no logo/nome
-        const sidebarHeader = document.querySelector('#sidebar > div:first-child');
-        sidebarHeader.style.cursor = 'pointer';
-        sidebarHeader.addEventListener('click', () => {
-             sidebar.classList.toggle('collapsed');
-             // Fecha todos os submenus ao recolher
-             if(sidebar.classList.contains('collapsed')) {
-                 document.querySelectorAll('#sidebar .submenu.open').forEach(sub => sub.classList.remove('open'));
-             }
-        });
+        // A lógica de expandir/recolher pelo cabeçalho foi removida e integrada nos ícones do menu
         
         // --- ADIÇÃO: LÓGICA DOS MODAIS DA AGENDA E FUNCIONALIDADES ---
         
@@ -2826,6 +2824,7 @@
     </script>
 </body>
 </html>
+
 
 
 
