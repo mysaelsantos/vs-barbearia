@@ -119,6 +119,16 @@
             flex: 1 1 0px;
             border-left: 1px solid #444;
             position: relative;
+            /* NOVO: Adicionar transição para feedback visual */
+            transition: background-color 0.3s ease;
+        }
+        /* NOVO: Estilos para feedback de dropzone */
+        .professional-column.drop-active {
+            background-color: rgba(251, 182, 44, 0.05);
+        }
+        .professional-column.drop-target {
+            background-color: rgba(251, 182, 44, 0.15);
+            border-left-color: #fbb62c;
         }
         .time-slot, .professional-header {
             height: 40px;
@@ -1080,6 +1090,7 @@
                 panelSection.classList.remove('hidden');
                 userEmailSpan.textContent = user.email;
                 initializeGlobalEventListeners(); // ATIVADO: Garante que os botões funcionem
+                initializeDropzones(); // NOVO: Inicializa as áreas de soltar (dropzones)
                 document.querySelector('#sidebar .nav-link[data-target="content-dashboard"]').click();
                 loadAgendaSettings(user.uid);
             } else {
@@ -2695,37 +2706,59 @@
                         end(event) {
                             const target = event.target;
                             target.classList.remove('dragging');
+                            // A lógica de atualização foi movida para o evento 'ondrop' do dropzone.
+                            // O 'end' agora apenas limpa o estilo de transformação, fazendo o
+                            // card voltar à posição original se não for solto em uma dropzone válida.
                             target.style.transform = '';
                             target.removeAttribute('data-x');
                             target.removeAttribute('data-y');
 
-                            const dropzone = event.target.closest('.professional-column');
-                            if (!dropzone) { isDragging = false; return; }
-
-                            const rect = dropzone.querySelector('div:not(.professional-header)').getBoundingClientRect();
-                            const newTop = event.client.y - rect.top;
-                            
-                            const slotHeight = 40;
-                            const slotIndex = Math.round(newTop / slotHeight);
-                            const minutesFromStart = slotIndex * agendaState.interval;
-                            
-                            const startHour = 8;
-                            const newHour = startHour + Math.floor(minutesFromStart / 60);
-                            const newMinute = minutesFromStart % 60;
-
-                            const newDateTime = new Date(agendaState.currentDate);
-                            newDateTime.setHours(newHour, newMinute, 0, 0);
-
-                            const newProfessionalId = dropzone.dataset.professionalId;
-                            const appointmentId = target.dataset.id;
-                            
-                            updateAppointmentOnDrop(appointmentId, newDateTime, newProfessionalId);
                             // Seta o isDragging para false após um pequeno delay para evitar o click
                             setTimeout(() => { isDragging = false; }, 100);
                         }
                     }
                 })
                 .resizable(false); // Desabilitar redimensionamento por enquanto
+        }
+        
+        // NOVO: Define as colunas dos profissionais como áreas de soltar (dropzones)
+        function initializeDropzones() {
+            interact('.professional-column').dropzone({
+                accept: '.appointment-card',
+                overlap: 0.25, // Requer 25% de sobreposição
+
+                ondrop: function (event) {
+                    const dropzone = event.target; // a professional-column
+                    const draggableElement = event.relatedTarget; // o appointment-card
+
+                    const rect = dropzone.querySelector('div:not(.professional-header)').getBoundingClientRect();
+                    const newTop = event.dragEvent.clientY - rect.top;
+                                    
+                    const slotHeight = 40;
+                    const slotIndex = Math.round(newTop / slotHeight);
+                    const minutesFromStart = slotIndex * agendaState.interval;
+                    
+                    const startHour = 8;
+                    const newHour = startHour + Math.floor(minutesFromStart / 60);
+                    const newMinute = minutesFromStart % 60;
+
+                    const newDateTime = new Date(agendaState.currentDate);
+                    newDateTime.setHours(newHour, newMinute, 0, 0);
+
+                    const newProfessionalId = dropzone.dataset.professionalId;
+                    const appointmentId = draggableElement.dataset.id;
+                    
+                    updateAppointmentOnDrop(appointmentId, newDateTime, newProfessionalId);
+                },
+
+                ondragenter: (event) => { event.target.classList.add('drop-target'); },
+                ondragleave: (event) => { event.target.classList.remove('drop-target'); },
+                ondropactivate: (event) => { event.target.classList.add('drop-active'); },
+                ondropdeactivate: (event) => {
+                    event.target.classList.remove('drop-active');
+                    event.target.classList.remove('drop-target');
+                }
+            });
         }
 
         async function updateAppointmentOnDrop(appointmentId, newDateTime, newProfessionalId) {
@@ -2745,4 +2778,5 @@
     </script>
 </body>
 </html>
+
 
