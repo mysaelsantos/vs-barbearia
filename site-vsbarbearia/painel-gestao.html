@@ -2706,8 +2706,8 @@
                             const newTop = event.client.y - rect.top;
                             
                             const slotHeight = 40;
-                            const pixelsPerMinute = slotHeight / agendaState.interval;
-                            const minutesFromStart = Math.round(newTop / pixelsPerMinute) * agendaState.interval;
+                            const slotIndex = Math.round(newTop / slotHeight);
+                            const minutesFromStart = slotIndex * agendaState.interval;
                             
                             const startHour = 8;
                             const newHour = startHour + Math.floor(minutesFromStart / 60);
