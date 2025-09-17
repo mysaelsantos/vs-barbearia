@@ -231,7 +231,7 @@
         <main>
             <!-- Abas de Navegação -->
             <div class="border-b border-gray-800 bg-[#1e1e1e]">
-                <nav class="-mb-px flex space-x-8 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 overflow-x-auto" aria-label="Tabs">
+                <nav id="main-tabs-nav" class="-mb-px flex space-x-8 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 overflow-x-auto" aria-label="Tabs">
                     <button id="tab-servicos" class="tab-button active whitespace-nowrap py-4 px-1 text-sm font-medium">Serviços</button>
                     <button id="tab-profissionais" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Profissionais</button>
                     <button id="tab-unidades" class="tab-button whitespace-nowrap py-4 px-1 text-sm font-medium text-gray-400 hover:text-gray-200">Unidades</button>
@@ -884,7 +884,7 @@
         logoutButton.addEventListener('click', async () => { /* ... */ try { await signOut(auth); } catch (error) { console.error("Erro no logout:", error); } });
 
         // --- Lógica de Navegação por Abas ---
-        const tabs = document.querySelectorAll('.tab-button');
+        const tabs = document.querySelectorAll('#main-tabs-nav .tab-button');
         const contents = { 
             'tab-servicos': document.getElementById('content-servicos'), 
             'tab-profissionais': document.getElementById('content-profissionais'), 
@@ -1256,6 +1256,26 @@
         const saveAddAppointmentButton = document.getElementById('save-add-appointment-button');
         let unsubscribeAgenda = null;
 
+        async function populateCaches(userId) {
+            // Garante que os dados locais (clientes, serviços, etc.) estejam carregados antes de usar a agenda.
+            try {
+                if (localServicesCache.length === 0) {
+                    const servicesSnapshot = await getDocs(query(collection(db, "servicos"), where("gestorId", "==", userId)));
+                    localServicesCache = servicesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                }
+                if (localClientsCache.length === 0) {
+                    const clientsSnapshot = await getDocs(query(collection(db, "users"), where("gestorId", "==", userId)));
+                    localClientsCache = clientsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                }
+                 if (localProfessionalsCache.length === 0) {
+                    const profsSnapshot = await getDocs(query(collection(db, "profissionais"), where("gestorId", "==", userId)));
+                    localProfessionalsCache = profsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                }
+            } catch (error) {
+                console.error("Falha ao carregar dados de suporte da agenda:", error);
+            }
+        }
+
         function formatDateForInput(date) {
             const year = date.getFullYear();
             const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -1285,7 +1305,8 @@
             loadAgendaData(auth.currentUser.uid);
         });
         
-        function initializeAgenda(userId) {
+        async function initializeAgenda(userId) {
+            await populateCaches(userId);
             updateDateDisplay();
             loadAgendaData(userId);
         }
@@ -2433,4 +2454,5 @@
     </script>
 </body>
 </html>
+
 
