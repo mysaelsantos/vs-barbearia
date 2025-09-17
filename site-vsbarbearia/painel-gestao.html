@@ -299,7 +299,7 @@
                 </div>
                 <nav class="flex-grow py-4">
                     <ul>
-                        <li><a href="#" class="nav-link active" data-target="content-dashboard"><i class="fas fa-home nav-icon"></i><span class="nav-text">Visão Geral</span></a></li>
+                        <li><a href="#" class="nav-link" data-target="content-dashboard"><i class="fas fa-home nav-icon"></i><span class="nav-text">Visão Geral</span></a></li>
                         <li>
                             <a href="#" class="nav-link has-submenu" data-target="content-agenda"><i class="fas fa-calendar-alt nav-icon"></i><span class="nav-text">Agenda</span></a>
                             <ul class="submenu">
@@ -1063,7 +1063,8 @@
                 authSection.classList.add('hidden');
                 panelSection.classList.remove('hidden');
                 userEmailSpan.textContent = user.email;
-                loadServices(user.uid);
+                // CORRIGIDO: Inicia o painel na Visão Geral (Dashboard)
+                document.querySelector('#sidebar .nav-link[data-target="content-dashboard"]').click();
                 loadAgendaSettings(user.uid);
             } else {
                 authSection.classList.remove('hidden');
@@ -2254,5 +2255,6 @@
     </script>
 </body>
 </html>
+
 
 
