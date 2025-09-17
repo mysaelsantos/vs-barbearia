@@ -1482,11 +1482,11 @@
                 profColumn.dataset.professionalId = prof.id;
 
                 const profHeader = document.createElement('div');
-                profHeader.className = 'professional-header items-center justify-center gap-2';
+                profHeader.className = 'professional-header !h-auto flex-col !py-2';
                 profHeader.innerHTML = `
-                    <span>${prof.nome.split(' ')[0]}</span>
-                    <button data-prof-id="${prof.id}" class="block-day-btn text-xs text-gray-400 hover:text-white" title="Bloquear dia inteiro">
-                        <i class="fas fa-ban"></i>
+                    <span class="font-bold text-white">${prof.nome.split(' ')[0]}</span>
+                    <button data-prof-id="${prof.id}" class="block-day-btn text-xs mt-1 px-2 py-0.5 bg-gray-700/50 hover:bg-gray-700 rounded-md transition-colors" title="Bloquear dia inteiro">
+                        <i class="fas fa-ban mr-1"></i>Bloquear Dia
                     </button>
                 `;
                 profColumn.appendChild(profHeader);
@@ -2675,4 +2675,5 @@
     </script>
 </body>
 </html>
+
 
