@@ -930,6 +930,7 @@
         let localServicesCache = [];
         let localProfessionalsCache = [];
         let localClientsCache = [];
+        let isDragging = false; // Flag para controlar o estado de arrastar
 
 
         // --- Lógica de Autenticação ---
@@ -1552,18 +1553,24 @@
                     card.className = `appointment-card status-bloqueio motivo-${motivo}`;
                     cardContent = `<i class="fas ${motivo === 'almoco' ? 'fa-utensils' : 'fa-coffee'} mr-2"></i> ${appt.servico.nome.toUpperCase()}`;
                     card.dataset.id = appt.id; // Adiciona o ID para ser clicável
-                    card.addEventListener('click', () => openEditBlockModal(appt.id));
+                    card.addEventListener('click', () => {
+                        if (isDragging) return; // Evita abrir modal após arrastar
+                        openEditBlockModal(appt.id);
+                    });
                 } else {
                     card.className = `appointment-card status-${appt.status || 'agendado'}`;
-                cardContent = `
-                    <p class="font-bold">${appt.cliente?.nome || 'Cliente'}</p>
-                    <p class="text-xs">${appt.servico?.nome || 'Serviço'}</p>
-                `;
-                card.dataset.id = appt.id;
-                card.addEventListener('click', () => openEditAppointmentModal(appt.id));
-                // Torna o card arrastável
-                makeDraggable(card);
-            }
+                    cardContent = `
+                        <p class="font-bold">${appt.cliente?.nome || 'Cliente'}</p>
+                        <p class="text-xs">${appt.servico?.nome || 'Serviço'}</p>
+                    `;
+                    card.dataset.id = appt.id;
+                    card.addEventListener('click', () => {
+                        if (isDragging) return; // Evita abrir modal após arrastar
+                        openEditAppointmentModal(appt.id);
+                    });
+                    // Torna o card arrastável
+                    makeDraggable(card);
+                }
             
             card.style.top = `${topPosition}px`;
                 card.style.height = `${height}px`;
@@ -2582,20 +2589,21 @@
             });
         });
 
-        // --- NOVO: LÓGICA DE DRAG AND DROP ---
+        // --- LÓGICA DE DRAG AND DROP ---
         function makeDraggable(element) {
             interact(element)
                 .draggable({
                     inertia: true,
                     modifiers: [
                         interact.modifiers.restrictRect({
-                            restriction: 'parent',
+                            restriction: '#agenda-grid-view', // CORRIGIDO: Restringe ao container da grade
                             endOnly: true
                         })
                     ],
                     autoScroll: true,
                     listeners: {
                         start(event) {
+                            isDragging = true; // ATIVADO: Inicia o arrasto
                             event.target.classList.add('dragging');
                         },
                         move(event) {
@@ -2609,12 +2617,13 @@
                         },
                         end(event) {
                             event.target.classList.remove('dragging');
-                            // Reseta a transformação se não for solto em uma zona válida
-                            if (!event.relatedTarget) {
-                                event.target.style.transform = 'none';
-                                event.target.setAttribute('data-x', 0);
-                                event.target.setAttribute('data-y', 0);
-                            }
+                            // A lógica de resetar a posição visual agora é feita no ondropdeactivate
+                            // para garantir que funcione mesmo se soltar fora de um dropzone.
+
+                            // Usa um timeout para garantir que o evento de 'click' seja processado antes de resetar o flag
+                            setTimeout(() => {
+                                isDragging = false;
+                            }, 100);
                         }
                     }
                 });
@@ -2780,6 +2789,7 @@
     </script>
 </body>
 </html>
+
 
 
 
