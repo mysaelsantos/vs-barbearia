@@ -153,6 +153,7 @@
             height: 40px;
             border-bottom: 1px solid #333;
             box-sizing: border-box;
+            cursor: pointer; /* Adicionado para indicar que os slots são clicáveis */
         }
         .appointment-card {
             position: absolute;
@@ -1491,6 +1492,7 @@
                 panelSection.classList.remove('hidden');
                 userEmailSpan.textContent = user.email;
                 initializeGlobalEventListeners(); 
+                initializeAgendaEventListeners(); // NOVO: Inicializa o listener inteligente da agenda
                 initializeDropzones(); 
                 document.querySelector('#sidebar .nav-link[data-target="content-dashboard"]').click();
                 loadAgendaSettings(user.uid);
@@ -2014,6 +2016,55 @@
         const saveAddAppointmentButton = document.getElementById('save-add-appointment-button');
         let unsubscribeAgenda = null;
 
+        let agendaClickHandlerAttached = false; // Flag para prevenir múltiplos listeners
+        function initializeAgendaEventListeners() {
+            if (agendaClickHandlerAttached) return;
+
+            const agendaGridView = document.getElementById('agenda-grid-view');
+            agendaGridView.addEventListener('click', (e) => {
+                if (isDragging) return; // Ignora o clique se estiver arrastando um evento
+
+                const card = e.target.closest('.appointment-card');
+                const column = e.target.closest('.professional-column');
+
+                if (card) {
+                    // Clicou num agendamento ou bloqueio existente
+                    const id = card.dataset.id;
+                    const appt = agendaState.appointments.find(a => a.id === id);
+                    if (appt) {
+                        if (appt.status === 'bloqueio') {
+                            openEditBlockModal(id);
+                        } else {
+                            openEditAppointmentModal(id);
+                        }
+                    }
+                } else if (column && !e.target.closest('.professional-header')) {
+                    // Clicou num slot vazio
+                    const linesContainer = column.querySelector('div:not(.professional-header)');
+                    if (!linesContainer || !linesContainer.contains(e.target)) return;
+
+                    const professionalId = column.dataset.professionalId;
+                    const rect = linesContainer.getBoundingClientRect();
+                    const y = e.clientY - rect.top;
+
+                    const slotHeight = 40;
+                    const slotIndex = Math.floor(y / slotHeight);
+                    const minutesFromStart = slotIndex * agendaState.interval;
+                    
+                    const startHour = 8;
+                    const newHour = startHour + Math.floor(minutesFromStart / 60);
+                    const newMinute = minutesFromStart % 60;
+
+                    const slotTime = new Date(agendaState.currentDate);
+                    slotTime.setHours(newHour, newMinute, 0, 0);
+                    
+                    openSlotActionModal(professionalId, slotTime);
+                }
+            });
+
+            agendaClickHandlerAttached = true;
+        }
+
         function initializeGlobalEventListeners() {
             prevDayBtn.addEventListener('click', () => {
                 agendaState.currentDate.setDate(agendaState.currentDate.getDate() - 1);
@@ -2048,7 +2099,8 @@
             addAppointmentBtn.addEventListener('click', () => openAddAppointmentModal());
             
             cancelAddAppointmentButton.addEventListener('click', () => addAppointmentModal.classList.add('hidden'));
-            addAppointmentModal.querySelector('form').addEventListener('submit', async (e) => {
+            
+            saveAddAppointmentButton.addEventListener('click', async (e) => {
                 e.preventDefault();
                 const btn = saveAddAppointmentButton;
                 const btnText = btn.querySelector('.btn-text');
@@ -2327,12 +2379,6 @@
                     for (let minute = 0; minute < 60; minute += agendaState.interval) {
                          const line = document.createElement('div');
                          line.className = 'time-slot-line';
-                         line.style.cursor = 'pointer';
-                         line.addEventListener('click', () => {
-                            const slotTime = new Date(agendaState.currentDate);
-                            slotTime.setHours(hour, minute, 0, 0);
-                            openSlotActionModal(prof.id, slotTime);
-                         });
                          linesContainer.appendChild(line);
                     }
                 }
@@ -2380,10 +2426,6 @@
                     card.className = `appointment-card status-bloqueio motivo-${motivo}`;
                     cardContent = `<i class="fas ${motivo === 'almoco' ? 'fa-utensils' : 'fa-coffee'} mr-2"></i> ${(appt.motivo || 'bloqueio').toUpperCase()}`;
                     card.dataset.id = appt.id;
-                    card.addEventListener('click', () => {
-                        if (isDragging) return;
-                        openEditBlockModal(appt.id);
-                    });
                 } else {
                     card.className = `appointment-card status-${appt.status || 'agendado'}`;
                     cardContent = `
@@ -2391,10 +2433,6 @@
                         <p class="text-xs">${appt.servico?.nome || 'Serviço'}</p>
                     `;
                     card.dataset.id = appt.id;
-                    card.addEventListener('click', () => {
-                        if (isDragging) return;
-                        openEditAppointmentModal(appt.id);
-                    });
                     makeDraggable(card);
                 }
             
@@ -3239,6 +3277,7 @@
                             case 'content-servicos': loadServices(user.uid); break;
                             case 'content-profissionais': loadProfessionals(user.uid); break;
                             case 'content-unidades': loadUnits(user.uid); break;
+                            case 'content-clientes': loadClients(user.uid); break; // <-- LINHA ADICIONADA
                             case 'content-planos': loadPlans(user.uid); break;
                             case 'content-metas': loadGoals(user.uid); loadReferralSettings(user.uid); break;
                             case 'content-configuracoes': loadPanelUsers(user.uid); break;
@@ -4194,6 +4233,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
