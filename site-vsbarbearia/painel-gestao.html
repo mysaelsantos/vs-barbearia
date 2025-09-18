@@ -225,6 +225,7 @@
             flex-direction: column;
             position: absolute;
             z-index: 50;
+            border-right: 1px solid #374151; /* Borda adicionada para destaque */
         }
         #sidebar.collapsed {
             transform: translateX(calc(-100% + 70px));
@@ -282,6 +283,10 @@
         #sidebar .nav-icon {
             width: 25px;
             text-align: center;
+            transition: margin-left 0.3s ease; /* Adicionada transição suave */
+        }
+        #sidebar.collapsed .nav-icon {
+            margin-left: 182.5px; /* Compensa a translação para manter o ícone visível e centralizado */
         }
         #main-content {
             overflow-y: auto;
@@ -3889,6 +3894,7 @@
     </script>
 </body>
 </html>
+
 
 
 
