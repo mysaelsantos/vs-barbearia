@@ -211,21 +211,23 @@
 
         /* --- ESTILOS PARA O MENU LATERAL --- */
         #main-container {
-            display: flex;
+            position: relative;
             flex-grow: 1; 
             overflow: hidden;
         }
         #sidebar {
             width: 250px; 
             background-color: #1e1e1e;
-            transition: width 0.3s ease;
+            transition: transform 0.3s ease;
             overflow-x: hidden;
             height: 100%;
             display: flex;
             flex-direction: column;
+            position: absolute;
+            z-index: 50;
         }
         #sidebar.collapsed {
-            width: 70px; 
+            transform: translateX(calc(-100% + 70px));
         }
         #sidebar .nav-link {
             display: flex;
@@ -282,9 +284,9 @@
             text-align: center;
         }
         #main-content {
-            flex-grow: 1;
             overflow-y: auto;
             height: 100%;
+            padding-left: 70px;
         }
         
         /* NOVO: Estilos para as notificações (Toasts) */
@@ -2605,9 +2607,7 @@
                 const q = query(
                     collection(db, "agendamentos"),
                     where("gestorId", "==", userId),
-                    where("status", "==", "finalizado"),
-                    where("dataPagamento", ">=", startDate),
-                    where("dataPagamento", "<=", endDate)
+                    where("status", "==", "finalizado")
                 );
                 
                 const querySnapshot = await getDocs(q);
@@ -2617,7 +2617,14 @@
                 const servicePerformance = {};
                 const clientPerformance = {};
 
-                querySnapshot.forEach(doc => {
+                const agendamentosNoPeriodo = querySnapshot.docs.filter(doc => {
+                    const appt = doc.data();
+                    if (!appt.dataPagamento) return false;
+                    const dataPagamento = appt.dataPagamento.toDate();
+                    return dataPagamento >= startDate && dataPagamento <= endDate;
+                });
+
+                agendamentosNoPeriodo.forEach(doc => {
                     const appt = doc.data();
                     const bruto = appt.valorServico || 0;
                     const comissao = appt.valorComissao || 0;
@@ -3167,9 +3174,11 @@
                             case 'content-configuracoes': loadPanelUsers(user.uid); break;
                         }
                     }
-                }
+                } // Fecha o if(targetId)
             });
         });
+
+// ...
 
         // --- LÓGICA DO DASHBOARD (VISÃO GERAL) ---
         let unsubscribeDashboard = null;
@@ -3180,27 +3189,29 @@
 
             if (unsubscribeDashboard) unsubscribeDashboard();
 
-            const startOfDay = new Date();
-            startOfDay.setHours(0, 0, 0, 0);
-
-            const endOfDay = new Date();
-            endOfDay.setHours(23, 59, 59, 999);
-
             const q = query(
                 collection(db, "agendamentos"),
-                where("gestorId", "==", userId),
-                where("data", ">=", startOfDay),
-                where("data", "<=", endOfDay)
+                where("gestorId", "==", userId)
             );
 
             unsubscribeDashboard = onSnapshot(q, (snapshot) => {
+                const startOfDay = new Date();
+                startOfDay.setHours(0, 0, 0, 0);
+                const endOfDay = new Date();
+                endOfDay.setHours(23, 59, 59, 999);
+
                 let faturacaoDia = 0;
                 let agendamentosHoje = 0;
                 const clientesAtendidos = new Set();
                 const now = new Date();
                 const proximosAgendamentos = [];
 
-                snapshot.forEach(doc => {
+                const agendamentosDoDia = snapshot.docs.filter(doc => {
+                    const data = doc.data().data.toDate();
+                    return data >= startOfDay && data <= endOfDay;
+                });
+
+                agendamentosDoDia.forEach(doc => {
                     const agendamento = {id: doc.id, ...doc.data()};
 
                     if (agendamento.status !== 'cancelado' && agendamento.status !== 'bloqueio') {
@@ -3246,8 +3257,6 @@
             const q = query(
                 collection(db, "agendamentos"),
                 where("gestorId", "==", userId),
-                where("data", ">=", startOfDay),
-                where("data", "<=", endOfDay),
                 where("status", "==", "finalizado")
             );
 
@@ -3256,12 +3265,18 @@
 
             unsubscribeCaixa = onSnapshot(q, (snapshot) => {
                 caixaListBody.innerHTML = ''; 
-                if (snapshot.empty) {
+
+                const comandasDoDia = snapshot.docs.filter(doc => {
+                    const data = doc.data().data.toDate();
+                    return data >= startOfDay && data <= endOfDay;
+                });
+
+                if (comandasDoDia.length === 0) {
                     caixaListBody.innerHTML = '<tr><td colspan="6" class="text-center p-8 text-gray-500">Nenhum serviço finalizado hoje.</td></tr>';
                     return;
                 }
 
-                snapshot.forEach(doc => {
+                comandasDoDia.forEach(doc => {
                     const comanda = doc.data();
                     const valor = comanda.valorServico || 0;
                     const statusPagamento = comanda.pagamentoStatus || 'Pendente';
@@ -3874,5 +3889,8 @@
     </script>
 </body>
 </html>
+
+
+
 
 
