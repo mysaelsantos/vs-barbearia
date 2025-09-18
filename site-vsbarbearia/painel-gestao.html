@@ -14,6 +14,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Interact.js for Drag and Drop -->
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <!-- Chart.js for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: 'Montserrat', sans-serif;
@@ -80,6 +82,11 @@
         }
         .btn-secondary:hover {
             background-color: #444;
+        }
+        .dashboard-period-btn.active {
+            background-color: #fbb62c;
+            color: #111;
+            border-color: #fbb62c;
         }
 
         /* Estilos do Modal */
@@ -402,60 +409,91 @@
                     <div class="min-h-full">
                         
                         <!-- Conteúdo da Visão Geral -->
-                        <div id="content-dashboard" class="p-6">
-                            <h2 class="text-2xl font-bold mb-6 text-gray-300">Resumo de Hoje</h2>
-                            <!-- Container dos Cards -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                                <!-- Card: Faturação do Dia -->
-                                <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg flex items-center space-x-4">
-                                    <div class="bg-green-500/20 p-3 rounded-full">
-                                        <i class="fas fa-dollar-sign fa-lg text-green-400"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-400">Faturação do Dia</p>
-                                        <p id="kpi-faturacao" class="text-2xl font-bold text-gray-100">R$ 0,00</p>
-                                    </div>
+                        <div id="content-dashboard" class="p-6 space-y-8">
+                            <!-- Cabeçalho e Filtros -->
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                <div>
+                                    <h2 class="text-2xl font-bold text-gray-300">Dashboard</h2>
+                                    <p id="dashboard-period" class="text-sm text-gray-500">Análise de desempenho do período selecionado.</p>
                                 </div>
-
-                                <!-- Card: Agendamentos de Hoje -->
-                                <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg flex items-center space-x-4">
-                                    <div class="bg-blue-500/20 p-3 rounded-full">
-                                        <i class="fas fa-calendar-check fa-lg text-blue-400"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-400">Agendamentos de Hoje</p>
-                                        <p id="kpi-agendamentos" class="text-2xl font-bold text-gray-100">0</p>
-                                    </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="month" id="dashboard-month-picker" class="form-input !p-2 !w-auto">
+                                    <button data-period="current" class="dashboard-period-btn btn-secondary !py-2 !px-3 text-sm active">Este Mês</button>
+                                    <button data-period="previous" class="dashboard-period-btn btn-secondary !py-2 !px-3 text-sm">Mês Passado</button>
                                 </div>
-
-                                <!-- Card: Clientes Atendidos -->
-                                <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg flex items-center space-x-4">
-                                    <div class="bg-indigo-500/20 p-3 rounded-full">
-                                        <i class="fas fa-users fa-lg text-indigo-400"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-400">Clientes Atendidos</o>
-                                        <p id="kpi-clientes" class="text-2xl font-bold text-gray-100">0</p>
-                                    </div>
-                                </div>
-
                             </div>
 
-                            <!-- ATUALIZADO: Layout de duas colunas para as listas -->
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-                                <!-- Coluna Próximos Agendamentos -->
-                                <div>
-                                    <h3 class="text-xl font-bold mb-4 text-gray-300">Próximos Agendamentos do Dia</h3>
-                                    <div id="proximos-agendamentos-list" class="space-y-3">
-                                        <div class="bg-[#2a2a2a] p-4 rounded-lg text-center text-gray-500">A carregar...</div>
+                            <!-- Container dos KPIs -->
+                            <div id="dashboard-kpis" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <!-- Card: Faturamento Líquido -->
+                                <div class="bg-[#2a2a2a] p-5 rounded-xl border border-gray-800">
+                                    <div class="flex justify-between items-start">
+                                        <p class="text-sm font-medium text-gray-400">Faturamento Líquido</p>
+                                        <i class="fas fa-dollar-sign text-green-500"></i>
                                     </div>
+                                    <p id="kpi-faturamento" class="text-3xl font-bold text-gray-100 mt-2">R$ 0,00</p>
+                                    <p id="kpi-faturamento-comp" class="text-xs text-gray-500 mt-1">&nbsp;</p>
                                 </div>
-                                <!-- NOVO: Coluna Aniversariantes do Dia -->
-                                <div>
-                                    <h3 class="text-xl font-bold mb-4 text-gray-300">Aniversariantes do Dia</h3>
-                                    <div id="aniversariantes-list" class="space-y-3">
-                                        <div class="bg-[#2a2a2a] p-4 rounded-lg text-center text-gray-500">A carregar...</div>
+                                <!-- Card: Total de Atendimentos -->
+                                <div class="bg-[#2a2a2a] p-5 rounded-xl border border-gray-800">
+                                    <div class="flex justify-between items-start">
+                                        <p class="text-sm font-medium text-gray-400">Total de Atendimentos</p>
+                                        <i class="fas fa-calendar-check text-blue-500"></i>
+                                    </div>
+                                    <p id="kpi-atendimentos" class="text-3xl font-bold text-gray-100 mt-2">0</p>
+                                    <p id="kpi-atendimentos-comp" class="text-xs text-gray-500 mt-1">&nbsp;</p>
+                                </div>
+                                <!-- Card: Ticket Médio -->
+                                <div class="bg-[#2a2a2a] p-5 rounded-xl border border-gray-800">
+                                    <div class="flex justify-between items-start">
+                                        <p class="text-sm font-medium text-gray-400">Ticket Médio</p>
+                                        <i class="fas fa-receipt text-yellow-500"></i>
+                                    </div>
+                                    <p id="kpi-ticket" class="text-3xl font-bold text-gray-100 mt-2">R$ 0,00</p>
+                                    <p id="kpi-ticket-comp" class="text-xs text-gray-500 mt-1">&nbsp;</p>
+                                </div>
+                                <!-- Card: Novos Clientes -->
+                                <div class="bg-[#2a2a2a] p-5 rounded-xl border border-gray-800">
+                                    <div class="flex justify-between items-start">
+                                        <p class="text-sm font-medium text-gray-400">Novos Clientes</p>
+                                        <i class="fas fa-user-plus text-indigo-500"></i>
+                                    </div>
+                                    <p id="kpi-novos-clientes" class="text-3xl font-bold text-gray-100 mt-2">0</p>
+                                    <p id="kpi-novos-clientes-comp" class="text-xs text-gray-500 mt-1">&nbsp;</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Gráfico e Tabela de Profissionais -->
+                            <div class="grid grid-cols-1 xl:grid-cols-5 gap-8">
+                                <!-- Gráfico -->
+                                <div class="bg-[#2a2a2a] p-6 rounded-xl border border-gray-800 xl:col-span-3">
+                                    <h3 class="text-lg font-bold text-gray-300 mb-4">Faturamento Bruto vs Comissões</h3>
+                                    <canvas id="faturamento-chart"></canvas>
+                                </div>
+
+                                <!-- Tabela de Profissionais -->
+                                <div class="bg-[#2a2a2a] p-6 rounded-xl border border-gray-800 xl:col-span-2">
+                                    <h3 class="text-lg font-bold text-gray-300 mb-4">Desempenho dos Profissionais</h3>
+                                    <!-- Abas da Tabela -->
+                                    <div class="border-b border-gray-700 mb-4">
+                                        <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                                            <button id="tab-prof-faturamento" class="tab-button active">Faturamento</button>
+                                            <button id="tab-prof-produtividade" class="tab-button text-gray-400 hover:text-gray-200">Produtividade</button>
+                                        </nav>
+                                    </div>
+                                    <!-- Tabela -->
+                                    <div class="overflow-x-auto max-h-96">
+                                        <table class="w-full text-sm text-left text-gray-400">
+                                            <thead class="text-xs text-gray-400 uppercase bg-[#333] sticky top-0">
+                                                <tr id="performance-table-header">
+                                                    <th scope="col" class="px-4 py-3">Nome</th>
+                                                    <th scope="col" class="px-4 py-3 text-right">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="performance-table-body">
+                                                <!-- Conteúdo dinâmico -->
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
@@ -3186,65 +3224,276 @@
 // ...
 
         // --- LÓGICA DO DASHBOARD (VISÃO GERAL) ---
-        let unsubscribeDashboard = null;
+        let dashboardChart = null;
         async function loadDashboardData(userId) {
-            if (localServicesCache.length === 0 || localProfessionalsCache.length === 0 || localClientsCache.length === 0) {
-                await populateCaches(userId);
-            }
+            
+            const periodButtons = document.querySelectorAll('.dashboard-period-btn');
+            const monthPicker = document.getElementById('dashboard-month-picker');
 
-            if (unsubscribeDashboard) unsubscribeDashboard();
+            const updateDashboardForPeriod = async (startDate, endDate) => {
+                const previousStartDate = new Date(startDate);
+                previousStartDate.setMonth(previousStartDate.getMonth() - 1);
+                const previousEndDate = new Date(endDate);
+                previousEndDate.setMonth(previousEndDate.getMonth() - 1);
+                
+                // Obter dados do período atual e anterior em paralelo
+                const [currentData, previousData, newClientsData, previousNewClientsData] = await Promise.all([
+                    fetchDashboardMetrics(userId, startDate, endDate),
+                    fetchDashboardMetrics(userId, previousStartDate, previousEndDate),
+                    fetchNewClientsCount(userId, startDate, endDate),
+                    fetchNewClientsCount(userId, previousStartDate, previousEndDate)
+                ]);
 
+                currentData.newClients = newClientsData;
+                previousData.newClients = previousNewClientsData;
+                
+                renderDashboardKPIs(currentData, previousData);
+                renderPerformanceChart(currentData.dailyBreakdown);
+                renderProfessionalsTable(currentData.professionalsBreakdown, 'faturamento');
+            };
+
+            const setupListeners = () => {
+                periodButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        periodButtons.forEach(btn => btn.classList.remove('active'));
+                        button.classList.add('active');
+                        monthPicker.value = '';
+
+                        const period = button.dataset.period;
+                        const today = new Date();
+                        let startDate, endDate;
+
+                        if (period === 'current') {
+                            startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                            endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
+                        } else { // previous
+                            startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                            endDate = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59);
+                        }
+                        document.getElementById('dashboard-period').textContent = `Análise de ${startDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric'})}`;
+                        updateDashboardForPeriod(startDate, endDate);
+                    });
+                });
+
+                monthPicker.addEventListener('change', () => {
+                    periodButtons.forEach(btn => btn.classList.remove('active'));
+                    const [year, month] = monthPicker.value.split('-').map(Number);
+                    const startDate = new Date(year, month - 1, 1);
+                    const endDate = new Date(year, month, 0, 23, 59, 59);
+                    document.getElementById('dashboard-period').textContent = `Análise de ${startDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric'})}`;
+                    updateDashboardForPeriod(startDate, endDate);
+                });
+            };
+
+            const setupProfessionalTableTabs = (data) => {
+                const tabFaturamento = document.getElementById('tab-prof-faturamento');
+                const tabProdutividade = document.getElementById('tab-prof-produtividade');
+                
+                tabFaturamento.onclick = () => {
+                    tabFaturamento.classList.add('active');
+                    tabProdutividade.classList.remove('active');
+                    renderProfessionalsTable(data.professionalsBreakdown, 'faturamento');
+                };
+                tabProdutividade.onclick = () => {
+                    tabProdutividade.classList.add('active');
+                    tabFaturamento.classList.remove('active');
+                    renderProfessionalsTable(data.professionalsBreakdown, 'produtividade');
+                };
+            };
+            
+            // Inicialização
+            setupListeners();
+            const today = new Date();
+            const startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            const endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
+            document.getElementById('dashboard-period').textContent = `Análise de ${startDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric'})}`;
+            
+            const initialData = await fetchDashboardMetrics(userId, startDate, endDate);
+            setupProfessionalTableTabs(initialData);
+            document.querySelector('.dashboard-period-btn[data-period="current"]').click(); // Trigger inicial
+        }
+
+        async function fetchDashboardMetrics(userId, startDate, endDate) {
             const q = query(
                 collection(db, "agendamentos"),
-                where("gestorId", "==", userId)
+                where("gestorId", "==", userId),
+                where("status", "==", "finalizado"),
+                where("dataPagamento", ">=", startDate),
+                where("dataPagamento", "<=", endDate)
             );
+            
+            const snapshot = await getDocs(q);
+            
+            let totalLiquido = 0;
+            let totalAtendimentos = 0;
+            const dailyBreakdown = {};
+            const professionalsBreakdown = {};
+            
+            snapshot.forEach(doc => {
+                const appt = doc.data();
+                const bruto = appt.valorServico || 0;
+                const comissao = appt.valorComissao || 0;
+                const liquido = bruto - comissao;
+                const profId = appt.barbeiro.id;
 
-            unsubscribeDashboard = onSnapshot(q, (snapshot) => {
-                const startOfDay = new Date();
-                startOfDay.setHours(0, 0, 0, 0);
-                const endOfDay = new Date();
-                endOfDay.setHours(23, 59, 59, 999);
+                totalLiquido += liquido;
+                totalAtendimentos++;
 
-                let faturacaoDia = 0;
-                let agendamentosHoje = 0;
-                const clientesAtendidos = new Set();
-                const now = new Date();
-                const proximosAgendamentos = [];
+                // Para o gráfico diário
+                const day = appt.dataPagamento.toDate().getDate();
+                if (!dailyBreakdown[day]) dailyBreakdown[day] = { faturamento: 0, comissao: 0 };
+                dailyBreakdown[day].faturamento += bruto;
+                dailyBreakdown[day].comissao += comissao;
 
-                const agendamentosDoDia = snapshot.docs.filter(doc => {
-                    const data = doc.data().data.toDate();
-                    return data >= startOfDay && data <= endOfDay;
-                });
+                // Para a tabela de profissionais
+                if (!professionalsBreakdown[profId]) {
+                    professionalsBreakdown[profId] = {
+                        nome: appt.barbeiro.nome,
+                        faturamento: 0,
+                        atendimentos: 0,
+                        servicos: 0,
+                        produtos: 0 // Placeholder
+                    };
+                }
+                professionalsBreakdown[profId].faturamento += bruto;
+                professionalsBreakdown[profId].atendimentos++;
+                professionalsBreakdown[profId].servicos += bruto; // Simplificado, assumindo tudo é serviço
+            });
 
-                agendamentosDoDia.forEach(doc => {
-                    const agendamento = {id: doc.id, ...doc.data()};
+            return {
+                totalLiquido,
+                totalAtendimentos,
+                ticketMedio: totalAtendimentos > 0 ? totalLiquido / totalAtendimentos : 0,
+                dailyBreakdown,
+                professionalsBreakdown
+            };
+        }
 
-                    if (agendamento.status !== 'cancelado' && agendamento.status !== 'bloqueio') {
-                        agendamentosHoje++;
-                    }
-                    if (agendamento.status === 'finalizado' && agendamento.servico?.id) {
-                        clientesAtendidos.add(agendamento.cliente.id);
-                        const servico = localServicesCache.find(s => s.id === agendamento.servico.id);
-                        if (servico) { faturacaoDia += servico.promocao || servico.valor || 0; }
-                    }
+        async function fetchNewClientsCount(userId, startDate, endDate) {
+             const q = query(
+                collection(db, "users"),
+                where("gestorId", "==", userId),
+                where("createdAt", ">=", startDate),
+                where("createdAt", "<=", endDate)
+            );
+            const snapshot = await getDocs(q);
+            return snapshot.size;
+        }
 
-                    const apptDate = agendamento.data.toDate();
-                    if (apptDate >= now && agendamento.status !== 'finalizado' && agendamento.status !== 'cancelado' && agendamento.status !== 'bloqueio') {
-                        proximosAgendamentos.push(agendamento);
-                    }
-                });
-
-                document.getElementById('kpi-faturacao').textContent = `R$ ${faturacaoDia.toFixed(2).replace('.', ',')}`;
-                document.getElementById('kpi-agendamentos').textContent = agendamentosHoje;
-                document.getElementById('kpi-clientes').textContent = clientesAtendidos.size;
-
-                renderProximosAgendamentos(proximosAgendamentos);
+        function renderDashboardKPIs(currentData, previousData) {
+            const formatCurrency = (value) => `R$ ${value.toFixed(2).replace('.', ',')}`;
+            
+            const renderComparison = (current, previous) => {
+                if (previous === 0 && current > 0) return `<span class="text-green-500"><i class="fas fa-arrow-up"></i> Novo</span>`;
+                if (previous === 0) return `<span>-</span>`;
                 
-                renderAniversariantes();
+                const percentageChange = ((current - previous) / previous) * 100;
+                const colorClass = percentageChange >= 0 ? 'text-green-500' : 'text-red-500';
+                const iconClass = percentageChange >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
 
-            }, (error) => {
-                console.error("Erro ao carregar dados do dashboard:", error);
-                showToast('Erro ao carregar dados do dashboard.', 'error');
+                return `<span class="${colorClass}"><i class="fas ${iconClass}"></i> ${percentageChange.toFixed(1).replace('.',',')}% vs mês anterior</span>`;
+            };
+
+            document.getElementById('kpi-faturamento').textContent = formatCurrency(currentData.totalLiquido);
+            document.getElementById('kpi-faturamento-comp').innerHTML = renderComparison(currentData.totalLiquido, previousData.totalLiquido);
+
+            document.getElementById('kpi-atendimentos').textContent = currentData.totalAtendimentos;
+            document.getElementById('kpi-atendimentos-comp').innerHTML = renderComparison(currentData.totalAtendimentos, previousData.totalAtendimentos);
+
+            document.getElementById('kpi-ticket').textContent = formatCurrency(currentData.ticketMedio);
+            document.getElementById('kpi-ticket-comp').innerHTML = renderComparison(currentData.ticketMedio, previousData.ticketMedio);
+            
+            document.getElementById('kpi-novos-clientes').textContent = currentData.newClients;
+            document.getElementById('kpi-novos-clientes-comp').innerHTML = renderComparison(currentData.newClients, previousData.newClients);
+        }
+
+        function renderPerformanceChart(dailyData) {
+            const ctx = document.getElementById('faturamento-chart').getContext('2d');
+            
+            const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+            const labels = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+            
+            const faturamentoData = labels.map(day => dailyData[day]?.faturamento || 0);
+            const comissaoData = labels.map(day => dailyData[day]?.comissao || 0);
+
+            if (dashboardChart) {
+                dashboardChart.destroy();
+            }
+
+            dashboardChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Faturamento Bruto',
+                            data: faturamentoData,
+                            backgroundColor: 'rgba(52, 211, 153, 0.6)', // green-400
+                            borderColor: 'rgba(52, 211, 153, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Comissões',
+                            data: comissaoData,
+                            backgroundColor: 'rgba(239, 68, 68, 0.6)', // red-500
+                            borderColor: 'rgba(239, 68, 68, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        y: { beginAtZero: true, ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                        x: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                    },
+                    plugins: { legend: { labels: { color: '#e5e7eb' } } }
+                }
+            });
+        }
+        
+        function renderProfessionalsTable(professionalsData, mode = 'faturamento') {
+            const tableHeader = document.getElementById('performance-table-header');
+            const tableBody = document.getElementById('performance-table-body');
+            tableBody.innerHTML = '';
+            
+            const sortedData = Object.values(professionalsData).sort((a, b) => {
+                if (mode === 'faturamento') return b.faturamento - a.faturamento;
+                return b.atendimentos - a.atendimentos;
+            });
+
+            if (mode === 'faturamento') {
+                tableHeader.innerHTML = `
+                    <th scope="col" class="px-4 py-3">Nome</th>
+                    <th scope="col" class="px-4 py-3 text-right">Serviços</th>
+                    <th scope="col" class="px-4 py-3 text-right">Produtos</th>
+                    <th scope="col" class="px-4 py-3 text-right">Total</th>`;
+            } else { // produtividade
+                tableHeader.innerHTML = `
+                    <th scope="col" class="px-4 py-3">Nome</th>
+                    <th scope="col" class="px-4 py-3 text-right">Atendimentos</th>`;
+            }
+            
+            if(sortedData.length === 0){
+                const colspan = mode === 'faturamento' ? 4 : 2;
+                tableBody.innerHTML = `<tr><td colspan="${colspan}" class="text-center p-4">Nenhum dado.</td></tr>`;
+                return;
+            }
+
+            sortedData.forEach(prof => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-700';
+                if (mode === 'faturamento') {
+                    row.innerHTML = `
+                        <td class="px-4 py-3 font-medium text-white">${prof.nome}</td>
+                        <td class="px-4 py-3 text-right">R$ ${prof.servicos.toFixed(2).replace('.',',')}</td>
+                        <td class="px-4 py-3 text-right text-gray-500">R$ ${prof.produtos.toFixed(2).replace('.',',')}</td>
+                        <td class="px-4 py-3 font-bold text-primary text-right">R$ ${prof.faturamento.toFixed(2).replace('.',',')}</td>`;
+                } else {
+                    row.innerHTML = `
+                        <td class="px-4 py-3 font-medium text-white">${prof.nome}</td>
+                        <td class="px-4 py-3 font-bold text-primary text-right">${prof.atendimentos}</td>`;
+                }
+                tableBody.appendChild(row);
             });
         }
         
@@ -3894,6 +4143,7 @@
     </script>
 </body>
 </html>
+
 
 
 
