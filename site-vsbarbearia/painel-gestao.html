@@ -434,6 +434,15 @@
                                     <p id="kpi-faturamento" class="text-3xl font-bold text-gray-100 mt-2">R$ 0,00</p>
                                     <p id="kpi-faturamento-comp" class="text-xs text-gray-500 mt-1">&nbsp;</p>
                                 </div>
+                                <!-- Card: Comissões Pagas (NOVO) -->
+                                <div class="bg-[#2a2a2a] p-5 rounded-xl border border-gray-800">
+                                    <div class="flex justify-between items-start">
+                                        <p class="text-sm font-medium text-gray-400">Comissões Pagas</p>
+                                        <i class="fas fa-hand-holding-usd text-red-500"></i>
+                                    </div>
+                                    <p id="kpi-comissoes" class="text-3xl font-bold text-gray-100 mt-2">R$ 0,00</p>
+                                    <p id="kpi-comissoes-comp" class="text-xs text-gray-500 mt-1">&nbsp;</p>
+                                </div>
                                 <!-- Card: Total de Atendimentos -->
                                 <div class="bg-[#2a2a2a] p-5 rounded-xl border border-gray-800">
                                     <div class="flex justify-between items-start">
@@ -452,8 +461,8 @@
                                     <p id="kpi-ticket" class="text-3xl font-bold text-gray-100 mt-2">R$ 0,00</p>
                                     <p id="kpi-ticket-comp" class="text-xs text-gray-500 mt-1">&nbsp;</p>
                                 </div>
-                                <!-- Card: Novos Clientes -->
-                                <div class="bg-[#2a2a2a] p-5 rounded-xl border border-gray-800">
+                                <!-- Card: Novos Clientes (AJUSTADO PARA OCUPAR ESPAÇO) -->
+                                <div class="bg-[#2a2a2a] p-5 rounded-xl border border-gray-800 sm:col-span-2 lg:col-span-1">
                                     <div class="flex justify-between items-start">
                                         <p class="text-sm font-medium text-gray-400">Novos Clientes</p>
                                         <i class="fas fa-user-plus text-indigo-500"></i>
@@ -494,6 +503,24 @@
                                                 <!-- Conteúdo dinâmico -->
                                             </tbody>
                                         </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- NOVAS SEÇÕES: Próximos Agendamentos e Aniversariantes -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <!-- Próximos Agendamentos -->
+                                <div class="bg-[#2a2a2a] p-6 rounded-xl border border-gray-800">
+                                    <h3 class="text-lg font-bold text-gray-300 mb-4">Próximos Agendamentos de Hoje</h3>
+                                    <div id="proximos-agendamentos-list" class="space-y-3 max-h-96 overflow-y-auto">
+                                        <!-- Conteúdo dinâmico -->
+                                    </div>
+                                </div>
+                                <!-- Aniversariantes do Dia -->
+                                <div class="bg-[#2a2a2a] p-6 rounded-xl border border-gray-800">
+                                    <h3 class="text-lg font-bold text-gray-300 mb-4">Aniversariantes do Dia</h3>
+                                    <div id="aniversariantes-list" class="space-y-3 max-h-96 overflow-y-auto">
+                                        <!-- Conteúdo dinâmico -->
                                     </div>
                                 </div>
                             </div>
@@ -3237,11 +3264,12 @@
                 previousEndDate.setMonth(previousEndDate.getMonth() - 1);
                 
                 // Obter dados do período atual e anterior em paralelo
-                const [currentData, previousData, newClientsData, previousNewClientsData] = await Promise.all([
+                const [currentData, previousData, newClientsData, previousNewClientsData, appointmentsToday] = await Promise.all([
                     fetchDashboardMetrics(userId, startDate, endDate),
                     fetchDashboardMetrics(userId, previousStartDate, previousEndDate),
                     fetchNewClientsCount(userId, startDate, endDate),
-                    fetchNewClientsCount(userId, previousStartDate, previousEndDate)
+                    fetchNewClientsCount(userId, previousStartDate, previousEndDate),
+                    fetchAppointmentsForToday(userId) // NOVO
                 ]);
 
                 currentData.newClients = newClientsData;
@@ -3250,6 +3278,9 @@
                 renderDashboardKPIs(currentData, previousData);
                 renderPerformanceChart(currentData.dailyBreakdown);
                 renderProfessionalsTable(currentData.professionalsBreakdown, 'faturamento');
+                // NOVAS FUNÇÕES DE RENDERIZAÇÃO
+                renderProximosAgendamentos(appointmentsToday);
+                renderAniversariantes();
             };
 
             const setupListeners = () => {
@@ -3325,6 +3356,7 @@
             const snapshot = await getDocs(q);
             
             let totalLiquido = 0;
+            let totalComissao = 0;
             let totalAtendimentos = 0;
             const dailyBreakdown = {};
             const professionalsBreakdown = {};
@@ -3337,6 +3369,7 @@
                 const profId = appt.barbeiro.id;
 
                 totalLiquido += liquido;
+                totalComissao += comissao; // NOVO
                 totalAtendimentos++;
 
                 // Para o gráfico diário
@@ -3363,6 +3396,7 @@
             return {
                 totalLiquido,
                 totalAtendimentos,
+                totalComissao, // NOVO
                 ticketMedio: totalAtendimentos > 0 ? totalLiquido / totalAtendimentos : 0,
                 dailyBreakdown,
                 professionalsBreakdown
@@ -3396,6 +3430,9 @@
 
             document.getElementById('kpi-faturamento').textContent = formatCurrency(currentData.totalLiquido);
             document.getElementById('kpi-faturamento-comp').innerHTML = renderComparison(currentData.totalLiquido, previousData.totalLiquido);
+
+            document.getElementById('kpi-comissoes').textContent = formatCurrency(currentData.totalComissao);
+            document.getElementById('kpi-comissoes-comp').innerHTML = renderComparison(currentData.totalComissao, previousData.totalComissao);
 
             document.getElementById('kpi-atendimentos').textContent = currentData.totalAtendimentos;
             document.getElementById('kpi-atendimentos-comp').innerHTML = renderComparison(currentData.totalAtendimentos, previousData.totalAtendimentos);
@@ -3789,6 +3826,20 @@
             }
         }
 
+        async function fetchAppointmentsForToday(userId) {
+            const now = new Date();
+            const endOfDay = new Date(now);
+            endOfDay.setHours(23, 59, 59, 999);
+            const q = query(
+                collection(db, "agendamentos"),
+                where("gestorId", "==", userId),
+                where("data", ">=", now),
+                where("data", "<=", endOfDay)
+            );
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+        }
+
         // --- LÓGICA DOS MODAIS DA AGENDA (RESTABELECIDA) ---
         const slotActionModal = document.getElementById('slot-action-modal');
         const closeSlotActionModalBtn = document.getElementById('close-slot-action-modal');
@@ -4143,6 +4194,7 @@
     </script>
 </body>
 </html>
+
 
 
 
