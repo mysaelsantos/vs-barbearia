@@ -300,6 +300,7 @@
             overflow-y: auto;
             height: 100%;
             padding-left: 70px;
+            transition: padding-left 0.3s ease; /* Transição adicionada */
         }
         
         /* NOVO: Estilos para as notificações (Toasts) */
@@ -336,6 +337,22 @@
         .toast.error { border-left-color: #ef4444; } /* red-500 */
         .toast.info { border-left-color: #3b82f6; } /* blue-500 */
 
+        /* NOVO: Estilização da barra de rolagem */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #4a4a4a;
+            border-radius: 10px;
+            border: 2px solid #1e1e1e;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: #5a5a5a;
+        }
     </style>
 </head>
 <body class="h-full bg-[#111111]">
@@ -385,6 +402,7 @@
                                 <li><a href="#" class="nav-link" data-target="content-agenda">Agenda Diária</a></li>
                                 <li><a href="#" class="nav-link" data-target="content-caixa">Frente de Caixa</a></li>
                                 <li><a href="#" class="nav-link" data-target="content-relatorios">Relatórios</a></li>
+                                <li><a href="#" class="nav-link" data-target="content-agenda-settings">Configurações da Agenda</a></li>
                             </ul>
                         </li>
                          <li>
@@ -527,278 +545,326 @@
                             </div>
                         </div>
 
-                        <!-- Conteúdo da Aba Serviços -->
-                        <div id="content-servicos" class="hidden">
-                            <h1 class="text-2xl font-bold text-primary mb-6">Gerenciar Serviços</h1>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                                    <h3 class="text-lg font-bold mb-4">Adicionar Novo Serviço</h3>
-                                    <form id="add-service-form" class="space-y-4">
-                                        <input type="text" id="service-name" required placeholder="Nome do Serviço" class="form-input w-full">
-                                        <input type="number" step="0.01" id="service-value" required placeholder="Valor (R$)" class="form-input w-full">
-                                        <input type="number" step="0.01" id="service-promo-value" placeholder="Valor Promocional (Opcional)" class="form-input w-full">
-                                        <input type="number" id="service-duration" required placeholder="Duração (min)" class="form-input w-full">
-                                        <button type="submit" class="w-full justify-center btn-primary">
-                                            <span class="btn-text">Salvar Serviço</span>
-                                            <div class="loader hidden"></div>
-                                        </button>
-                                    </form>
+                        <!-- Conteúdo da Agenda -->
+                        <div id="content-agenda" class="hidden p-6 space-y-6">
+                            <!-- Cabeçalho da Agenda e Controles de Data -->
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                <div>
+                                    <h2 id="agenda-title" class="text-2xl font-bold text-gray-300">Agenda - Carregando...</h2>
+                                    <p class="text-sm text-gray-500">Visualize e gerencie os horários.</p>
                                 </div>
-                                <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                                    <h3 class="text-lg font-bold mb-4">Serviços Cadastrados</h3>
-                                    <div id="services-list" class="space-y-4">
-                                        <p id="loading-services" class="text-gray-400">A carregar serviços...</p>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <button id="prev-day-btn" class="btn-secondary !p-2.5" title="Dia Anterior"><i class="fas fa-chevron-left"></i></button>
+                                    <input type="date" id="date-picker" class="form-input !p-2 w-auto">
+                                    <button id="next-day-btn" class="btn-secondary !p-2.5" title="Próximo Dia"><i class="fas fa-chevron-right"></i></button>
+                                </div>
+                            </div>
+                            
+                            <!-- Filtros e Ações -->
+                            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-[#2a2a2a] p-4 rounded-xl border border-gray-800">
+                                <div>
+                                    <label for="professional-filter" class="text-sm text-gray-400 mr-2">Filtrar por profissional:</label>
+                                    <select id="professional-filter" class="form-select !w-auto">
+                                        <option value="all">Todos Profissionais</option>
+                                    </select>
+                                </div>
+                                <button id="add-appointment-btn" class="btn-primary">
+                                    <i class="fas fa-plus"></i> Novo Agendamento
+                                </button>
+                            </div>
+
+                            <!-- Container da Grade da Agenda -->
+                            <div id="agenda-container" class="bg-[#2a2a2a] p-4 rounded-xl border border-gray-800">
+                                <div id="loading-agenda" class="text-center py-16 text-gray-500">
+                                    <div class="loader mx-auto" style="width: 40px; height: 40px; border-width: 4px;"></div>
+                                    <p class="mt-4">A carregar agenda...</p>
+                                </div>
+                                <div id="agenda-grid-view" class="hidden">
+                                    <!-- A grade da agenda será renderizada aqui pelo JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SEÇÕES DE CADASTRO ADICIONADAS PARA CORREÇÃO -->
+
+                        <!-- Conteúdo da Aba Serviços -->
+                        <div id="content-servicos" class="hidden p-6">
+                            <h1 class="text-2xl font-bold text-primary mb-6">Gerenciar Serviços</h1>
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                <div class="lg:col-span-1">
+                                    <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
+                                        <h3 class="text-lg font-bold text-gray-300 mb-4">Adicionar Novo Serviço</h3>
+                                        <form id="add-service-form" class="space-y-4">
+                                            <input type="text" id="service-name" required placeholder="Nome do Serviço" class="form-input w-full">
+                                            <input type="number" step="0.01" id="service-value" required placeholder="Valor (R$)" class="form-input w-full">
+                                            <input type="number" step="0.01" id="service-promo-value" placeholder="Valor Promocional (Opcional)" class="form-input w-full">
+                                            <input type="number" id="service-duration" required placeholder="Duração (minutos)" class="form-input w-full">
+                                            <button type="submit" class="w-full justify-center btn-primary">
+                                                <span class="btn-text">Salvar Serviço</span>
+                                                <div class="loader hidden"></div>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                                <div class="lg:col-span-2">
+                                    <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
+                                        <h3 class="text-lg font-bold text-gray-300 mb-4">Serviços Cadastrados</h3>
+                                        <div id="services-list" class="space-y-4">
+                                            <p id="loading-services">A carregar serviços...</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Conteúdo da Aba Profissionais -->
-                        <div id="content-profissionais" class="hidden">
+                        <div id="content-profissionais" class="hidden p-6">
                             <h1 class="text-2xl font-bold text-primary mb-6">Gerenciar Profissionais</h1>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                                    <h3 class="text-lg font-bold mb-4">Adicionar Novo Profissional</h3>
-                                    <form id="add-professional-form" class="space-y-4">
-                                        <input type="text" id="professional-name" required placeholder="Nome do Profissional" class="form-input w-full">
-                                        <input type="text" id="professional-function" required placeholder="Função" class="form-input w-full">
-                                        <input type="url" id="professional-photo" placeholder="URL da Foto (Opcional)" class="form-input w-full">
-                                        <input type="number" id="professional-commission-services" step="1" min="0" max="100" placeholder="Comissão Serviços (%)" class="form-input w-full">
-                                        <input type="number" id="professional-commission-products" step="1" min="0" max="100" placeholder="Comissão Produtos (%)" class="form-input w-full">
-                                        <button type="submit" class="w-full justify-center btn-primary">
-                                            <span class="btn-text">Salvar Profissional</span>
-                                            <div class="loader hidden"></div>
-                                        </button>
-                                    </form>
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                <div class="lg:col-span-1">
+                                    <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
+                                        <h3 class="text-lg font-bold text-gray-300 mb-4">Adicionar Novo Profissional</h3>
+                                        <form id="add-professional-form" class="space-y-4">
+                                            <input type="text" id="professional-name" required placeholder="Nome do Profissional" class="form-input w-full">
+                                            <input type="text" id="professional-function" required placeholder="Função" class="form-input w-full">
+                                            <input type="url" id="professional-photo" placeholder="URL da Foto (Opcional)" class="form-input w-full">
+                                            <input type="number" id="professional-commission-services" step="1" min="0" max="100" placeholder="Comissão Serviços (%)" class="form-input w-full">
+                                            <input type="number" id="professional-commission-products" step="1" min="0" max="100" placeholder="Comissão Produtos (%)" class="form-input w-full">
+                                            <button type="submit" class="w-full justify-center btn-primary">
+                                                <span class="btn-text">Salvar Profissional</span>
+                                                <div class="loader hidden"></div>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
-                                <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                                    <h3 class="text-lg font-bold mb-4">Profissionais Cadastrados</h3>
-                                    <div id="professionals-list" class="space-y-4">
-                                        <p id="loading-professionals" class="text-gray-400">A carregar profissionais...</p>
+                                <div class="lg:col-span-2">
+                                    <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
+                                        <h3 class="text-lg font-bold text-gray-300 mb-4">Profissionais Cadastrados</h3>
+                                        <div id="professionals-list" class="space-y-4">
+                                            <p id="loading-professionals">A carregar profissionais...</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Conteúdo da Aba Unidades -->
-                        <div id="content-unidades" class="hidden">
+                        <div id="content-unidades" class="hidden p-6">
                             <h1 class="text-2xl font-bold text-primary mb-6">Gerenciar Unidades</h1>
-                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                                    <h3 class="text-lg font-bold mb-4">Adicionar Unidade</h3>
-                                    <form id="add-unit-form" class="space-y-4">
-                                        <input type="text" id="unit-name" required placeholder="Nome da Unidade" class="form-input w-full">
-                                        <input type="text" id="unit-address" required placeholder="Endereço" class="form-input w-full">
-                                        <input type="url" id="unit-photo" placeholder="URL da Foto (Opcional)" class="form-input w-full">
-                                        <input type="url" id="unit-maps" placeholder="Link do Google Maps (Opcional)" class="form-input w-full">
-                                        <button type="submit" class="w-full justify-center btn-primary">
-                                            <span class="btn-text">Salvar Unidade</span>
-                                            <div class="loader hidden"></div>
-                                        </button>
-                                    </form>
-                                </div>
-                                <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                                    <h3 class="text-lg font-bold mb-4">Unidades Cadastradas</h3>
-                                    <div id="units-list" class="space-y-4">
-                                        <p id="loading-units" class="text-gray-400">A carregar unidades...</p>
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                <div class="lg:col-span-1">
+                                    <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
+                                        <h3 class="text-lg font-bold text-gray-300 mb-4">Adicionar Nova Unidade</h3>
+                                        <form id="add-unit-form" class="space-y-4">
+                                            <input type="text" id="unit-name" required placeholder="Nome da Unidade" class="form-input w-full">
+                                            <input type="text" id="unit-address" required placeholder="Endereço" class="form-input w-full">
+                                            <input type="url" id="unit-photo" placeholder="URL da Foto (Opcional)" class="form-input w-full">
+                                            <input type="url" id="unit-maps" placeholder="Link do Google Maps (Opcional)" class="form-input w-full">
+                                            <button type="submit" class="w-full justify-center btn-primary">
+                                                <span class="btn-text">Salvar Unidade</span>
+                                                <div class="loader hidden"></div>
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Conteúdo da Aba Agenda -->
-                        <div id="content-agenda" class="hidden p-6">
-                            <div class="bg-[#1e1e1e] rounded-lg border border-gray-800">
-                                <!-- Cabeçalho da Agenda -->
-                                <div class="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-gray-700">
-                                    <h3 id="agenda-title" class="text-lg font-bold text-primary">Agenda</h3>
-                                    <div class="flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
-                                        <select id="professional-filter" class="form-select !p-2">
-                                            <option value="all">Todos Profissionais</option>
-                                        </select>
-                                        <button id="prev-day-btn" class="btn-secondary px-3 py-2"><i class="fas fa-chevron-left"></i></button>
-                                        <input type="date" id="date-picker" class="form-input !p-2 text-center">
-                                        <button id="next-day-btn" class="btn-secondary px-3 py-2"><i class="fas fa-chevron-right"></i></button>
-                                        <button id="add-appointment-btn" class="btn-primary"><i class="fas fa-plus mr-2"></i>Agendamento</button>
-                                    </div>
-                                </div>
-                                <!-- Container da Grade da Agenda -->
-                                <div id="agenda-container" class="p-4">
-                                     <div id="loading-agenda" class="text-center p-8">
-                                        <div class="loader mx-auto mb-4" style="width: 30px; height: 30px;"></div>
-                                        <p class="text-gray-400">A carregar agenda...</p>
-                                    </div>
-                                    <div id="agenda-grid-view" class="hidden">
-                                        <!-- A grade será gerada pelo JavaScript aqui -->
+                                <div class="lg:col-span-2">
+                                    <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
+                                        <h3 class="text-lg font-bold text-gray-300 mb-4">Unidades Cadastradas</h3>
+                                        <div id="units-list" class="space-y-4">
+                                            <p id="loading-units">A carregar unidades...</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Conteúdo da Aba Clientes -->
-                        <div id="content-clientes" class="hidden">
+                        <div id="content-clientes" class="hidden p-6">
                             <h1 class="text-2xl font-bold text-primary mb-6">Gerenciar Clientes</h1>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                                    <h3 class="text-lg font-bold mb-4">Adicionar Novo Cliente</h3>
-                                    <form id="add-client-form" class="space-y-4">
-                                        <input type="text" id="client-name" required placeholder="Nome do Cliente" class="form-input w-full">
-                                        <input type="tel" id="client-phone" required placeholder="Telefone" class="form-input w-full">
-                                        <input type="email" id="client-email" placeholder="E-mail (Opcional)" class="form-input w-full">
-                                        <label for="client-birthdate" class="block text-sm font-medium text-gray-300 -mb-3 pt-2">Data de Nascimento (Opcional)</label>
-                                        <input type="date" id="client-birthdate" class="form-input w-full">
-                                        <!-- NOVO: Campo de Indicação -->
-                                        <label for="client-referrer" class="block text-sm font-medium text-gray-300 -mb-3 pt-2">Indicado por (Opcional)</label>
-                                        <select id="client-referrer" class="form-select w-full">
-                                            <option value="">Ninguém</option>
-                                            <!-- Populado via JS -->
-                                        </select>
-                                        <button type="submit" class="w-full justify-center btn-primary">
-                                            <span class="btn-text">Salvar Cliente</span>
-                                            <div class="loader hidden"></div>
-                                        </button>
-                                    </form>
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                <div class="lg:col-span-1">
+                                    <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
+                                        <h3 class="text-lg font-bold text-gray-300 mb-4">Adicionar Novo Cliente</h3>
+                                        <form id="add-client-form" class="space-y-4">
+                                            <input type="text" id="client-name" required placeholder="Nome do Cliente" class="form-input w-full">
+                                            <input type="tel" id="client-phone" required placeholder="Telefone" class="form-input w-full">
+                                            <input type="email" id="client-email" placeholder="E-mail (Opcional)" class="form-input w-full">
+                                            <div>
+                                                <label for="client-birthdate" class="block text-sm font-medium text-gray-400 mb-1">Data de Nascimento (Opcional)</label>
+                                                <input type="date" id="client-birthdate" class="form-input w-full">
+                                            </div>
+                                            <div>
+                                                <label for="client-referrer" class="block text-sm font-medium text-gray-400 mb-1">Indicado por (Opcional)</label>
+                                                <select id="client-referrer" class="form-select w-full">
+                                                    <option value="">Ninguém</option>
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="w-full justify-center btn-primary">
+                                                <span class="btn-text">Salvar Cliente</span>
+                                                <div class="loader hidden"></div>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
-                                <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                                    <h3 class="text-lg font-bold mb-4">Clientes Cadastrados</h3>
-                                    <div id="clients-list" class="space-y-4">
-                                        <p id="loading-clients" class="text-gray-400">A carregar clientes...</p>
+                                <div class="lg:col-span-2">
+                                    <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
+                                        <h3 class="text-lg font-bold text-gray-300 mb-4">Clientes Cadastrados</h3>
+                                        <div id="clients-list" class="space-y-4">
+                                            <p id="loading-clients">A carregar clientes...</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Conteúdo da Aba Planos -->
-                        <div id="content-planos" class="hidden">
+                        <div id="content-planos" class="hidden p-6">
                              <h1 class="text-2xl font-bold text-primary mb-6">Gerenciar Planos</h1>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                                    <h3 class="text-lg font-bold mb-4">Adicionar Novo Plano</h3>
-                                    <form id="add-plan-form" class="space-y-4">
-                                        <input type="text" id="plan-title" required placeholder="Título do Plano" class="form-input w-full">
-                                        <div class="grid grid-cols-2 gap-4">
-                                            <input type="text" id="plan-price" required placeholder="Preço (ex: 129,90)" class="form-input w-full">
-                                            <input type="text" id="plan-period" required placeholder="Período (ex: /mês)" class="form-input w-full">
-                                        </div>
-                                        <textarea id="plan-features" required placeholder="Características (uma por linha)" rows="4" class="form-textarea w-full"></textarea>
-                                        <div class="flex items-center">
-                                            <input id="plan-popular" type="checkbox" class="h-4 w-4 rounded border-gray-600 bg-gray-700 text-primary focus:ring-primary">
-                                            <label for="plan-popular" class="ml-2 block text-sm text-gray-300">Marcar como "Mais Popular"?</label>
-                                        </div>
-                                        <button type="submit" class="w-full justify-center btn-primary">
-                                            <span class="btn-text">Salvar Plano</span>
-                                            <div class="loader hidden"></div>
-                                        </button>
-                                    </form>
+                             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                <div class="lg:col-span-1">
+                                    <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
+                                        <h3 class="text-lg font-bold text-gray-300 mb-4">Adicionar Novo Plano</h3>
+                                        <form id="add-plan-form" class="space-y-4">
+                                            <input type="text" id="plan-title" required placeholder="Título do Plano" class="form-input w-full">
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <input type="text" id="plan-price" required placeholder="Preço (ex: 129,90)" class="form-input w-full">
+                                                <input type="text" id="plan-period" required placeholder="Período (ex: /mês)" class="form-input w-full">
+                                            </div>
+                                            <textarea id="plan-features" required placeholder="Características (uma por linha)" rows="4" class="form-textarea w-full"></textarea>
+                                            <div class="flex items-center">
+                                                <input id="plan-popular" type="checkbox" class="h-4 w-4 rounded border-gray-600 bg-gray-700 text-primary focus:ring-primary">
+                                                <label for="plan-popular" class="ml-2 block text-sm text-gray-300">Marcar como "Mais Popular"?</label>
+                                            </div>
+                                            <button type="submit" class="w-full justify-center btn-primary">
+                                                <span class="btn-text">Salvar Plano</span>
+                                                <div class="loader hidden"></div>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
-                                <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                                    <h3 class="text-lg font-bold mb-4">Planos Cadastrados</h3>
-                                    <div id="plans-list" class="space-y-4">
-                                        <p id="loading-plans" class="text-gray-400">A carregar planos...</p>
+                                <div class="lg:col-span-2">
+                                    <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
+                                        <h3 class="text-lg font-bold text-gray-300 mb-4">Planos Oferecidos</h3>
+                                        <div id="plans-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <p id="loading-plans">A carregar planos...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                             </div>
+                        </div>
+
+                        <!-- Conteúdo da Aba Metas -->
+                        <div id="content-metas" class="hidden p-6">
+                            <h1 class="text-2xl font-bold text-primary mb-6">Metas & Fidelidade</h1>
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                <div class="lg:col-span-1 space-y-8">
+                                    <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
+                                        <h3 class="text-lg font-bold text-gray-300 mb-4">Configurar Indicação</h3>
+                                        <form id="referral-settings-form" class="space-y-4">
+                                            <div>
+                                                <label for="referral-credit-value" class="block text-sm font-medium text-gray-400 mb-1">Crédito por indicação (R$)</label>
+                                                <input type="number" step="0.01" id="referral-credit-value" required placeholder="Ex: 10,00" class="form-input w-full">
+                                                <p class="text-xs text-gray-500 mt-2">Este é o valor que o cliente indicador ganhará de crédito após o indicado realizar o primeiro serviço.</p>
+                                            </div>
+                                            <button type="submit" class="w-full justify-center btn-primary">
+                                                <span class="btn-text">Salvar Configuração</span>
+                                                <div class="loader hidden"></div>
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
+                                        <h3 class="text-lg font-bold text-gray-300 mb-4">Adicionar Nova Meta</h3>
+                                        <form id="add-goal-form" class="space-y-4">
+                                            <input type="number" id="goal-target" required placeholder="Nº de Indicações" class="form-input w-full">
+                                            <input type="text" id="goal-prize" required placeholder="Prêmio" class="form-input w-full">
+                                            <input type="text" id="goal-icon" required placeholder="Ícone (ex: fas fa-gift)" class="form-input w-full">
+                                            <select id="goal-service-id" class="form-select w-full">
+                                                <option value="">Prêmio sem serviço vinculado</option>
+                                            </select>
+                                            <button type="submit" class="w-full justify-center btn-primary">
+                                                <span class="btn-text">Salvar Meta</span>
+                                                <div class="loader hidden"></div>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                                <div class="lg:col-span-2">
+                                    <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
+                                        <h3 class="text-lg font-bold text-gray-300 mb-4">Metas de Indicação Ativas</h3>
+                                        <div id="goals-list" class="space-y-4">
+                                            <p id="loading-goals">A carregar metas...</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                         <!-- Conteúdo da Aba Metas -->
-                        <div id="content-metas" class="hidden">
-                             <h1 class="text-2xl font-bold text-primary mb-6">Fidelidade e Metas</h1>
-                            
-                            <!-- NOVO: Seção do Programa de Indicação -->
-                            <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800 mb-8">
-                                <h3 class="text-lg font-bold text-gray-300 mb-4 flex items-center"><i class="fas fa-gift mr-3 text-primary"></i>Programa de Indicação</h3>
-                                <form id="referral-settings-form" class="space-y-4">
-                                    <p class="text-sm text-gray-400">Defina o valor em créditos que um cliente ganha ao indicar um novo cliente que complete um serviço.</p>
-                                    <div>
-                                        <label for="referral-credit-value" class="block text-sm font-medium text-gray-300 mb-1">Valor do Crédito por Indicação (R$)</label>
-                                        <input type="number" step="0.01" id="referral-credit-value" placeholder="10,00" class="form-input w-full max-w-xs">
-                                    </div>
-                                    <div class="text-left">
-                                        <button type="submit" class="btn-primary">
-                                            <span class="btn-text">Salvar Configuração</span>
-                                            <div class="loader hidden"></div>
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
+                        <!-- NOVA PÁGINA: Configurações da Agenda -->
+                        <div id="content-agenda-settings" class="hidden p-6 space-y-8">
+                            <h1 class="text-2xl font-bold text-primary">Configurações da Agenda</h1>
 
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div class="md:col-span-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                                    <h3 class="text-lg font-bold mb-4">Adicionar Nova Meta de Indicação</h3>
-                                    <form id="add-goal-form" class="space-y-4">
-                                        <input type="number" id="goal-target" required placeholder="Nº de Indicações (ex: 5)" class="form-input w-full">
-                                        <input type="text" id="goal-prize" required placeholder="Prêmio (ex: Hidratação Grátis)" class="form-input w-full">
-                                        <input type="text" id="goal-icon" required placeholder="Ícone (ex: fas fa-tint)" class="form-input w-full">
-                                        <select id="goal-service-id" class="form-select w-full">
-                                            <option value="">Prêmio sem serviço vinculado</option>
-                                            <!-- Opções de serviços serão populadas aqui -->
-                                        </select>
-                                        <button type="submit" class="w-full justify-center btn-primary">
-                                            <span class="btn-text">Salvar Meta</span>
-                                            <div class="loader hidden"></div>
-                                        </button>
-                                    </form>
-                                </div>
-                                <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                                    <h3 class="text-lg font-bold mb-4">Metas Cadastradas</h3>
-                                    <div id="goals-list" class="space-y-4">
-                                        <p id="loading-goals" class="text-gray-400">A carregar metas...</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                         <!-- Conteúdo da Aba Configurações -->
-                        <div id="content-configuracoes" class="hidden">
-                            <h1 class="text-2xl font-bold text-primary mb-6">Configurações</h1>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- Seção Minha Conta -->
-                                <div class="bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                                    <h3 class="text-lg font-bold mb-4">Minha Conta</h3>
-                                    <form id="change-password-form" class="space-y-4">
-                                        <p class="text-sm text-gray-400">Altere sua senha de acesso ao painel.</p>
-                                        <input type="password" id="current-password" required placeholder="Senha Atual" class="form-input w-full">
-                                        <input type="password" id="new-password" required placeholder="Nova Senha" class="form-input w-full">
-                                        <button type="submit" class="w-full justify-center btn-primary">
-                                            <span class="btn-text">Alterar Senha</span>
-                                            <div class="loader hidden"></div>
-                                        </button>
-                                    </form>
-                                </div>
-                                
-                                <!-- Seção Usuários do Painel -->
-                                <div class="bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                                    <h3 class="text-lg font-bold mb-4">Usuários do Painel</h3>
-                                    <form id="add-panel-user-form" class="space-y-4">
-                                        <input type="email" id="panel-user-email" required placeholder="Email do novo usuário" class="form-input w-full">
-                                        <input type="password" id="panel-user-password" required placeholder="Senha provisória" class="form-input w-full">
-                                        <select id="panel-user-role" class="form-select w-full">
-                                            <option value="gestor">Gestor</option>
-                                            <option value="profissional">Profissional</option>
-                                        </select>
-                                        <p class="text-xs text-gray-500">O novo usuário deverá alterar esta senha no primeiro acesso.</p>
-                                        <button type="submit" class="w-full justify-center btn-primary">
-                                            <span class="btn-text">Criar Usuário</span>
-                                            <div class="loader hidden"></div>
-                                        </button>
-                                    </form>
-                                    <div class="mt-6 pt-4 border-t border-gray-700">
-                                        <h4 class="text-md font-bold mb-4">Usuários Ativos</h4>
-                                        <div id="panel-users-list" class="space-y-3">
-                                           <p id="loading-panel-users">A carregar...</p>
+                            <form id="agenda-settings-form">
+                                <!-- Horário Geral -->
+                                <div class="bg-[#2a2a2a] p-6 rounded-xl border border-gray-800">
+                                    <h3 class="text-lg font-bold text-gray-300 mb-4">Horário de Funcionamento Geral</h3>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-300 mb-2">Dias da semana</label>
+                                            <div id="general-working-days" class="flex flex-wrap gap-x-6 gap-y-2">
+                                                <p class="text-gray-500 text-sm">A carregar...</p>
+                                            </div>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <label for="general-start-time" class="block text-sm font-medium text-gray-300 mb-1">Início do Expediente</label>
+                                                <input type="time" id="general-start-time" class="form-input w-full">
+                                            </div>
+                                            <div>
+                                                <label for="general-end-time" class="block text-sm font-medium text-gray-300 mb-1">Fim do Expediente</label>
+                                                <input type="time" id="general-end-time" class="form-input w-full">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Seção Configurações da Agenda -->
-                                <div class="md:col-span-2 bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
-                                     <h3 class="text-lg font-bold mb-4">Configurações da Agenda</h3>
-                                     <form id="agenda-settings-form" class="space-y-4">
-                                         </form>
+                                <!-- Pausa para Almoço -->
+                                <div class="bg-[#2a2a2a] p-6 rounded-xl border border-gray-800 mt-8">
+                                    <h3 class="text-lg font-bold text-gray-300 mb-4">Pausa para Almoço Automática</h3>
+                                    <div class="flex items-center mb-4">
+                                        <input id="lunch-enabled" type="checkbox" class="h-4 w-4 rounded border-gray-600 bg-gray-700 text-primary focus:ring-primary">
+                                        <label for="lunch-enabled" class="ml-2 block text-sm text-gray-300">Habilitar almoço automático</label>
+                                    </div>
+                                    <div id="lunch-options" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="lunch-start-time" class="block text-sm font-medium text-gray-300 mb-1">Início do Almoço</label>
+                                            <input type="time" id="lunch-start-time" class="form-input w-full">
+                                        </div>
+                                        <div>
+                                            <label for="lunch-duration" class="block text-sm font-medium text-gray-300 mb-1">Duração (minutos)</label>
+                                            <input type="number" id="lunch-duration" step="15" value="60" class="form-input w-full">
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+
+                                <!-- Configurações Individuais -->
+                                <div class="bg-[#2a2a2a] p-6 rounded-xl border border-gray-800 mt-8">
+                                    <h3 class="text-lg font-bold text-gray-300 mb-4">Configurações Individuais dos Profissionais</h3>
+                                    <p class="text-sm text-gray-500 mb-6">Deixe os campos em branco para usar as configurações gerais.</p>
+                                    <div id="professional-overrides-container" class="space-y-6">
+                                        <p class="text-gray-500 text-sm">A carregar profissionais...</p>
+                                    </div>
+                                </div>
+
+                                <div class="mt-8 text-right">
+                                    <button type="submit" class="btn-primary">
+                                        <span class="btn-text">Salvar Configurações da Agenda</span>
+                                        <div class="loader hidden"></div>
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-                         <!-- PÁGINA FRENTE DE CAIXA -->
+
+                        <!-- PÁGINA FRENTE DE CAIXA -->
                         <div id="content-caixa" class="hidden p-6">
                              <h1 class="text-2xl font-bold text-primary mb-4">Frente de Caixa</h1>
                              <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
@@ -950,6 +1016,50 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div id="content-configuracoes" class="hidden p-6">
+                            <h1 class="text-2xl font-bold text-primary mb-6">Configurações</h1>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Seção Minha Conta -->
+                                <div class="bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-lg font-bold mb-4">Minha Conta</h3>
+                                    <form id="change-password-form" class="space-y-4">
+                                        <p class="text-sm text-gray-400">Altere sua senha de acesso ao painel.</p>
+                                        <input type="password" id="current-password" required placeholder="Senha Atual" class="form-input w-full">
+                                        <input type="password" id="new-password" required placeholder="Nova Senha" class="form-input w-full">
+                                        <button type="submit" class="w-full justify-center btn-primary">
+                                            <span class="btn-text">Alterar Senha</span>
+                                            <div class="loader hidden"></div>
+                                        </button>
+                                    </form>
+                                </div>
+                                
+                                <!-- Seção Usuários do Painel -->
+                                <div class="bg-[#1e1e1e] p-6 rounded-lg border border-gray-800">
+                                    <h3 class="text-lg font-bold mb-4">Usuários do Painel</h3>
+                                    <form id="add-panel-user-form" class="space-y-4">
+                                        <input type="email" id="panel-user-email" required placeholder="Email do novo usuário" class="form-input w-full">
+                                        <input type="password" id="panel-user-password" required placeholder="Senha provisória" class="form-input w-full">
+                                        <select id="panel-user-role" class="form-select w-full">
+                                            <option value="gestor">Gestor</option>
+                                            <option value="profissional">Profissional</option>
+                                        </select>
+                                        <p class="text-xs text-gray-500">O novo usuário deverá alterar esta senha no primeiro acesso.</p>
+                                        <button type="submit" class="w-full justify-center btn-primary">
+                                            <span class="btn-text">Criar Usuário</span>
+                                            <div class="loader hidden"></div>
+                                        </button>
+                                    </form>
+                                    <div class="mt-6 pt-4 border-t border-gray-700">
+                                        <h4 class="text-md font-bold mb-4">Usuários Ativos</h4>
+                                        <div id="panel-users-list" class="space-y-3">
+                                           <p id="loading-panel-users">A carregar...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </main>
             </div>
@@ -1492,10 +1602,9 @@
                 panelSection.classList.remove('hidden');
                 userEmailSpan.textContent = user.email;
                 initializeGlobalEventListeners(); 
-                initializeAgendaEventListeners(); // NOVO: Inicializa o listener inteligente da agenda
+                initializeAgendaEventListeners();
                 initializeDropzones(); 
                 document.querySelector('#sidebar .nav-link[data-target="content-dashboard"]').click();
-                loadAgendaSettings(user.uid);
             } else {
                 authSection.classList.remove('hidden');
                 panelSection.classList.add('hidden');
@@ -2058,7 +2167,12 @@
                     const slotTime = new Date(agendaState.currentDate);
                     slotTime.setHours(newHour, newMinute, 0, 0);
                     
-                    openSlotActionModal(professionalId, slotTime);
+                    // Validação antes de abrir o modal
+                    if (isTimeSlotAvailable(professionalId, slotTime, 1)) {
+                        openSlotActionModal(professionalId, slotTime);
+                    } else {
+                        showToast('Este horário está dentro de um bloqueio ou evento existente.', 'error');
+                    }
                 }
             });
 
@@ -2118,6 +2232,11 @@
                     const service = localServicesCache.find(s => s.id === serviceId);
                     
                     if (!client || !professional || !service) throw new Error("Dados inválidos selecionados.");
+
+                    // Validação de horário
+                    if (!isTimeSlotAvailable(professional.id, dateTime, service.duracaoMinutos)) {
+                        throw new Error("Horário indisponível, em conflito ou fora do expediente.");
+                    }
 
                     const newAppointment = {
                         cliente: { id: client.id, nome: client.name },
@@ -3036,77 +3155,209 @@
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditGoalButton.disabled = false; cancelEditGoalButton.disabled = false; }
         });
         
-        // --- CONFIGURAÇÕES ---
-        const changePasswordForm = document.getElementById('change-password-form');
-        const agendaSettingsForm = document.getElementById('agenda-settings-form');
-        
-        changePasswordForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const submitBtn = changePasswordForm.querySelector('button[type="submit"]');
-            const btnText = submitBtn.querySelector('.btn-text');
-            const loader = submitBtn.querySelector('.loader');
-            btnText.classList.add('hidden'); loader.classList.remove('hidden'); submitBtn.disabled = true;
-            
-            const currentPassword = document.getElementById('current-password').value;
-            const newPassword = document.getElementById('new-password').value;
-            const user = auth.currentUser;
+        // --- CONFIGURAÇÕES E INICIALIZAÇÃO DE PÁGINAS ---
 
-            try {
-                const credential = EmailAuthProvider.credential(user.email, currentPassword);
-                await reauthenticateWithCredential(user, credential);
-                await updatePassword(user, newPassword);
-                showToast('Senha alterada com sucesso!', 'success');
-                changePasswordForm.reset();
-            } catch(error) {
-                console.error("Erro ao alterar senha:", error);
-                showToast('Senha atual incorreta.', 'error');
-            } finally {
-                btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false;
+        function initializeConfiguracoesListeners() {
+            const changePasswordForm = document.getElementById('change-password-form');
+            if (changePasswordForm && !changePasswordForm.dataset.initialized) {
+                changePasswordForm.dataset.initialized = 'true';
+                changePasswordForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const submitBtn = changePasswordForm.querySelector('button[type="submit"]');
+                    const btnText = submitBtn.querySelector('.btn-text');
+                    const loader = submitBtn.querySelector('.loader');
+                    btnText.classList.add('hidden'); loader.classList.remove('hidden'); submitBtn.disabled = true;
+                    
+                    const currentPassword = document.getElementById('current-password').value;
+                    const newPassword = document.getElementById('new-password').value;
+                    const user = auth.currentUser;
+
+                    try {
+                        const credential = EmailAuthProvider.credential(user.email, currentPassword);
+                        await reauthenticateWithCredential(user, credential);
+                        await updatePassword(user, newPassword);
+                        showToast('Senha alterada com sucesso!', 'success');
+                        changePasswordForm.reset();
+                    } catch(error) {
+                        console.error("Erro ao alterar senha:", error);
+                        showToast('Senha atual incorreta.', 'error');
+                    } finally {
+                        btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false;
+                    }
+                });
             }
-        });
-        
-        agendaSettingsForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const user = auth.currentUser; if (!user) return;
-            const submitBtn = agendaSettingsForm.querySelector('button[type="submit"]');
-            const btnText = submitBtn.querySelector('.btn-text');
-            const loader = submitBtn.querySelector('.loader');
             
-            btnText.classList.add('hidden'); loader.classList.remove('hidden'); submitBtn.disabled = true;
-            
-            const newInterval = parseInt(document.getElementById('agenda-interval').value);
-            if (isNaN(newInterval) || newInterval <= 0) {
-                 showToast('Por favor, insira um valor válido.', 'error');
-                 btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false;
-                 return;
+            const addPanelUserForm = document.getElementById('add-panel-user-form');
+            if (addPanelUserForm && !addPanelUserForm.dataset.initialized) {
+                addPanelUserForm.dataset.initialized = 'true';
+                addPanelUserForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const submitBtn = addPanelUserForm.querySelector('button[type="submit"]');
+                    const btnText = submitBtn.querySelector('.btn-text');
+                    const loader = submitBtn.querySelector('.loader');
+                    btnText.classList.add('hidden'); loader.classList.remove('hidden'); submitBtn.disabled = true;
+                    
+                    const email = document.getElementById('panel-user-email').value;
+                    const password = document.getElementById('panel-user-password').value;
+                    const role = document.getElementById('panel-user-role').value;
+                    
+                    try {
+                        await addDoc(collection(db, "panel_users"), { email: email, role: role, createdAt: serverTimestamp(), gestorId: auth.currentUser.uid });
+                        showToast(`Convite enviado para ${email}!`, 'success');
+                        addPanelUserForm.reset();
+                    } catch (error) {
+                        console.error("Erro ao convidar usuário:", error);
+                        showToast('Erro ao convidar usuário.', 'error');
+                    } finally {
+                        btnText.classList.remove('hidden');
+                        loader.classList.remove('hidden');
+                        submitBtn.disabled = false;
+                    }
+                });
             }
-            
-            const settingsRef = doc(db, 'configuracoes', user.uid);
-            try {
-                await setDoc(settingsRef, { agendaInterval: newInterval, updatedAt: serverTimestamp() }, { merge: true });
-                agendaState.interval = newInterval;
-                showToast('Configurações da agenda salvas!', 'success');
-            } catch(error) {
-                 console.error("Erro ao salvar configurações:", error);
-                 showToast('Erro ao salvar configurações.', 'error');
-            } finally {
-                btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false;
-            }
-        });
+        }
         
         async function loadAgendaSettings(userId) {
             const settingsRef = doc(db, 'configuracoes', userId);
             const docSnap = await getDoc(settingsRef);
-            if (docSnap.exists()) {
-                const settings = docSnap.data();
-                agendaState.interval = settings.agendaInterval || 30;
-                const intervalInput = document.getElementById('agenda-interval');
-                if (intervalInput) intervalInput.value = agendaState.interval;
+
+            const defaults = {
+                workingDays: { seg: true, ter: true, qua: true, qui: true, sex: true, sab: true, dom: false },
+                startTime: '08:00',
+                endTime: '20:00',
+                lunchBreak: { enabled: true, startTime: '12:00', duration: 60 },
+                professionalOverrides: []
+            };
+
+            if (docSnap.exists() && docSnap.data().agendaSettings) {
+                const savedSettings = docSnap.data().agendaSettings;
+                const mergedSettings = { 
+                    ...defaults, 
+                    ...savedSettings, 
+                    lunchBreak: { ...defaults.lunchBreak, ...savedSettings.lunchBreak },
+                    workingDays: { ...defaults.workingDays, ...savedSettings.workingDays }
+                };
+                return mergedSettings;
             } else {
-                try {
-                    await setDoc(settingsRef, { agendaInterval: 30, createdAt: serverTimestamp() });
-                } catch(error) { console.error("Erro ao criar doc de config:", error); }
+                return defaults;
             }
+        }
+
+        async function initializeAgendaSettingsPage(userId) {
+            const form = document.getElementById('agenda-settings-form');
+            if (form.dataset.initialized === 'true') return;
+            form.dataset.initialized = 'true';
+
+            await populateCaches(userId);
+            const settings = await loadAgendaSettings(userId);
+            agendaState.settings = settings;
+
+            const daysOfWeek = { seg: "Segunda", ter: "Terça", qua: "Quarta", qui: "Quinta", sex: "Sexta", sab: "Sábado", dom: "Domingo" };
+            const workingDaysContainer = document.getElementById('general-working-days');
+            workingDaysContainer.innerHTML = '';
+            for (const [key, value] of Object.entries(daysOfWeek)) {
+                const checked = settings.workingDays[key] ? 'checked' : '';
+                workingDaysContainer.innerHTML += `
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" data-day="${key}" class="h-4 w-4 rounded border-gray-600 bg-gray-700 text-primary focus:ring-primary" ${checked}>
+                        <span class="text-sm text-gray-300">${value}</span>
+                    </label>`;
+            }
+
+            document.getElementById('general-start-time').value = settings.startTime;
+            document.getElementById('general-end-time').value = settings.endTime;
+            document.getElementById('lunch-enabled').checked = settings.lunchBreak.enabled;
+            document.getElementById('lunch-start-time').value = settings.lunchBreak.startTime;
+            document.getElementById('lunch-duration').value = settings.lunchBreak.duration;
+            
+            const overridesContainer = document.getElementById('professional-overrides-container');
+            overridesContainer.innerHTML = '';
+            localProfessionalsCache.forEach(prof => {
+                const override = settings.professionalOverrides.find(o => o.professionalId === prof.id) || {};
+                let daysHtml = '';
+                for (const [key, value] of Object.entries(daysOfWeek)) {
+                    const isChecked = override.workingDays ? override.workingDays[key] : false;
+                    daysHtml += `<label class="flex items-center space-x-2"><input type="checkbox" data-day="${key}" class="h-4 w-4 rounded-md" ${isChecked ? 'checked' : ''}><span class="text-xs">${value.substring(0,3)}</span></label>`;
+                }
+
+                const profCard = `
+                    <div class="bg-[#1e1e1e] p-4 rounded-lg border border-gray-700" data-prof-id="${prof.id}">
+                        <p class="font-bold text-white mb-3">${prof.nome}</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="md:col-span-3">
+                                <label class="block text-xs font-medium text-gray-400 mb-2">Dias de trabalho específicos (deixe desmarcado para usar o geral)</label>
+                                <div class="flex flex-wrap gap-x-4 gap-y-1">${daysHtml}</div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Início</label>
+                                <input type="time" class="form-input w-full !p-2 !text-sm professional-start-time" value="${override.startTime || ''}">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Fim</label>
+                                <input type="time" class="form-input w-full !p-2 !text-sm professional-end-time" value="${override.endTime || ''}">
+                            </div>
+                        </div>
+                    </div>`;
+                overridesContainer.innerHTML += profCard;
+            });
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = e.target.querySelector('button[type="submit"]');
+                const btnText = btn.querySelector('.btn-text');
+                const loader = btn.querySelector('.loader');
+                btnText.classList.add('hidden'); loader.classList.remove('hidden'); btn.disabled = true;
+
+                try {
+                    const workingDays = {};
+                    document.querySelectorAll('#general-working-days input').forEach(input => {
+                        workingDays[input.dataset.day] = input.checked;
+                    });
+
+                    const professionalOverrides = [];
+                    document.querySelectorAll('#professional-overrides-container > div').forEach(card => {
+                        const profId = card.dataset.profId;
+                        const overrideWorkingDays = {};
+                        let hasSpecificDays = false;
+                        card.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+                            overrideWorkingDays[chk.dataset.day] = chk.checked;
+                            if(chk.checked) hasSpecificDays = true;
+                        });
+                        
+                        const override = {
+                            professionalId: profId,
+                            startTime: card.querySelector('.professional-start-time').value,
+                            endTime: card.querySelector('.professional-end-time').value,
+                            workingDays: hasSpecificDays ? overrideWorkingDays : null
+                        };
+                         if (override.startTime || override.endTime || hasSpecificDays) {
+                            professionalOverrides.push(override);
+                        }
+                    });
+
+                    const settingsData = {
+                        workingDays,
+                        startTime: document.getElementById('general-start-time').value,
+                        endTime: document.getElementById('general-end-time').value,
+                        lunchBreak: {
+                            enabled: document.getElementById('lunch-enabled').checked,
+                            startTime: document.getElementById('lunch-start-time').value,
+                            duration: parseInt(document.getElementById('lunch-duration').value) || 0
+                        },
+                        professionalOverrides
+                    };
+
+                    await setDoc(doc(db, 'configuracoes', auth.currentUser.uid), { agendaSettings: settingsData }, { merge: true });
+                    agendaState.settings = settingsData;
+                    showToast('Configurações da agenda salvas com sucesso!', 'success');
+
+                } catch (error) {
+                    console.error("Erro ao salvar configurações da agenda:", error);
+                    showToast('Ocorreu um erro ao salvar as configurações.', 'error');
+                } finally {
+                    btnText.classList.remove('hidden'); loader.classList.add('hidden'); btn.disabled = false;
+                }
+            });
         }
 
         // --- GESTÃO DE USUÁRIOS DO PAINEL ---
@@ -3274,13 +3525,17 @@
                             case 'content-agenda': initializeAgenda(user.uid); break;
                             case 'content-caixa': loadCaixaData(user.uid); break; 
                             case 'content-relatorios': initializeReports(user.uid); break;
+                            case 'content-agenda-settings': initializeAgendaSettingsPage(user.uid); break;
                             case 'content-servicos': loadServices(user.uid); break;
                             case 'content-profissionais': loadProfessionals(user.uid); break;
                             case 'content-unidades': loadUnits(user.uid); break;
-                            case 'content-clientes': loadClients(user.uid); break; // <-- LINHA ADICIONADA
+                            case 'content-clientes': loadClients(user.uid); break;
                             case 'content-planos': loadPlans(user.uid); break;
                             case 'content-metas': loadGoals(user.uid); loadReferralSettings(user.uid); break;
-                            case 'content-configuracoes': loadPanelUsers(user.uid); break;
+                            case 'content-configuracoes': 
+                                loadPanelUsers(user.uid); 
+                                initializeConfiguracoesListeners();
+                                break;
                         }
                     }
                 } // Fecha o if(targetId)
@@ -3901,6 +4156,56 @@
         const cancelQuickClientBtn = document.getElementById('cancel-quick-client-button');
         const saveQuickClientBtn = document.getElementById('save-quick-client-button');
 
+        // FUNÇÕES DE ABERTURA DOS MODAIS (CORREÇÃO)
+        async function openSlotActionModal(professionalId, slotTime) {
+            const professional = localProfessionalsCache.find(p => p.id === professionalId);
+            if (!professional) return;
+
+            slotAppointmentForm.reset();
+            document.getElementById('slot-recurring-options').classList.add('hidden');
+            document.getElementById('slot-tab-agendar').click(); 
+            
+            document.getElementById('slot-action-subtitle').textContent = 
+                `Para ${professional.nome} às ${slotTime.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}`;
+
+            document.getElementById('slot-professional-id').value = professionalId;
+            document.getElementById('slot-datetime').value = slotTime.toISOString();
+
+            const clientSelect = document.getElementById('slot-client-select');
+            const serviceSelect = document.getElementById('slot-service-select');
+            clientSelect.innerHTML = '<option value="">Selecione um cliente</option>';
+            serviceSelect.innerHTML = '<option value="">Selecione um serviço</option>';
+            localClientsCache.forEach(c => clientSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+            localServicesCache.forEach(s => serviceSelect.innerHTML += `<option value="${s.id}">${s.nome} (${s.duracaoMinutos} min)</option>`);
+
+            slotActionModal.classList.remove('hidden');
+        }
+
+        function openEditAppointmentModal(appointmentId) {
+            const appt = agendaState.appointments.find(a => a.id === appointmentId);
+            if (!appt) return;
+
+            document.getElementById('edit-appointment-id').value = appointmentId;
+            document.getElementById('edit-appt-status').value = appt.status;
+            document.getElementById('edit-appt-datetime').value = formatDateTimeForInput(appt.data.toDate());
+
+            editAppointmentModal.classList.remove('hidden');
+        }
+
+        function openEditBlockModal(blockId) {
+            const block = agendaState.appointments.find(b => b.id === blockId);
+            if (!block) return;
+
+            document.getElementById('edit-block-id').value = blockId;
+            const blockDate = block.data.toDate();
+            document.getElementById('edit-block-subtitle').textContent = 
+                `Início às ${blockDate.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})} - ${block.barbeiro.nome}`;
+            document.getElementById('edit-block-reason').value = block.motivo;
+            document.getElementById('edit-block-duration').value = block.duracaoMinutos;
+
+            editBlockModal.classList.remove('hidden');
+        }
+
         closeSlotActionModalBtn.addEventListener('click', () => slotActionModal.classList.add('hidden'));
 
         slotTabAgendar.addEventListener('click', () => {
@@ -3937,6 +4242,7 @@
                 }
 
                 if (isRecurring) {
+                    // Lógica de recorrência (sem validação individual por simplicidade, mas poderia ser adicionada)
                     const frequency = parseInt(document.getElementById('slot-recurring-frequency').value) || 1;
                     const period = document.getElementById('slot-recurring-period').value;
                     const count = parseInt(document.getElementById('slot-recurring-count').value) || 4;
@@ -3964,6 +4270,10 @@
                     showToast(`${count} agendamentos recorrentes criados!`, 'success');
 
                 } else {
+                    // Validação de horário para agendamento único
+                    if (!isTimeSlotAvailable(professional.id, baseDateTime, service.duracaoMinutos)) {
+                        throw new Error("Horário indisponível, em conflito ou fora do expediente.");
+                    }
                     await addDoc(collection(db, "agendamentos"), {
                         cliente: { id: client.id, nome: client.name },
                         barbeiro: { id: professional.id, nome: professional.nome },
@@ -4026,9 +4336,16 @@
             
             try {
                 const appointmentId = document.getElementById('edit-appointment-id').value;
+                const originalAppointment = agendaState.appointments.find(a => a.id === appointmentId);
+
                 const newStatus = document.getElementById('edit-appt-status').value;
                 const newDateTime = new Date(document.getElementById('edit-appt-datetime').value);
                 
+                 // Validação de horário ao editar
+                if (!isTimeSlotAvailable(originalAppointment.barbeiro.id, newDateTime, originalAppointment.servico.duracaoMinutos, appointmentId)) {
+                    throw new Error("Horário indisponível, em conflito ou fora do expediente.");
+                }
+
                 const dataToUpdate = {
                     status: newStatus,
                     data: newDateTime
@@ -4220,6 +4537,16 @@
                 const professional = localProfessionalsCache.find(p => p.id === newProfessionalId);
                 if (!professional) throw new Error("Profissional não encontrado");
 
+                const appointment = agendaState.appointments.find(a => a.id === appointmentId);
+                const duration = appointment.servico?.duracaoMinutos || agendaState.interval;
+
+                // Validação de horário ao arrastar
+                if (!isTimeSlotAvailable(newProfessionalId, newDateTime, duration, appointmentId)) {
+                    showToast('Horário de destino indisponível!', 'error');
+                    renderAgendaGrid(); // Re-renderiza para reverter a posição visual
+                    return;
+                }
+
                 await updateDoc(doc(db, "agendamentos", appointmentId), {
                     data: newDateTime,
                     barbeiro: { id: professional.id, nome: professional.nome }
@@ -4229,6 +4556,50 @@
                 console.error("Erro ao atualizar agendamento após arrastar:", error);
                 showToast('Não foi possível reagendar.', 'error');
             }
+        }
+
+        // --- NOVA FUNÇÃO CENTRAL DE VALIDAÇÃO DE HORÁRIOS ---
+        function isTimeSlotAvailable(professionalId, startDateTime, durationInMinutes, excludeAppointmentId = null) {
+            const now = new Date();
+            // Regra 1: Não permitir agendar no passado (com 5 min de tolerância)
+            if (startDateTime < new Date(now.getTime() - 5 * 60000)) {
+                showToast('Não é possível agendar em horários passados.', 'error');
+                return false;
+            }
+
+            // Regra 2: Respeitar horário de funcionamento (8h às 20h)
+            const startHour = startDateTime.getHours();
+            const endDateTime = new Date(startDateTime.getTime() + durationInMinutes * 60000);
+            const endHour = endDateTime.getHours();
+            const endMinutes = endDateTime.getMinutes();
+            if (startHour < 8 || endHour > 20 || (endHour === 20 && endMinutes > 0)) {
+                showToast('Fora do horário de funcionamento (08:00 - 20:00).', 'error');
+                return false;
+            }
+
+            // Regra 3: Checar conflitos com eventos existentes
+            const newStartTime = startDateTime.getTime();
+            const newEndTime = endDateTime.getTime();
+
+            const conflictingEvent = agendaState.appointments.find(appt => {
+                if (appt.barbeiro.id !== professionalId || appt.id === excludeAppointmentId) {
+                    return false; // Ignorar eventos de outros profissionais ou o próprio evento sendo editado
+                }
+
+                const existingStartTime = appt.data.toDate().getTime();
+                const existingDuration = appt.status === 'bloqueio' ? appt.duracaoMinutos : appt.servico.duracaoMinutos;
+                const existingEndTime = existingStartTime + existingDuration * 60000;
+                
+                // Lógica de verificação de sobreposição de horários
+                return (newStartTime < existingEndTime) && (newEndTime > existingStartTime);
+            });
+            
+            if (conflictingEvent) {
+                showToast(`Conflito com um ${conflictingEvent.status || 'evento'} existente.`, 'error');
+                return false;
+            }
+
+            return true; // Horário disponível
         }
     </script>
 </body>
