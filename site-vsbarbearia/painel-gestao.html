@@ -596,8 +596,8 @@
                                         <h3 class="text-lg font-bold text-gray-300 mb-4">Adicionar Novo Serviço</h3>
                                         <form id="add-service-form" class="space-y-4">
                                             <input type="text" id="service-name" required placeholder="Nome do Serviço" class="form-input w-full">
-                                            <input type="number" step="0.01" id="service-value" required placeholder="Valor (R$)" class="form-input w-full">
-                                            <input type="number" step="0.01" id="service-promo-value" placeholder="Valor Promocional (Opcional)" class="form-input w-full">
+                                            <input type="text" id="service-value" required placeholder="R$ 0,00" class="form-input w-full" oninput="window.applyCurrencyMask(event)">
+                                            <input type="text" id="service-promo-value" placeholder="Valor Promocional (Opcional)" class="form-input w-full" oninput="window.applyCurrencyMask(event)">
                                             <input type="number" id="service-duration" required placeholder="Duração (minutos)" class="form-input w-full">
                                             <button type="submit" class="w-full justify-center btn-primary">
                                                 <span class="btn-text">Salvar Serviço</span>
@@ -609,6 +609,7 @@
                                 <div class="lg:col-span-2">
                                     <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
                                         <h3 class="text-lg font-bold text-gray-300 mb-4">Serviços Cadastrados</h3>
+                                        <input type="search" id="service-search" placeholder="Buscar por nome do serviço..." class="form-input w-full mb-4">
                                         <div id="services-list" class="space-y-4">
                                             <p id="loading-services">A carregar serviços...</p>
                                         </div>
@@ -640,6 +641,7 @@
                                 <div class="lg:col-span-2">
                                     <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
                                         <h3 class="text-lg font-bold text-gray-300 mb-4">Profissionais Cadastrados</h3>
+                                        <input type="search" id="professional-search" placeholder="Buscar por nome ou função..." class="form-input w-full mb-4">
                                         <div id="professionals-list" class="space-y-4">
                                             <p id="loading-professionals">A carregar profissionais...</p>
                                         </div>
@@ -687,7 +689,7 @@
                                         <h3 class="text-lg font-bold text-gray-300 mb-4">Adicionar Novo Cliente</h3>
                                         <form id="add-client-form" class="space-y-4">
                                             <input type="text" id="client-name" required placeholder="Nome do Cliente" class="form-input w-full">
-                                            <input type="tel" id="client-phone" required placeholder="Telefone" class="form-input w-full">
+                                            <input type="tel" id="client-phone" required placeholder="(XX) XXXXX-XXXX" oninput="window.applyPhoneMask(event)" maxlength="15" class="form-input w-full">
                                             <input type="email" id="client-email" placeholder="E-mail (Opcional)" class="form-input w-full">
                                             <div>
                                                 <label for="client-birthdate" class="block text-sm font-medium text-gray-400 mb-1">Data de Nascimento (Opcional)</label>
@@ -709,9 +711,11 @@
                                 <div class="lg:col-span-2">
                                     <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
                                         <h3 class="text-lg font-bold text-gray-300 mb-4">Clientes Cadastrados</h3>
+                                        <input type="search" id="client-search" placeholder="Buscar por nome ou telefone..." class="form-input w-full mb-4">
                                         <div id="clients-list" class="space-y-4">
                                             <p id="loading-clients">A carregar clientes...</p>
                                         </div>
+                                        <div id="clients-pagination" class="mt-6 flex justify-center items-center space-x-2"></div>
                                     </div>
                                 </div>
                             </div>
@@ -727,7 +731,7 @@
                                         <form id="add-plan-form" class="space-y-4">
                                             <input type="text" id="plan-title" required placeholder="Título do Plano" class="form-input w-full">
                                             <div class="grid grid-cols-2 gap-4">
-                                                <input type="text" id="plan-price" required placeholder="Preço (ex: 129,90)" class="form-input w-full">
+                                                <input type="text" id="plan-price" required placeholder="R$ 0,00" class="form-input w-full" oninput="window.applyCurrencyMask(event)">
                                                 <input type="text" id="plan-period" required placeholder="Período (ex: /mês)" class="form-input w-full">
                                             </div>
                                             <textarea id="plan-features" required placeholder="Características (uma por linha)" rows="4" class="form-textarea w-full"></textarea>
@@ -763,7 +767,7 @@
                                         <form id="referral-settings-form" class="space-y-4">
                                             <div>
                                                 <label for="referral-credit-value" class="block text-sm font-medium text-gray-400 mb-1">Crédito por indicação (R$)</label>
-                                                <input type="number" step="0.01" id="referral-credit-value" required placeholder="Ex: 10,00" class="form-input w-full">
+                                                <input type="text" id="referral-credit-value" required placeholder="R$ 10,00" class="form-input w-full" oninput="window.applyCurrencyMask(event)">
                                                 <p class="text-xs text-gray-500 mt-2">Este é o valor que o cliente indicador ganhará de crédito após o indicado realizar o primeiro serviço.</p>
                                             </div>
                                             <button type="submit" class="w-full justify-center btn-primary">
@@ -1039,14 +1043,13 @@
                                     <h3 class="text-lg font-bold mb-4">Usuários do Painel</h3>
                                     <form id="add-panel-user-form" class="space-y-4">
                                         <input type="email" id="panel-user-email" required placeholder="Email do novo usuário" class="form-input w-full">
-                                        <input type="password" id="panel-user-password" required placeholder="Senha provisória" class="form-input w-full">
                                         <select id="panel-user-role" class="form-select w-full">
                                             <option value="gestor">Gestor</option>
                                             <option value="profissional">Profissional</option>
                                         </select>
-                                        <p class="text-xs text-gray-500">O novo usuário deverá alterar esta senha no primeiro acesso.</p>
+                                        <p class="text-xs text-gray-500">O usuário convidado definirá a própria senha no primeiro acesso.</p>
                                         <button type="submit" class="w-full justify-center btn-primary">
-                                            <span class="btn-text">Criar Usuário</span>
+                                            <span class="btn-text">Convidar Usuário</span>
                                             <div class="loader hidden"></div>
                                         </button>
                                     </form>
@@ -1113,7 +1116,7 @@
                         </div>
                         <div>
                            <label for="payment-discount" class="block text-sm font-medium text-gray-300 mb-1">Desconto (R$)</label>
-                           <input type="number" step="0.01" id="payment-discount" placeholder="0,00" class="form-input w-full">
+                           <input type="text" id="payment-discount" placeholder="R$ 0,00" class="form-input w-full" oninput="window.applyCurrencyMask(event)">
                         </div>
                     </div>
 
@@ -1126,7 +1129,7 @@
                     </div>
                     <div id="payment-cash-section">
                         <label for="payment-cash-paid" class="block text-sm font-medium text-gray-300 mb-1">Valor Pago (Dinheiro)</label>
-                        <input type="number" step="0.01" id="payment-cash-paid" placeholder="0,00" class="form-input w-full">
+                        <input type="text" id="payment-cash-paid" placeholder="R$ 0,00" class="form-input w-full" oninput="window.applyCurrencyMask(event)">
                         <div class="text-right mt-2">
                             <span class="text-gray-400">Troco:</span>
                             <span id="payment-change" class="font-semibold text-white">R$ 0,00</span>
@@ -1170,8 +1173,8 @@
                 <form id="edit-service-form" class="space-y-4 text-left">
                     <input type="hidden" id="edit-service-id">
                     <input type="text" id="edit-service-name" required placeholder="Nome" class="form-input w-full">
-                    <input type="number" step="0.01" id="edit-service-value" required placeholder="Valor (R$)" class="form-input w-full">
-                    <input type="number" step="0.01" id="edit-service-promo-value" placeholder="Valor Promocional (Opcional)" class="form-input w-full">
+                    <input type="text" id="edit-service-value" required placeholder="R$ 0,00" class="form-input w-full" oninput="window.applyCurrencyMask(event)">
+                    <input type="text" id="edit-service-promo-value" placeholder="Valor Promocional (Opcional)" class="form-input w-full" oninput="window.applyCurrencyMask(event)">
                     <input type="number" id="edit-service-duration" required placeholder="Duração (min)" class="form-input w-full">
                 </form>
                 <div class="mt-8 flex justify-end space-x-4">
@@ -1238,7 +1241,7 @@
                     <input type="hidden" id="edit-plan-id">
                     <input type="text" id="edit-plan-title" required placeholder="Título do Plano" class="form-input w-full">
                     <div class="grid grid-cols-2 gap-4">
-                        <input type="text" id="edit-plan-price" required placeholder="Preço (ex: 129,90)" class="form-input w-full">
+                        <input type="text" id="edit-plan-price" required placeholder="R$ 0,00" class="form-input w-full" oninput="window.applyCurrencyMask(event)">
                         <input type="text" id="edit-plan-period" required placeholder="Período (ex: /mês)" class="form-input w-full">
                     </div>
                     <textarea id="edit-plan-features" required placeholder="Características (uma por linha)" rows="4" class="form-textarea w-full"></textarea>
@@ -1289,11 +1292,11 @@
                 <form id="edit-client-form" class="space-y-4 text-left">
                     <input type="hidden" id="edit-client-id">
                     <input type="text" id="edit-client-name" required placeholder="Nome do Cliente" class="form-input w-full">
-                    <input type="tel" id="edit-client-phone" required placeholder="Telefone" class="form-input w-full">
+                    <input type="tel" id="edit-client-phone" required placeholder="(XX) XXXXX-XXXX" oninput="window.applyPhoneMask(event)" maxlength="15" class="form-input w-full">
                     <input type="email" id="edit-client-email" placeholder="E-mail" class="form-input w-full">
                     <label for="edit-client-birthdate" class="block text-sm font-medium text-gray-300 -mb-3 pt-2">Data de Nascimento</label>
                     <input type="date" id="edit-client-birthdate" class="form-input w-full">
-                    <input type="number" id="edit-client-credits" step="0.01" placeholder="Créditos de Indicação (R$)" class="form-input w-full">
+                    <input type="text" id="edit-client-credits" placeholder="Créditos de Indicação (R$)" class="form-input w-full" oninput="window.applyCurrencyMask(event)">
                 </form>
                 <div class="mt-8 flex justify-end space-x-4">
                     <button id="cancel-edit-client-button" class="btn-secondary">Cancelar</button>
@@ -1536,7 +1539,7 @@
                     </div>
                     <div>
                         <label for="quick-client-phone" class="block text-sm font-medium text-gray-300 mb-1">Telefone</label>
-                        <input type="tel" id="quick-client-phone" required class="form-input w-full">
+                        <input type="tel" id="quick-client-phone" required placeholder="(XX) XXXXX-XXXX" oninput="window.applyPhoneMask(event)" maxlength="15" class="form-input w-full">
                     </div>
                 </form>
                 <div class="mt-8 flex justify-end space-x-4">
@@ -1577,13 +1580,48 @@
             currentDate: new Date(),
             interval: 30,
             professionals: [],
-            appointments: []
+            appointments: [],
+            settings: null, // Armazenará as configurações da agenda
+            gridStartMinutes: 0 // Armazenará o horário de início da grade renderizada
         };
         let localServicesCache = [];
         let localProfessionalsCache = [];
         let localClientsCache = [];
         let isDragging = false; // Flag para controlar o estado de arrastar
+        let globalUnsubscribes = []; // Array para guardar os listeners e desligá-los no logout
+        let clientCurrentPage = 1;
+        const clientsPerPage = 8;
+        let localGoalsCache = [];
 
+
+        // --- NOVAS FUNÇÕES DE MÁSCARA E VALIDAÇÃO ---
+        window.applyPhoneMask = (event) => {
+            let value = event.target.value;
+            value = value.replace(/\D/g, '');
+            value = value.replace(/^(\d{2})(\d)/g, "($1) $2");
+            value = value.replace(/(\d)(\d{4})$/, "$1-$2");
+            event.target.value = value;
+        }
+
+        // NOVO: Máscara de moeda e parser
+        window.applyCurrencyMask = (event) => {
+            const input = event.target;
+            let value = input.value.replace(/\D/g, '');
+            if (value === '') {
+                input.value = '';
+                return;
+            }
+            value = (parseInt(value, 10) / 100).toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            });
+            input.value = value;
+        }
+
+        window.parseCurrency = (value) => {
+            if (typeof value !== 'string' || value.trim() === '') return 0;
+            return parseFloat(value.replace('R$', '').replace(/\./g, '').replace(',', '.').trim()) || 0;
+        }
 
         // --- Lógica de Autenticação ---
         const authSection = document.getElementById('auth-section');
@@ -1601,6 +1639,7 @@
                 authSection.classList.add('hidden');
                 panelSection.classList.remove('hidden');
                 userEmailSpan.textContent = user.email;
+                initializeRealtimeCaches(user.uid); // NOVO: Inicia os caches em tempo real
                 initializeGlobalEventListeners(); 
                 initializeAgendaEventListeners();
                 initializeDropzones(); 
@@ -1608,12 +1647,93 @@
             } else {
                 authSection.classList.remove('hidden');
                 panelSection.classList.add('hidden');
+                // Limpa os listeners e caches ao fazer logout
+                globalUnsubscribes.forEach(unsubscribe => unsubscribe());
+                globalUnsubscribes = [];
+                localServicesCache = [];
+                localProfessionalsCache = [];
+                localClientsCache = [];
             }
         });
         
-        signupButton.addEventListener('click', async () => { const email = emailInput.value; const password = passwordInput.value; authError.textContent = ''; try { await createUserWithEmailAndPassword(auth, email, password); } catch (error) { console.error("Erro no cadastro:", error); authError.textContent = "Erro ao cadastrar. Verifique o email e a senha (mínimo 6 caracteres)."; } });
+        signupButton.addEventListener('click', async () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            authError.textContent = '';
+
+            try {
+                // 1. Verificar se o email foi convidado
+                const q = query(collection(db, "panel_users"), where("email", "==", email));
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    throw new Error("Não autorizado. Peça um convite ao gestor.");
+                }
+
+                // 2. Verificar se o convite já foi utilizado
+                const invitationDoc = querySnapshot.docs[0];
+                if (invitationDoc.data().userId) {
+                    throw new Error("Este email já foi cadastrado. Tente fazer o login.");
+                }
+
+                // 3. Criar o usuário na autenticação
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // 4. Atualizar o documento do convite com o UID do novo usuário
+                await updateDoc(doc(db, "panel_users", invitationDoc.id), {
+                    userId: user.uid
+                });
+                // O login acontece automaticamente via onAuthStateChanged, que já está configurado
+            } catch (error) {
+                console.error("Erro no cadastro:", error);
+                const defaultMessage = "Erro ao cadastrar. Verifique o email e a senha (mínimo 6 caracteres).";
+                authError.textContent = error.message.includes("auth/") ? defaultMessage : error.message;
+            }
+        });
         loginButton.addEventListener('click', async () => { const email = emailInput.value; const password = passwordInput.value; authError.textContent = ''; try { await signInWithEmailAndPassword(auth, email, password); } catch (error) { console.error("Erro no login:", error); authError.textContent = "Email ou senha inválidos."; } });
         logoutButton.addEventListener('click', async () => { try { await signOut(auth); } catch (error) { console.error("Erro no logout:", error); } });
+
+        // NOVO: Função para inicializar os caches em tempo real
+        function initializeRealtimeCaches(userId) {
+            // Listener para Serviços
+            const servicesQuery = query(collection(db, "servicos"), where("gestorId", "==", userId));
+            const unsubscribeServices = onSnapshot(servicesQuery, (snapshot) => {
+                localServicesCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            });
+            globalUnsubscribes.push(unsubscribeServices);
+
+            // Listener para Profissionais
+            const professionalsQuery = query(collection(db, "profissionais"), where("gestorId", "==", userId));
+            const unsubscribeProfessionals = onSnapshot(professionalsQuery, (snapshot) => {
+                localProfessionalsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                 // Atualiza o filtro da agenda se a página estiver visível
+                if (document.getElementById('content-agenda').offsetParent !== null) {
+                    populateProfessionalFilter();
+                    renderAgendaGrid();
+                }
+                // NOVO: Atualiza a lista de profissionais se a página estiver visível
+                if (document.getElementById('content-profissionais').offsetParent !== null) {
+                    renderProfessionalsList();
+                }
+            });
+            globalUnsubscribes.push(unsubscribeProfessionals);
+
+            // Listener para Clientes
+            const clientsQuery = query(collection(db, "users"), where("gestorId", "==", userId));
+            const unsubscribeClients = onSnapshot(clientsQuery, (snapshot) => {
+                localClientsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                 // Atualiza os aniversariantes se o dashboard estiver visível
+                if (document.getElementById('content-dashboard').offsetParent !== null) {
+                    renderAniversariantes();
+                }
+                // NOVO: Atualiza a lista de clientes se a página estiver visível
+                if (document.getElementById('content-clientes').offsetParent !== null) {
+                    renderClientsList();
+                }
+            });
+            globalUnsubscribes.push(unsubscribeClients);
+        }
 
         // --- CRUD DE SERVIÇOS ---
         const addServiceForm = document.getElementById('add-service-form');
@@ -1632,55 +1752,72 @@
             btnText.classList.add('hidden');
             loader.classList.remove('hidden');
             submitBtn.disabled = true;
-            const serviceName = document.getElementById('service-name').value; 
-            const serviceValue = parseFloat(document.getElementById('service-value').value); 
-            const servicePromoValueInput = document.getElementById('service-promo-value');
-            const serviceDuration = parseInt(document.getElementById('service-duration').value);
-            const data = { nome: serviceName, valor: serviceValue, duracaoMinutos: serviceDuration, gestorId: user.uid };
-            if (servicePromoValueInput.value) { data.promocao = parseFloat(servicePromoValueInput.value); }
-            try { 
+            try {
+                const serviceName = document.getElementById('service-name').value; 
+                const serviceValue = window.parseCurrency(document.getElementById('service-value').value); 
+                const servicePromoValueInput = document.getElementById('service-promo-value');
+                const serviceDuration = parseInt(document.getElementById('service-duration').value);
+
+                // Validação de duplicidade usando o cache
+                const normalizedNewName = serviceName.trim().toLowerCase();
+                const serviceExists = localServicesCache.some(service => service.nome.trim().toLowerCase() === normalizedNewName);
+                if (serviceExists) {
+                    throw new Error("Um serviço com este nome já existe.");
+                }
+
+                const data = { nome: serviceName, valor: serviceValue, duracaoMinutos: serviceDuration, gestorId: user.uid };
+                const promoValue = window.parseCurrency(servicePromoValueInput.value);
+                if (promoValue > 0) { data.promocao = promoValue; }
+                
                 await addDoc(collection(db, "servicos"), data); 
                 addServiceForm.reset();
                 showToast('Serviço salvo com sucesso!', 'success');
             } 
             catch (error) { 
                 console.error("Erro ao adicionar serviço: ", error); 
-                showToast('Erro ao salvar serviço.', 'error');
+                showToast(error.message || 'Erro ao salvar serviço.', 'error');
             } 
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false; }
         });
 
-        let unsubscribeServices = null;
-        function loadServices(userId) {
-            if (unsubscribeServices) unsubscribeServices();
-            const q = query(collection(db, "servicos"), where("gestorId", "==", userId));
-            unsubscribeServices = onSnapshot(q, (snapshot) => {
-                loadingServicesP.classList.add('hidden');
-                servicesListDiv.innerHTML = '';
-                localServicesCache = [];
-                if (snapshot.empty) { servicesListDiv.innerHTML = '<p class="text-gray-400">Nenhum serviço cadastrado.</p>'; return; }
-                snapshot.forEach((doc) => {
-                    const servico = {id: doc.id, ...doc.data()};
-                    localServicesCache.push(servico);
-                    let priceHtml = '';
-                    if (servico.promocao && typeof servico.promocao === 'number') {
-                        priceHtml = `<span class="font-bold text-primary">R$ ${servico.promocao.toFixed(2).replace('.',',')}</span> <span class="text-xs line-through text-gray-500">R$ ${servico.valor.toFixed(2).replace('.',',')}</span>`;
-                    } else { priceHtml = `R$ ${servico.valor.toFixed(2).replace('.',',')}`; }
-                    const servicoCard = document.createElement('div');
-                    servicoCard.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex justify-between items-center';
-                    servicoCard.innerHTML = `
-                        <div>
-                            <p class="font-bold text-white">${servico.nome}</p>
-                            <p class="text-sm text-gray-400">${priceHtml} - ${servico.duracaoMinutos} min</p>
-                        </div>
-                        <div class="flex items-center gap-4">
-                            <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${servico.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
-                            <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${servico.id}" data-action="delete">
-                                <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
-                            </button>
-                        </div>`;
-                    servicesListDiv.appendChild(servicoCard);
-                });
+        function renderServicesList() {
+            const loadingP = document.getElementById('loading-services');
+            const listDiv = document.getElementById('services-list');
+            const searchTerm = document.getElementById('service-search').value.trim().toLowerCase();
+
+            const filteredServices = localServicesCache.filter(service => 
+                service.nome.toLowerCase().includes(searchTerm)
+            );
+
+            loadingP.classList.add('hidden');
+            listDiv.innerHTML = '';
+
+            if (filteredServices.length === 0) {
+                listDiv.innerHTML = '<p class="text-gray-400">Nenhum serviço encontrado.</p>';
+                return;
+            }
+
+            filteredServices.forEach((servico) => {
+                let priceHtml = '';
+                if (servico.promocao && typeof servico.promocao === 'number') {
+                    priceHtml = `<span class="font-bold text-primary">R$ ${servico.promocao.toFixed(2).replace('.',',')}</span> <span class="text-xs line-through text-gray-500">R$ ${servico.valor.toFixed(2).replace('.',',')}</span>`;
+                } else {
+                    priceHtml = `R$ ${servico.valor.toFixed(2).replace('.',',')}`;
+                }
+                const servicoCard = document.createElement('div');
+                servicoCard.className = 'p-4 bg-[#1e1e1e] border border-gray-700 rounded-lg flex justify-between items-center';
+                servicoCard.innerHTML = `
+                    <div>
+                        <p class="font-bold text-white">${servico.nome}</p>
+                        <p class="text-sm text-gray-400">${priceHtml} - ${servico.duracaoMinutos} min</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${servico.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
+                        <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${servico.id}" data-action="delete">
+                            <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
+                        </button>
+                    </div>`;
+                listDiv.appendChild(servicoCard);
             });
         }
         
@@ -1698,8 +1835,8 @@
                     const data = serviceDoc.data();
                     document.getElementById('edit-service-id').value = id;
                     document.getElementById('edit-service-name').value = data.nome;
-                    document.getElementById('edit-service-value').value = data.valor;
-                    document.getElementById('edit-service-promo-value').value = data.promocao || '';
+                    document.getElementById('edit-service-value').value = (data.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    document.getElementById('edit-service-promo-value').value = data.promocao ? data.promocao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '';
                     document.getElementById('edit-service-duration').value = data.duracaoMinutos;
                     editServiceModal.classList.remove('hidden');
                 }
@@ -1716,9 +1853,9 @@
             const servicoRef = doc(db, "servicos", id);
             const dataToUpdate = {
                 nome: document.getElementById('edit-service-name').value,
-                valor: parseFloat(document.getElementById('edit-service-value').value),
+                valor: window.parseCurrency(document.getElementById('edit-service-value').value),
                 duracaoMinutos: parseInt(document.getElementById('edit-service-duration').value),
-                promocao: servicePromoValueInput.value ? parseFloat(servicePromoValueInput.value) : null
+                promocao: window.parseCurrency(servicePromoValueInput.value) || null
             };
             try { 
                 await updateDoc(servicoRef, dataToUpdate); 
@@ -1738,7 +1875,6 @@
         const editProfessionalModal = document.getElementById('edit-professional-modal');
         const cancelEditProfessionalButton = document.getElementById('cancel-edit-professional-button');
         const saveEditProfessionalButton = document.getElementById('save-edit-professional-button');
-        let unsubscribeProfessionals = null;
         
         addProfessionalForm.addEventListener('submit', async (e) => {
             e.preventDefault(); const user = auth.currentUser; if (!user) return;
@@ -1774,38 +1910,45 @@
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false; }
         });
 
-        function loadProfessionals(userId) {
-            if (unsubscribeProfessionals) unsubscribeProfessionals();
-            const q = query(collection(db, "profissionais"), where("gestorId", "==", userId));
-            unsubscribeProfessionals = onSnapshot(q, (snapshot) => {
-                document.getElementById('loading-professionals').classList.add('hidden');
-                professionalsListDiv.innerHTML = '';
-                localProfessionalsCache = [];
-                if (snapshot.empty) { professionalsListDiv.innerHTML = '<p class="text-gray-400">Nenhum profissional cadastrado.</p>'; return; }
-                snapshot.forEach(doc => {
-                    const professional = {id: doc.id, ...doc.data()};
-                    localProfessionalsCache.push(professional);
-                    const placeholderImg = `https://placehold.co/100x100/333333/FFFFFF?text=${professional.nome.charAt(0)}`;
-                    const card = document.createElement('div');
-                    card.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex items-center';
-                    card.innerHTML = `
-                        <img src="${professional.imgUrl || placeholderImg}" alt="${professional.nome}" class="w-16 h-16 rounded-full mr-4 object-cover border-2 border-gray-600" onerror="this.onerror=null;this.src='${placeholderImg}';">
-                        <div class="flex-grow">
-                            <p class="font-bold text-white">${professional.nome}</p>
-                            <p class="text-sm text-gray-400">${professional.funcao || 'Sem função'}</p>
-                            <div class="text-xs text-gray-500 mt-2 flex gap-4">
-                                <span><i class="fas fa-cut mr-1 text-primary/70"></i> Serv.: ${professional.comissaoServicos || 0}%</span>
-                                <span><i class="fas fa-box mr-1 text-primary/70"></i> Prod.: ${professional.comissaoProdutos || 0}%</span>
-                            </div>
+        function renderProfessionalsList() {
+            const loadingP = document.getElementById('loading-professionals');
+            const listDiv = document.getElementById('professionals-list');
+            const searchTerm = document.getElementById('professional-search').value.trim().toLowerCase();
+
+            const filteredProfessionals = localProfessionalsCache.filter(prof => 
+                prof.nome.toLowerCase().includes(searchTerm) || 
+                (prof.funcao && prof.funcao.toLowerCase().includes(searchTerm))
+            );
+
+            loadingP.classList.add('hidden');
+            listDiv.innerHTML = '';
+            
+            if (filteredProfessionals.length === 0) {
+                listDiv.innerHTML = '<p class="text-gray-400">Nenhum profissional encontrado.</p>';
+                return;
+            }
+
+            filteredProfessionals.forEach(professional => {
+                const placeholderImg = `https://placehold.co/100x100/333333/FFFFFF?text=${professional.nome.charAt(0)}`;
+                const card = document.createElement('div');
+                card.className = 'p-4 bg-[#1e1e1e] border border-gray-700 rounded-lg flex items-center';
+                card.innerHTML = `
+                    <img src="${professional.imgUrl || placeholderImg}" alt="${professional.nome}" class="w-16 h-16 rounded-full mr-4 object-cover border-2 border-gray-600" onerror="this.onerror=null;this.src='${placeholderImg}';">
+                    <div class="flex-grow">
+                        <p class="font-bold text-white">${professional.nome}</p>
+                        <p class="text-sm text-gray-400">${professional.funcao || 'Sem função'}</p>
+                        <div class="text-xs text-gray-500 mt-2 flex gap-4">
+                            <span><i class="fas fa-cut mr-1 text-primary/70"></i> Serv.: ${professional.comissaoServicos || 0}%</span>
+                            <span><i class="fas fa-box mr-1 text-primary/70"></i> Prod.: ${professional.comissaoProdutos || 0}%</span>
                         </div>
-                        <div class="flex items-center gap-4">
-                            <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${doc.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
-                            <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${doc.id}" data-action="delete">
-                                <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
-                            </button>
-                        </div>`;
-                    professionalsListDiv.appendChild(card);
-                });
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${professional.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
+                        <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${professional.id}" data-action="delete">
+                            <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
+                        </button>
+                    </div>`;
+                listDiv.appendChild(card);
             });
         }
 
@@ -1880,7 +2023,7 @@
 
             const data = {
                 title: document.getElementById('plan-title').value,
-                price: document.getElementById('plan-price').value,
+                price: window.parseCurrency(document.getElementById('plan-price').value),
                 period: document.getElementById('plan-period').value,
                 features: document.getElementById('plan-features').value.split('\n').filter(f => f.trim() !== ''),
                 isPopular: document.getElementById('plan-popular').checked,
@@ -1922,7 +2065,7 @@
                         ${popularBadge}
                         <h4 class="text-lg font-bold text-white mb-2">${plan.title}</h4>
                         <div class="mb-4">
-                            <span class="text-3xl font-extrabold text-primary">${plan.price}</span>
+                            <span class="text-3xl font-extrabold text-primary">${(plan.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                             <span class="text-base font-medium text-gray-400">${plan.period}</span>
                         </div>
                         <ul class="space-y-2 text-gray-300 flex-grow mb-6">
@@ -1954,7 +2097,7 @@
                     const data = planDoc.data();
                     document.getElementById('edit-plan-id').value = id;
                     document.getElementById('edit-plan-title').value = data.title;
-                    document.getElementById('edit-plan-price').value = data.price;
+                    document.getElementById('edit-plan-price').value = (data.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                     document.getElementById('edit-plan-period').value = data.period;
                     document.getElementById('edit-plan-features').value = data.features.join('\n');
                     document.getElementById('edit-plan-popular').checked = data.isPopular;
@@ -1973,7 +2116,7 @@
             const planRef = doc(db, "planos", id);
             const dataToUpdate = {
                 title: document.getElementById('edit-plan-title').value,
-                price: document.getElementById('edit-plan-price').value,
+                price: window.parseCurrency(document.getElementById('edit-plan-price').value),
                 period: document.getElementById('edit-plan-period').value,
                 features: document.getElementById('edit-plan-features').value.split('\n').filter(f => f.trim() !== ''),
                 isPopular: document.getElementById('edit-plan-popular').checked
@@ -2147,7 +2290,7 @@
                             openEditAppointmentModal(id);
                         }
                     }
-                } else if (column && !e.target.closest('.professional-header')) {
+                } else if (column && !e.target.closest('.professional-header') && !column.querySelector('.day-off-overlay')) {
                     // Clicou num slot vazio
                     const linesContainer = column.querySelector('div:not(.professional-header)');
                     if (!linesContainer || !linesContainer.contains(e.target)) return;
@@ -2158,11 +2301,12 @@
 
                     const slotHeight = 40;
                     const slotIndex = Math.floor(y / slotHeight);
-                    const minutesFromStart = slotIndex * agendaState.interval;
                     
-                    const startHour = 8;
-                    const newHour = startHour + Math.floor(minutesFromStart / 60);
-                    const newMinute = minutesFromStart % 60;
+                    const minutesFromGridStart = slotIndex * agendaState.interval;
+                    const totalMinutesFromMidnight = agendaState.gridStartMinutes + minutesFromGridStart;
+                    
+                    const newHour = Math.floor(totalMinutesFromMidnight / 60);
+                    const newMinute = totalMinutesFromMidnight % 60;
 
                     const slotTime = new Date(agendaState.currentDate);
                     slotTime.setHours(newHour, newMinute, 0, 0);
@@ -2170,8 +2314,6 @@
                     // Validação antes de abrir o modal
                     if (isTimeSlotAvailable(professionalId, slotTime, 1)) {
                         openSlotActionModal(professionalId, slotTime);
-                    } else {
-                        showToast('Este horário está dentro de um bloqueio ou evento existente.', 'error');
                     }
                 }
             });
@@ -2196,7 +2338,6 @@
                 updateDateDisplay();
                 loadAgendaData(auth.currentUser.uid);
             });
-            professionalFilter.addEventListener('change', renderAgendaGrid);
             
             const agendaContainer = document.getElementById('agenda-container');
             agendaContainer.addEventListener('click', (e) => {
@@ -2211,10 +2352,9 @@
             });
             
             addAppointmentBtn.addEventListener('click', () => openAddAppointmentModal());
-            
             cancelAddAppointmentButton.addEventListener('click', () => addAppointmentModal.classList.add('hidden'));
             
-            saveAddAppointmentButton.addEventListener('click', async (e) => {
+            document.getElementById('add-appointment-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const btn = saveAddAppointmentButton;
                 const btnText = btn.querySelector('.btn-text');
@@ -2241,7 +2381,7 @@
                     const newAppointment = {
                         cliente: { id: client.id, nome: client.name },
                         barbeiro: { id: professional.id, nome: professional.nome },
-                        servico: { id: service.id, nome: service.nome, duracaoMinutos: service.duracaoMinutos },
+                        servico: { id: service.id, nome: service.nome, duracaoMinutos: service.duracaoMinutos, valor: service.promocao || service.valor },
                         data: dateTime,
                         status: 'agendado',
                         gestorId: auth.currentUser.uid,
@@ -2254,7 +2394,7 @@
 
                 } catch (error) {
                     console.error("Erro ao salvar agendamento manual:", error);
-                    showToast("Erro ao salvar.", 'error');
+                    showToast(error.message || "Erro ao salvar.", 'error');
                 } finally {
                     btnText.classList.remove('hidden'); loader.classList.add('hidden'); btn.disabled = false;
                 }
@@ -2262,18 +2402,39 @@
         }
         
         function blockEntireDay(professionalId, professionalName) {
-            const message = `Tem certeza que deseja bloquear a agenda inteira de ${professionalName} para este dia? Isto irá criar um bloqueio de dia inteiro e não pode ser desfeito facilmente.`;
+            const schedule = getProfessionalScheduleForDate(professionalId, agendaState.currentDate);
+            if (!schedule || !schedule.worksToday) {
+                showToast(`Não é possível bloquear: ${professionalName} está de folga neste dia.`, 'info');
+                return;
+            }
+
+            const message = `Tem certeza que deseja bloquear a agenda inteira de ${professionalName} para este dia? Isto irá criar um bloqueio de ${schedule.startTime} às ${schedule.endTime}.`;
             showConfirmationModal(message, async () => {
                 try {
                     const professional = localProfessionalsCache.find(p => p.id === professionalId);
                     if (!professional) throw new Error("Profissional não encontrado.");
-
-                    const startTime = 8; // 08:00
-                    const endTime = 20;  // 20:00
-                    const duration = (endTime - startTime) * 60; // Duração em minutos
-
+                    
+                    const duration = schedule.endMinutes - schedule.startMinutes;
+                    if (duration <= 0) {
+                        showToast('Horário de trabalho inválido para criar bloqueio.', 'error');
+                        return;
+                    }
+                    
                     const blockDateTime = new Date(agendaState.currentDate);
-                    blockDateTime.setHours(startTime, 0, 0, 0);
+                    blockDateTime.setHours(Math.floor(schedule.startMinutes / 60), schedule.startMinutes % 60, 0, 0);
+
+                    // Checar se já existe um bloqueio de dia inteiro
+                    const conflictingBlock = agendaState.appointments.find(appt => 
+                        appt.barbeiro.id === professionalId &&
+                        appt.status === 'bloqueio' &&
+                        appt.motivo === 'folga' &&
+                        appt.duracaoMinutos >= duration * 0.9 // 90% da duração para dar margem a pequenas diferenças
+                    );
+
+                    if (conflictingBlock) {
+                        showToast(`A agenda de ${professionalName} já parece estar bloqueada.`, 'info');
+                        return;
+                    }
 
                     await addDoc(collection(db, "agendamentos"), {
                         barbeiro: { id: professional.id, nome: professional.nome },
@@ -2295,22 +2456,15 @@
         }
 
         async function openAddAppointmentModal() {
-            const form = addAppointmentModal.querySelector('form');
-            form.reset();
-            
-            const clientSelect = document.getElementById('appt-client-select');
-            const profSelect = document.getElementById('appt-professional-select');
-            const serviceSelect = document.getElementById('appt-service-select');
-            
-            clientSelect.innerHTML = '<option value="">Carregando...</option>';
-            profSelect.innerHTML = '<option value="">Carregando...</option>';
-            serviceSelect.innerHTML = '<option value="">Carregando...</option>';
-
+            const form = document.getElementById('add-appointment-form');
             addAppointmentModal.classList.remove('hidden');
 
             try {
-                await populateCaches(auth.currentUser.uid);
-
+                const clientSelect = document.getElementById('appt-client-select');
+                const profSelect = document.getElementById('appt-professional-select');
+                const serviceSelect = document.getElementById('appt-service-select');
+                
+                // Os caches agora são preenchidos em tempo real, não precisa mais esperar
                 clientSelect.innerHTML = '<option value="">Selecione um cliente</option>';
                 localClientsCache.forEach(c => clientSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`);
 
@@ -2332,27 +2486,9 @@
         }
 
         async function populateCaches(userId) {
-            try {
-                const cachePromises = [];
-                if (localServicesCache.length === 0) {
-                    cachePromises.push(getDocs(query(collection(db, "servicos"), where("gestorId", "==", userId))).then(snap => {
-                        localServicesCache = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    }));
-                }
-                if (localClientsCache.length === 0) {
-                    cachePromises.push(getDocs(query(collection(db, "users"), where("gestorId", "==", userId))).then(snap => {
-                        localClientsCache = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    }));
-                }
-                 if (localProfessionalsCache.length === 0) {
-                     cachePromises.push(getDocs(query(collection(db, "profissionais"), where("gestorId", "==", userId))).then(snap => {
-                        localProfessionalsCache = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    }));
-                }
-                await Promise.all(cachePromises);
-            } catch (error) {
-                console.error("Falha ao carregar dados de suporte da agenda:", error);
-            }
+            // Esta função se torna obsoleta pois os caches são em tempo real.
+            // Mantida por segurança para chamadas legadas, mas idealmente seria removida.
+            return Promise.resolve();
         }
         
         function formatDateTimeForInput(date) {
@@ -2377,7 +2513,10 @@
         }
 
         async function initializeAgenda(userId) {
-            await populateCaches(userId);
+            // As configurações são cruciais para a renderização, então carregamos primeiro.
+            agendaState.settings = await loadAgendaSettings(userId);
+            agendaState.professionals = [...localProfessionalsCache]; // Usa o cache já populado
+            
             updateDateDisplay();
             loadAgendaData(userId);
         }
@@ -2385,6 +2524,7 @@
         function populateProfessionalFilter() {
             const currentVal = professionalFilter.value;
             professionalFilter.innerHTML = '<option value="all">Todos Profissionais</option>';
+            agendaState.professionals = [...localProfessionalsCache]; // Garante que a lista está atualizada
             agendaState.professionals.forEach(prof => {
                 const option = document.createElement('option');
                 option.value = prof.id;
@@ -2405,25 +2545,25 @@
             if (unsubscribeAgenda) unsubscribeAgenda();
 
             try {
-                const professionalsQuery = query(collection(db, "profissionais"), where("gestorId", "==", userId));
-                const professionalsSnapshot = await getDocs(professionalsQuery);
-                agendaState.professionals = professionalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // Popula o filtro com os profissionais do cache
                 populateProfessionalFilter();
 
-                const allAppointmentsQuery = query(collection(db, "agendamentos"), where("gestorId", "==", userId));
+                // Define o intervalo de data para a consulta (APENAS o dia atual)
+                const startOfDay = new Date(agendaState.currentDate);
+                startOfDay.setHours(0, 0, 0, 0);
+                const endOfDay = new Date(agendaState.currentDate);
+                endOfDay.setHours(23, 59, 59, 999);
+                
+                // Consulta otimizada para buscar apenas agendamentos do dia selecionado
+                const appointmentsQuery = query(
+                    collection(db, "agendamentos"), 
+                    where("gestorId", "==", userId),
+                    where("data", ">=", startOfDay),
+                    where("data", "<=", endOfDay)
+                );
 
-                unsubscribeAgenda = onSnapshot(allAppointmentsQuery, (snapshot) => {
-                    const startOfDay = new Date(agendaState.currentDate);
-                    startOfDay.setHours(0, 0, 0, 0);
-                    const endOfDay = new Date(agendaState.currentDate);
-                    endOfDay.setHours(23, 59, 59, 999);
-                    
-                    const appointmentsForDay = snapshot.docs.filter(doc => {
-                        const apptDate = doc.data().data.toDate();
-                        return apptDate >= startOfDay && apptDate <= endOfDay;
-                    });
-
-                    agendaState.appointments = appointmentsForDay.map(doc => ({ id: doc.id, ...doc.data() }));
+                unsubscribeAgenda = onSnapshot(appointmentsQuery, (snapshot) => {
+                    agendaState.appointments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     renderAgendaGrid();
                 }, (error) => {
                     console.error("Erro no listener de agendamentos:", error);
@@ -2457,6 +2597,29 @@
             const grid = document.createElement('div');
             grid.className = 'agenda-grid';
 
+            // Determinar o intervalo geral de tempo da grade para manter as colunas alinhadas
+            let overallStartMinutes = 24 * 60; // 1440
+            let overallEndMinutes = 0;
+
+            professionalsToRender.forEach(prof => {
+                const schedule = getProfessionalScheduleForDate(prof.id, agendaState.currentDate);
+                if (schedule && schedule.worksToday) {
+                    overallStartMinutes = Math.min(overallStartMinutes, schedule.startMinutes);
+                    overallEndMinutes = Math.max(overallEndMinutes, schedule.endMinutes);
+                }
+            });
+
+            // Se ninguém trabalhar, usar um horário padrão
+            if (overallStartMinutes >= overallEndMinutes) {
+                overallStartMinutes = 8 * 60; // 08:00
+                overallEndMinutes = 20 * 60; // 20:00
+            } else {
+                // Arredondar para o intervalo mais próximo para uma grade limpa
+                overallStartMinutes = Math.floor(overallStartMinutes / agendaState.interval) * agendaState.interval;
+                overallEndMinutes = Math.ceil(overallEndMinutes / agendaState.interval) * agendaState.interval;
+            }
+            agendaState.gridStartMinutes = overallStartMinutes; // Salvar no estado global
+
             const timeColumn = document.createElement('div');
             timeColumn.className = 'time-column';
             const timeHeader = document.createElement('div');
@@ -2465,15 +2628,13 @@
             timeColumn.appendChild(timeHeader);
             
             const timeSlotsContainer = document.createElement('div');
-            const startTime = 8;
-            const endTime = 20;
-            for (let hour = startTime; hour < endTime; hour++) {
-                for (let minute = 0; minute < 60; minute += agendaState.interval) {
-                    const timeSlot = document.createElement('div');
-                    timeSlot.className = 'time-slot';
-                    timeSlot.textContent = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-                    timeSlotsContainer.appendChild(timeSlot);
-                }
+            for (let totalMinutes = overallStartMinutes; totalMinutes < overallEndMinutes; totalMinutes += agendaState.interval) {
+                 const hour = Math.floor(totalMinutes / 60);
+                 const minute = totalMinutes % 60;
+                 const timeSlot = document.createElement('div');
+                 timeSlot.className = 'time-slot';
+                 timeSlot.textContent = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+                 timeSlotsContainer.appendChild(timeSlot);
             }
             timeColumn.appendChild(timeSlotsContainer);
             grid.appendChild(timeColumn);
@@ -2494,25 +2655,80 @@
                 profColumn.appendChild(profHeader);
                 
                 const linesContainer = document.createElement('div');
-                for (let hour = startTime; hour < endTime; hour++) {
-                    for (let minute = 0; minute < 60; minute += agendaState.interval) {
-                         const line = document.createElement('div');
-                         line.className = 'time-slot-line';
-                         linesContainer.appendChild(line);
-                    }
+                const schedule = getProfessionalScheduleForDate(prof.id, agendaState.currentDate);
+
+                if (!schedule || !schedule.worksToday) {
+                    profColumn.style.backgroundColor = 'rgba(0,0,0,0.2)';
+                    linesContainer.style.position = 'relative';
+                    linesContainer.innerHTML = `<div class="day-off-overlay absolute inset-0 flex items-center justify-center text-gray-500 font-bold text-lg -rotate-12 opacity-50 pointer-events-none">FOLGA</div>`;
+                }
+                
+                // Renderizar as linhas para o intervalo de tempo geral
+                for (let totalMinutes = overallStartMinutes; totalMinutes < overallEndMinutes; totalMinutes += agendaState.interval) {
+                     const line = document.createElement('div');
+                     line.className = 'time-slot-line';
+
+                     // Escurecer slots fora do horário de trabalho do profissional
+                     if (schedule && schedule.worksToday) {
+                         if (totalMinutes < schedule.startMinutes || totalMinutes >= schedule.endMinutes) {
+                             line.style.backgroundColor = 'rgba(0,0,0,0.1)';
+                             line.style.cursor = 'not-allowed';
+                         }
+                     }
+                     linesContainer.appendChild(line);
                 }
                 profColumn.appendChild(linesContainer);
                 grid.appendChild(profColumn);
             });
             
             agendaGridView.appendChild(grid);
-            placeAppointments();
+            placeAutomaticBlocks(overallStartMinutes);
+            placeAppointments(overallStartMinutes);
 
             loadingAgenda.classList.add('hidden');
             agendaGridView.classList.remove('hidden');
         }
 
-        function placeAppointments() {
+        function placeAutomaticBlocks(gridStartMinutes) {
+            const selectedProfId = professionalFilter.value;
+            const professionalsToRender = selectedProfId === 'all'
+                ? agendaState.professionals
+                : agendaState.professionals.filter(p => p.id === selectedProfId);
+            
+            professionalsToRender.forEach(prof => {
+                const schedule = getProfessionalScheduleForDate(prof.id, agendaState.currentDate);
+                if (!schedule || !schedule.worksToday || !schedule.lunch.enabled) return;
+
+                const column = agendaGridView.querySelector(`.professional-column[data-professional-id="${prof.id}"]`);
+                if (!column) return;
+                
+                const [lunchH, lunchM] = schedule.lunch.startTime.split(':').map(Number);
+                const lunchStartMinutes = lunchH * 60 + lunchM;
+                const lunchDuration = schedule.lunch.duration;
+
+                const totalMinutesFromGridStart = lunchStartMinutes - gridStartMinutes;
+                
+                const slotHeight = 40;
+                const pixelsPerMinute = slotHeight / agendaState.interval;
+                const topPosition = totalMinutesFromGridStart * pixelsPerMinute;
+                const height = lunchDuration * pixelsPerMinute;
+
+                const card = document.createElement('div');
+                card.className = 'appointment-card status-bloqueio motivo-almoco';
+                card.innerHTML = `<i class="fas fa-utensils mr-2"></i> ALMOÇO`;
+                card.style.top = `${topPosition}px`;
+                card.style.height = `${height}px`;
+                card.style.pointerEvents = 'none'; // Impede o clique no bloco de almoço
+
+                const linesContainer = column.querySelector('div:not(.professional-header)');
+                if (linesContainer) {
+                    linesContainer.style.position = 'relative';
+                    linesContainer.appendChild(card);
+                }
+            });
+        }
+
+        function placeAppointments(gridStartMinutes) {
             agendaState.appointments.forEach(appt => {
                 const professionalId = appt.barbeiro?.id;
                 if (!professionalId) return;
@@ -2521,13 +2737,13 @@
                 if (!column) return;
 
                 const apptDate = appt.data.toDate();
-                const startHour = 8;
-                const totalMinutesFromStart = (apptDate.getHours() - startHour) * 60 + apptDate.getMinutes();
+                const totalMinutesFromMidnight = (apptDate.getHours()) * 60 + apptDate.getMinutes();
+                const totalMinutesFromGridStart = totalMinutesFromMidnight - gridStartMinutes;
 
                 const slotHeight = 40;
                 const pixelsPerMinute = slotHeight / agendaState.interval;
 
-                const topPosition = totalMinutesFromStart * pixelsPerMinute;
+                const topPosition = totalMinutesFromGridStart * pixelsPerMinute;
                 
                 let duration;
                 if(appt.status === 'bloqueio') {
@@ -2574,8 +2790,7 @@
         const editClientModal = document.getElementById('edit-client-modal');
         const cancelEditClientButton = document.getElementById('cancel-edit-client-button');
         const saveEditClientButton = document.getElementById('save-edit-client-button');
-        let unsubscribeClients = null;
-
+        
         addClientForm.addEventListener('submit', async (e) => {
             e.preventDefault(); const user = auth.currentUser; if (!user) return;
             const submitBtn = addClientForm.querySelector('button[type="submit"]');
@@ -2586,74 +2801,182 @@
             const referrerId = document.getElementById('client-referrer').value;
             const referrer = localClientsCache.find(c => c.id === referrerId);
 
-            const data = {
-                name: document.getElementById('client-name').value,
-                phone: document.getElementById('client-phone').value,
-                email: document.getElementById('client-email').value,
-                birthDate: document.getElementById('client-birthdate').value,
-                referralCredits: 0,
-                gestorId: user.uid,
-                createdAt: serverTimestamp(),
-                referrer: referrer ? { id: referrer.id, name: referrer.name } : null,
-                firstServiceCompleted: false
-            };
+            try {
+                const clientPhone = document.getElementById('client-phone').value;
+
+                // Validação de duplicidade de telefone
+                const q = query(collection(db, "users"), where("phone", "==", clientPhone), where("gestorId", "==", user.uid));
+                const existingClient = await getDocs(q);
+                if (!existingClient.empty) {
+                    throw new Error("Um cliente com este telefone já existe.");
+                }
+
+                const data = {
+                    name: document.getElementById('client-name').value,
+                    phone: clientPhone,
+                    email: document.getElementById('client-email').value,
+                    birthDate: document.getElementById('client-birthdate').value,
+                    referralCredits: 0,
+                    gestorId: user.uid,
+                    createdAt: serverTimestamp(),
+                    referrer: referrer ? { id: referrer.id, name: referrer.name } : null,
+                    firstServiceCompleted: false
+                };
             
-            try { 
                 await addDoc(collection(db, "users"), data); 
                 addClientForm.reset(); 
                 showToast('Cliente salvo com sucesso!', 'success');
             }
             catch(error) { 
                 console.error("Erro ao adicionar cliente:", error); 
-                showToast('Erro ao salvar cliente.', 'error');
+                showToast(error.message || 'Erro ao salvar cliente.', 'error');
             }
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); submitBtn.disabled = false; }
         });
 
-        function loadClients(userId) {
-            if (unsubscribeClients) unsubscribeClients();
-            const q = query(collection(db, "users"), where("gestorId", "==", userId));
-            unsubscribeClients = onSnapshot(q, (snapshot) => {
-                loadingClientsP.classList.add('hidden');
-                clientsListDiv.innerHTML = '';
-                localClientsCache = [];
-                const referrerSelect = document.getElementById('client-referrer');
-                const currentReferrerValue = referrerSelect.value;
-                referrerSelect.innerHTML = '<option value="">Ninguém</option>';
+        function renderClientsList() {
+            const loadingP = document.getElementById('loading-clients');
+            const listDiv = document.getElementById('clients-list');
+            const referrerSelect = document.getElementById('client-referrer');
+            const searchTerm = document.getElementById('client-search').value.trim().toLowerCase();
 
-                if (snapshot.empty) {
-                    clientsListDiv.innerHTML = '<p class="text-gray-400">Nenhum cliente cadastrado.</p>';
-                    return;
+            // Calcular contagem de indicações
+            const referralCounts = {};
+            localClientsCache.forEach(c => {
+                if (c.referrer && c.referrer.id && c.firstServiceCompleted) {
+                    referralCounts[c.referrer.id] = (referralCounts[c.referrer.id] || 0) + 1;
                 }
-                snapshot.forEach(doc => {
-                    const client = {id: doc.id, ...doc.data()};
-                    localClientsCache.push(client);
-
-                    referrerSelect.innerHTML += `<option value="${client.id}">${client.name}</option>`;
-
-                    const placeholderImg = `https://placehold.co/100x100/333333/FFFFFF?text=${client.name ? client.name.charAt(0) : 'C'}`;
-                    const card = document.createElement('div');
-                    card.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex items-center';
-                    card.innerHTML = `
-                        <img src="${client.profilePic || placeholderImg}" alt="${client.name}" class="w-16 h-16 rounded-full mr-4 object-cover border-2 border-gray-600" onerror="this.onerror=null;this.src='${placeholderImg}';">
-                        <div class="flex-grow">
-                            <p class="font-bold text-white">${client.name || 'Nome não informado'}</p>
-                            <p class="text-sm text-gray-400">${client.phone || 'Telefone não informado'}</p>
-                        </div>
-                        <div class="text-right mr-4">
-                             <p class="text-sm text-gray-400">Créditos</p>
-                             <p class="font-bold text-primary text-lg">R$ ${(client.referralCredits || 0).toFixed(2).replace('.',',')}</p>
-                        </div>
-                        <div class="flex items-center gap-4">
-                             <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${doc.id}" data-action="history"><i class="fas fa-history mr-1"></i>Histórico</button>
-                             <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${doc.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
-                             <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${doc.id}" data-action="delete">
-                                 <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
-                             </button>
-                        </div>`;
-                    clientsListDiv.appendChild(card);
-                });
             });
+
+            // Ordenar metas para encontrar a próxima
+            const sortedGoals = [...localGoalsCache].sort((a, b) => a.target - b.target);
+
+
+            // Filtrar clientes
+            const filteredClients = localClientsCache.filter(client => {
+                const nameMatch = client.name ? client.name.toLowerCase().includes(searchTerm) : false;
+                const phoneMatch = client.phone ? client.phone.replace(/\D/g, '').includes(searchTerm.replace(/\D/g, '')) : false;
+                return nameMatch || phoneMatch;
+            });
+            
+            loadingP.classList.add('hidden');
+            listDiv.innerHTML = '';
+            
+            // Repopular o select de indicação, independentemente da busca
+            const currentReferrerValue = referrerSelect.value;
+            referrerSelect.innerHTML = '<option value="">Ninguém</option>';
+            localClientsCache.forEach(client => {
+                 referrerSelect.innerHTML += `<option value="${client.id}">${client.name}</option>`;
+            });
+            referrerSelect.value = currentReferrerValue;
+
+            if (filteredClients.length === 0) {
+                listDiv.innerHTML = '<p class="text-gray-400">Nenhum cliente encontrado.</p>';
+                document.getElementById('clients-pagination').innerHTML = '';
+                return;
+            }
+            
+            // Lógica de Paginação
+            const totalPages = Math.ceil(filteredClients.length / clientsPerPage);
+            if (clientCurrentPage > totalPages) clientCurrentPage = totalPages;
+            const startIndex = (clientCurrentPage - 1) * clientsPerPage;
+            const endIndex = startIndex + clientsPerPage;
+            const paginatedClients = filteredClients.slice(startIndex, endIndex);
+
+            paginatedClients.forEach(client => {
+                const placeholderImg = `https://placehold.co/100x100/333333/FFFFFF?text=${client.name ? client.name.charAt(0) : 'C'}`;
+                const card = document.createElement('div');
+                card.className = 'p-4 bg-[#1e1e1e] border border-gray-700 rounded-lg flex items-center';
+
+                // Lógica de Progresso de Metas
+                const referralCount = referralCounts[client.id] || 0;
+                const nextGoal = sortedGoals.find(g => g.target > referralCount);
+                let progressHtml = '';
+
+                if (nextGoal) {
+                    const progressPercent = Math.min((referralCount / nextGoal.target) * 100, 100);
+                    progressHtml = `
+                        <div class="mt-2">
+                             <p class="text-xs text-gray-400 mb-1">Progresso de Indicação:</p>
+                             <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div class="bg-primary h-2 rounded-full" style="width: ${progressPercent}%"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">${referralCount} de ${nextGoal.target} para (${nextGoal.prize})</p>
+                        </div>
+                    `;
+                } else if (referralCount > 0 && sortedGoals.length > 0) {
+                     progressHtml = `<p class="text-xs text-green-400 mt-2"><i class="fas fa-check-circle mr-1"></i> Todas as metas atingidas!</p>`;
+                } else if (referralCount > 0) {
+                     progressHtml = `<p class="text-xs text-gray-500 mt-2">${referralCount} indicações concluídas.</p>`;
+                }
+
+
+                card.innerHTML = `
+                    <img src="${client.profilePic || placeholderImg}" alt="${client.name}" class="w-16 h-16 rounded-full mr-4 object-cover border-2 border-gray-600" onerror="this.onerror=null;this.src='${placeholderImg}';">
+                    <div class="flex-grow">
+                        <p class="font-bold text-white">${client.name || 'Nome não informado'}</p>
+                        <p class="text-sm text-gray-400">${client.phone || 'Telefone não informado'}</p>
+                        ${progressHtml}
+                    </div>
+                    <div class="text-right mr-4">
+                            <p class="text-sm text-gray-400">Créditos</p>
+                            <p class="font-bold text-primary text-lg">R$ ${(client.referralCredits || 0).toFixed(2).replace('.',',')}</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                            <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${client.id}" data-action="history"><i class="fas fa-history mr-1"></i>Histórico</button>
+                            <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${client.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
+                            <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${client.id}" data-action="delete">
+                                <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
+                            </button>
+                    </div>`;
+                listDiv.appendChild(card);
+            });
+
+            renderClientPagination(filteredClients.length, clientCurrentPage);
+        }
+
+        function renderClientPagination(totalItems, currentPage) {
+            const paginationContainer = document.getElementById('clients-pagination');
+            paginationContainer.innerHTML = '';
+            const totalPages = Math.ceil(totalItems / clientsPerPage);
+
+            if (totalPages <= 1) return;
+
+            // Botão Anterior
+            const prevButton = document.createElement('button');
+            prevButton.innerHTML = `<i class="fas fa-chevron-left"></i>`;
+            prevButton.className = 'px-3 py-1 rounded-md bg-[#333] hover:bg-primary hover:text-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors';
+            prevButton.disabled = currentPage === 1;
+            prevButton.dataset.page = currentPage - 1;
+            paginationContainer.appendChild(prevButton);
+
+            // Números das Páginas
+            for (let i = 1; i <= totalPages; i++) {
+                // Lógica para exibir apenas algumas páginas se houver muitas (opcional, mas bom para UX)
+                if (totalPages > 7 && (i > 2 && i < currentPage - 1 || i < totalPages - 1 && i > currentPage + 1)) {
+                    if (!paginationContainer.querySelector('.dots')) {
+                        const dots = document.createElement('span');
+                        dots.textContent = '...';
+                        dots.className = 'dots px-3 py-1 text-gray-500';
+                        paginationContainer.appendChild(dots);
+                    }
+                    continue;
+                }
+
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.className = `px-3 py-1 rounded-md transition-colors ${i === currentPage ? 'bg-primary text-black font-bold' : 'bg-[#333] hover:bg-primary hover:text-black'}`;
+                pageButton.dataset.page = i;
+                paginationContainer.appendChild(pageButton);
+            }
+            
+            // Botão Próximo
+            const nextButton = document.createElement('button');
+            nextButton.innerHTML = `<i class="fas fa-chevron-right"></i>`;
+            nextButton.className = 'px-3 py-1 rounded-md bg-[#333] hover:bg-primary hover:text-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.dataset.page = currentPage + 1;
+            paginationContainer.appendChild(nextButton);
         }
         
         clientsListDiv.addEventListener('click', async (e) => {
@@ -2674,7 +2997,7 @@
                     document.getElementById('edit-client-phone').value = data.phone || '';
                     document.getElementById('edit-client-email').value = data.email || '';
                     document.getElementById('edit-client-birthdate').value = data.birthDate || '';
-                    document.getElementById('edit-client-credits').value = data.referralCredits || '';
+                    document.getElementById('edit-client-credits').value = (data.referralCredits || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                     editClientModal.classList.remove('hidden');
                 }
             }
@@ -2696,7 +3019,7 @@
                 phone: document.getElementById('edit-client-phone').value,
                 email: document.getElementById('edit-client-email').value,
                 birthDate: document.getElementById('edit-client-birthdate').value,
-                referralCredits: parseFloat(document.getElementById('edit-client-credits').value) || 0
+                referralCredits: window.parseCurrency(document.getElementById('edit-client-credits').value) || 0
             };
 
             try { 
@@ -2728,7 +3051,7 @@
             submitBtn.disabled = true;
             
             try {
-                const creditValue = parseFloat(document.getElementById('referral-credit-value').value);
+                const creditValue = window.parseCurrency(document.getElementById('referral-credit-value').value);
                 if (isNaN(creditValue) || creditValue < 0) {
                     throw new Error("Valor inválido.");
                 }
@@ -2752,7 +3075,7 @@
             const settingsRef = doc(db, 'configuracoes', userId);
             const docSnap = await getDoc(settingsRef);
             if (docSnap.exists() && docSnap.data().referralCreditValue) {
-                document.getElementById('referral-credit-value').value = docSnap.data().referralCreditValue.toFixed(2);
+                document.getElementById('referral-credit-value').value = (docSnap.data().referralCreditValue || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             }
         }
 
@@ -3080,9 +3403,11 @@
             unsubscribeGoals = onSnapshot(q, (snapshot) => {
                 loadingGoalsP.classList.add('hidden');
                 goalsListDiv.innerHTML = '';
+                localGoalsCache = []; // Limpa o cache antes de preencher
                 if (snapshot.empty) { goalsListDiv.innerHTML = '<p class="text-gray-400">Nenhuma meta cadastrada.</p>'; return; }
                 snapshot.forEach(doc => {
-                    const goal = doc.data();
+                    const goal = {id: doc.id, ...doc.data()};
+                    localGoalsCache.push(goal); // Adiciona ao cache
                     const card = document.createElement('div');
                     card.className = 'p-4 bg-[#2a2a2a] border border-gray-700 rounded-lg flex items-center';
                     card.innerHTML = `
@@ -3373,16 +3698,28 @@
             btnText.classList.add('hidden'); loader.classList.remove('hidden'); submitBtn.disabled = true;
             
             const email = document.getElementById('panel-user-email').value;
-            const password = document.getElementById('panel-user-password').value;
             const role = document.getElementById('panel-user-role').value;
             
             try {
-                await addDoc(collection(db, "panel_users"), { email: email, role: role, createdAt: serverTimestamp(), gestorId: auth.currentUser.uid });
+                // Verificar se o email já foi convidado ou cadastrado
+                const q = query(collection(db, "panel_users"), where("email", "==", email));
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    throw new Error("Este email já foi convidado ou cadastrado.");
+                }
+
+                await addDoc(collection(db, "panel_users"), { 
+                    email: email, 
+                    role: role, 
+                    createdAt: serverTimestamp(), 
+                    gestorId: auth.currentUser.uid,
+                    userId: null // Indica que o convite ainda não foi aceito
+                });
                 showToast(`Convite enviado para ${email}!`, 'success');
                 addPanelUserForm.reset();
             } catch (error) {
                 console.error("Erro ao convidar usuário:", error);
-                showToast('Erro ao convidar usuário.', 'error');
+                showToast(error.message || 'Erro ao convidar usuário.', 'error');
             } finally {
                 btnText.classList.remove('hidden');
                 loader.classList.remove('hidden');
@@ -3490,9 +3827,8 @@
                 if (sidebarIsCollapsed) {
                     sidebar.classList.remove('collapsed');
                 } else if (isCurrentlyActive && !isSubmenuTrigger) {
-                    sidebar.classList.add('collapsed');
-                    document.querySelectorAll('#sidebar .submenu.open').forEach(sub => sub.classList.remove('open'));
-                    return;
+                    // MUDANÇA: Não faz nada se o link ativo for clicado, em vez de fechar
+                    return; 
                 }
 
                 if (isSubmenuTrigger) {
@@ -3526,10 +3862,46 @@
                             case 'content-caixa': loadCaixaData(user.uid); break; 
                             case 'content-relatorios': initializeReports(user.uid); break;
                             case 'content-agenda-settings': initializeAgendaSettingsPage(user.uid); break;
-                            case 'content-servicos': loadServices(user.uid); break;
-                            case 'content-profissionais': loadProfessionals(user.uid); break;
+                            case 'content-servicos': 
+                                renderServicesList();
+                                const serviceSearch = document.getElementById('service-search');
+                                if (!serviceSearch.dataset.initialized) {
+                                    serviceSearch.addEventListener('input', renderServicesList);
+                                    serviceSearch.dataset.initialized = 'true';
+                                }
+                                break;
+                            case 'content-profissionais': 
+                                renderProfessionalsList();
+                                const profSearch = document.getElementById('professional-search');
+                                if (!profSearch.dataset.initialized) {
+                                    profSearch.addEventListener('input', renderProfessionalsList);
+                                    profSearch.dataset.initialized = 'true';
+                                }
+                                break;
                             case 'content-unidades': loadUnits(user.uid); break;
-                            case 'content-clientes': loadClients(user.uid); break;
+                            case 'content-clientes':
+                                renderClientsList();
+                                const clientSearch = document.getElementById('client-search');
+                                if (!clientSearch.dataset.initialized) {
+                                    clientSearch.addEventListener('input', () => {
+                                        clientCurrentPage = 1; // Reseta para a primeira página ao buscar
+                                        renderClientsList();
+                                    });
+                                    clientSearch.dataset.initialized = 'true';
+                                }
+                                // Adiciona listener para a paginação
+                                const paginationContainer = document.getElementById('clients-pagination');
+                                if (!paginationContainer.dataset.initialized) {
+                                    paginationContainer.addEventListener('click', (e) => {
+                                        const button = e.target.closest('button');
+                                        if (button && button.dataset.page) {
+                                            clientCurrentPage = parseInt(button.dataset.page);
+                                            renderClientsList();
+                                        }
+                                    });
+                                    paginationContainer.dataset.initialized = 'true';
+                                }
+                                break;
                             case 'content-planos': loadPlans(user.uid); break;
                             case 'content-metas': loadGoals(user.uid); loadReferralSettings(user.uid); break;
                             case 'content-configuracoes': 
@@ -3839,10 +4211,13 @@
             const endOfDay = new Date();
             endOfDay.setHours(23, 59, 59, 999);
 
+            // Consulta otimizada para buscar apenas agendamentos finalizados do dia atual
             const q = query(
                 collection(db, "agendamentos"),
                 where("gestorId", "==", userId),
-                where("status", "==", "finalizado")
+                where("status", "==", "finalizado"),
+                where("data", ">=", startOfDay),
+                where("data", "<=", endOfDay)
             );
 
             const caixaListBody = document.getElementById('caixa-list');
@@ -3851,17 +4226,16 @@
             unsubscribeCaixa = onSnapshot(q, (snapshot) => {
                 caixaListBody.innerHTML = ''; 
 
-                const comandasDoDia = snapshot.docs.filter(doc => {
-                    const data = doc.data().data.toDate();
-                    return data >= startOfDay && data <= endOfDay;
-                });
+                const comandasDoDia = snapshot.docs.map(doc => doc.data());
 
                 if (comandasDoDia.length === 0) {
                     caixaListBody.innerHTML = '<tr><td colspan="6" class="text-center p-8 text-gray-500">Nenhum serviço finalizado hoje.</td></tr>';
                     return;
                 }
 
-                comandasDoDia.forEach(doc => {
+                comandasDoDia.sort((a, b) => a.data.toDate() - b.data.toDate());
+
+                snapshot.docs.forEach(doc => {
                     const comanda = doc.data();
                     const valor = comanda.valorServico || 0;
                     const statusPagamento = comanda.pagamentoStatus || 'Pendente';
@@ -3952,7 +4326,7 @@
         function updateTotal() {
             let total = currentSaleData.originalValue;
             
-            const discount = parseFloat(document.getElementById('payment-discount').value) || 0;
+            const discount = window.parseCurrency(document.getElementById('payment-discount').value) || 0;
             total -= discount;
 
             const useCredits = document.getElementById('payment-use-credits').checked;
@@ -3963,7 +4337,7 @@
             
             document.getElementById('payment-summary-total').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
 
-            const cashPaid = parseFloat(document.getElementById('payment-cash-paid').value) || 0;
+            const cashPaid = window.parseCurrency(document.getElementById('payment-cash-paid').value) || 0;
             const change = cashPaid > total ? cashPaid - total : 0;
             document.getElementById('payment-change').textContent = `R$ ${change.toFixed(2).replace('.', ',')}`;
         }
@@ -3989,7 +4363,7 @@
                 const clientId = document.getElementById('payment-client-id').value;
 
                 let total = currentSaleData.originalValue;
-                const discount = parseFloat(document.getElementById('payment-discount').value) || 0;
+                const discount = window.parseCurrency(document.getElementById('payment-discount').value) || 0;
                 total -= discount;
 
                 let creditsUsed = 0;
@@ -4438,24 +4812,34 @@
             btnText.classList.add('hidden'); loader.classList.remove('hidden'); btn.disabled = true;
 
             try {
+                const newClientName = document.getElementById('quick-client-name').value;
+                const newClientPhone = document.getElementById('quick-client-phone').value;
+
+                // Validação de duplicidade de telefone
+                const q = query(collection(db, "users"), where("phone", "==", newClientPhone), where("gestorId", "==", auth.currentUser.uid));
+                const existingClient = await getDocs(q);
+                if (!existingClient.empty) {
+                    throw new Error("Um cliente com este telefone já existe.");
+                }
+
                 const newClient = {
-                    name: document.getElementById('quick-client-name').value,
-                    phone: document.getElementById('quick-client-phone').value,
+                    name: newClientName,
+                    phone: newClientPhone,
                     gestorId: auth.currentUser.uid,
                     createdAt: serverTimestamp()
                 };
                 const docRef = await addDoc(collection(db, "users"), newClient);
-                const clientForCache = { id: docRef.id, ...newClient };
-                localClientsCache.push(clientForCache);
+                // O cache será atualizado automaticamente pelo listener onSnapshot, não precisa adicionar manualmente
                 
                 const clientSelect = document.getElementById('slot-client-select');
                 clientSelect.innerHTML += `<option value="${docRef.id}" selected>${newClient.name}</option>`;
                 
                 quickClientModal.classList.add('hidden');
+                document.getElementById('add-quick-client-form').reset();
                 showToast('Cliente cadastrado com rapidez!', 'success');
             } catch (error) {
                 console.error("Erro no cadastro rápido:", error);
-                showToast('Erro ao salvar cliente.', 'error');
+                showToast(error.message || 'Erro ao salvar cliente.', 'error');
             } finally {
                 btnText.classList.remove('hidden'); loader.classList.add('hidden'); btn.disabled = false;
             }
@@ -4475,11 +4859,11 @@
                             const target = event.target;
                             const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
                             const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-                            target.style.transform = `translate(${x}px, ${y}px)`;
-                            target.setAttribute('data-x', x);
-                            target.setAttribute('data-y', y);
-                        },
-                        end(event) {
+                    target.style.transform = `translate(${x}px, ${y}px)`;
+                    target.setAttribute('data-x', x);
+                    target.setAttribute('data-y', y);
+                },
+                end(event) {
                             const target = event.target;
                             target.classList.remove('dragging');
                             target.style.transform = '';
@@ -4507,11 +4891,11 @@
                                     
                     const slotHeight = 40;
                     const slotIndex = Math.round(newTop / slotHeight);
-                    const minutesFromStart = slotIndex * agendaState.interval;
-                    
-                    const startHour = 8;
-                    const newHour = startHour + Math.floor(minutesFromStart / 60);
-                    const newMinute = minutesFromStart % 60;
+                    const minutesFromGridStart = slotIndex * agendaState.interval;
+                    const totalMinutesFromMidnight = agendaState.gridStartMinutes + minutesFromGridStart;
+
+                    const newHour = Math.floor(totalMinutesFromMidnight / 60);
+                    const newMinute = totalMinutesFromMidnight % 60;
 
                     const newDateTime = new Date(agendaState.currentDate);
                     newDateTime.setHours(newHour, newMinute, 0, 0);
@@ -4554,49 +4938,108 @@
                 showToast('Agendamento reagendado!', 'info');
             } catch (error) {
                 console.error("Erro ao atualizar agendamento após arrastar:", error);
-                showToast('Não foi possível reagendar.', 'error');
+                showToast(error.message || 'Não foi possível reagendar.', 'error');
+                renderAgendaGrid();
             }
         }
 
         // --- NOVA FUNÇÃO CENTRAL DE VALIDAÇÃO DE HORÁRIOS ---
+        function getProfessionalScheduleForDate(professionalId, date) {
+            if (!agendaState.settings) return null;
+
+            const generalSettings = agendaState.settings;
+            const professionalOverride = generalSettings.professionalOverrides.find(o => o.professionalId === professionalId);
+
+            const dayOfWeekShort = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'][date.getDay()];
+
+            let worksToday;
+            let startTime, endTime;
+
+            if (professionalOverride && professionalOverride.workingDays && Object.values(professionalOverride.workingDays).some(v => v)) {
+                // Override tem dias específicos e pelo menos um está marcado
+                worksToday = professionalOverride.workingDays[dayOfWeekShort] || false;
+                startTime = professionalOverride.startTime || generalSettings.startTime;
+                endTime = professionalOverride.endTime || generalSettings.endTime;
+            } else {
+                // Usar dias e horários gerais, mas permitir override de horário
+                worksToday = generalSettings.workingDays[dayOfWeekShort] || false;
+                startTime = (professionalOverride && professionalOverride.startTime) ? professionalOverride.startTime : generalSettings.startTime;
+                endTime = (professionalOverride && professionalOverride.endTime) ? professionalOverride.endTime : generalSettings.endTime;
+            }
+            
+            const timeToMinutes = (timeStr) => {
+                if (!timeStr) return 0;
+                const [h, m] = timeStr.split(':').map(Number);
+                return h * 60 + m;
+            };
+
+            return {
+                worksToday,
+                startTime: startTime,
+                endTime: endTime,
+                startMinutes: timeToMinutes(startTime),
+                endMinutes: timeToMinutes(endTime),
+                lunch: generalSettings.lunchBreak
+            };
+        }
+
+
         function isTimeSlotAvailable(professionalId, startDateTime, durationInMinutes, excludeAppointmentId = null) {
+            const schedule = getProfessionalScheduleForDate(professionalId, startDateTime);
+            if (!schedule) {
+                throw new Error('Configurações da agenda não carregadas.');
+            }
+
+            // Regra 1: Checar se o profissional trabalha no dia
+            if (!schedule.worksToday) {
+                throw new Error('O profissional não trabalha neste dia.');
+            }
+            
+            // Regra 2: Não permitir agendar no passado (com 1 min de tolerância)
             const now = new Date();
-            // Regra 1: Não permitir agendar no passado (com 5 min de tolerância)
-            if (startDateTime < new Date(now.getTime() - 5 * 60000)) {
-                showToast('Não é possível agendar em horários passados.', 'error');
-                return false;
+            if (startDateTime < new Date(now.getTime() - 1 * 60000)) {
+                throw new Error('Não é possível agendar em horários passados.');
             }
 
-            // Regra 2: Respeitar horário de funcionamento (8h às 20h)
-            const startHour = startDateTime.getHours();
+            // Regra 3: Respeitar horário de funcionamento do profissional
+            const startMinutes = startDateTime.getHours() * 60 + startDateTime.getMinutes();
             const endDateTime = new Date(startDateTime.getTime() + durationInMinutes * 60000);
-            const endHour = endDateTime.getHours();
-            const endMinutes = endDateTime.getMinutes();
-            if (startHour < 8 || endHour > 20 || (endHour === 20 && endMinutes > 0)) {
-                showToast('Fora do horário de funcionamento (08:00 - 20:00).', 'error');
-                return false;
+            const endMinutes = endDateTime.getHours() * 60 + endDateTime.getMinutes() + (endDateTime.getDate() > startDateTime.getDate() ? 24*60 : 0);
+
+            if (startMinutes < schedule.startMinutes || endMinutes > schedule.endMinutes) {
+                throw new Error(`Fora do horário de funcionamento (${schedule.startTime} - ${schedule.endTime}).`);
             }
 
-            // Regra 3: Checar conflitos com eventos existentes
+            // Regra 4: Checar conflitos com eventos existentes (agendamentos e bloqueios manuais)
             const newStartTime = startDateTime.getTime();
             const newEndTime = endDateTime.getTime();
 
             const conflictingEvent = agendaState.appointments.find(appt => {
                 if (appt.barbeiro.id !== professionalId || appt.id === excludeAppointmentId) {
-                    return false; // Ignorar eventos de outros profissionais ou o próprio evento sendo editado
+                    return false;
                 }
-
                 const existingStartTime = appt.data.toDate().getTime();
-                const existingDuration = appt.status === 'bloqueio' ? appt.duracaoMinutos : appt.servico.duracaoMinutos;
+                const existingDuration = (appt.status === 'bloqueio' ? appt.duracaoMinutos : appt.servico.duracaoMinutos) || agendaState.interval;
                 const existingEndTime = existingStartTime + existingDuration * 60000;
-                
-                // Lógica de verificação de sobreposição de horários
                 return (newStartTime < existingEndTime) && (newEndTime > existingStartTime);
             });
             
             if (conflictingEvent) {
-                showToast(`Conflito com um ${conflictingEvent.status || 'evento'} existente.`, 'error');
-                return false;
+                 throw new Error(`Conflito com um ${conflictingEvent.status === 'bloqueio' ? 'bloqueio' : 'agendamento'} existente.`);
+            }
+            
+            // Regra 5: Checar conflitos com a pausa de almoço automática
+            if (schedule.lunch.enabled) {
+                const lunchStart = new Date(startDateTime);
+                const [lunchH, lunchM] = schedule.lunch.startTime.split(':').map(Number);
+                lunchStart.setHours(lunchH, lunchM, 0, 0);
+                
+                const lunchStartTime = lunchStart.getTime();
+                const lunchEndTime = lunchStartTime + schedule.lunch.duration * 60000;
+                
+                if ((newStartTime < lunchEndTime) && (newEndTime > lunchStartTime)) {
+                    throw new Error('Conflito com o horário de almoço.');
+                }
             }
 
             return true; // Horário disponível
