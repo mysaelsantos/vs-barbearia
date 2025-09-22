@@ -155,6 +155,17 @@
             box-sizing: border-box;
             cursor: pointer; /* Adicionado para indicar que os slots são clicáveis */
         }
+        .time-slot-line.disabled {
+            background-color: rgba(0,0,0,0.15);
+            background-image: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 5px,
+                rgba(255, 255, 255, 0.02) 5px,
+                rgba(255, 255, 255, 0.02) 10px
+            );
+            cursor: not-allowed;
+        }
         .appointment-card {
             position: absolute;
             left: 5px;
@@ -177,6 +188,20 @@
         .appointment-card.dragging {
             opacity: 0.6;
             z-index: 20;
+        }
+
+        /* NOVO: Estilo para o placeholder de arrastar */
+        .drag-placeholder {
+            position: absolute;
+            left: 5px;
+            right: 5px;
+            background-color: rgba(251, 182, 44, 0.2);
+            border: 2px dashed #fbb62c;
+            border-radius: 4px;
+            z-index: 5;
+            box-sizing: border-box;
+            pointer-events: none; /* Impede que interfira com eventos do mouse */
+            transition: top 0.1s ease-out;
         }
 
         /* Cores por Status */
@@ -409,6 +434,7 @@
                             <a href="#" class="nav-link has-submenu"><i class="fas fa-archive nav-icon"></i><span class="nav-text">Cadastros</span></a>
                             <ul class="submenu">
                                 <li><a href="#" class="nav-link" data-target="content-servicos">Serviços</a></li>
+                                <li><a href="#" class="nav-link" data-target="content-produtos">Produtos</a></li>
                                 <li><a href="#" class="nav-link" data-target="content-profissionais">Profissionais</a></li>
                                 <li><a href="#" class="nav-link" data-target="content-unidades">Unidades</a></li>
                                 <li><a href="#" class="nav-link" data-target="content-clientes">Clientes</a></li>
@@ -545,62 +571,48 @@
                             </div>
                         </div>
 
-                        <!-- Conteúdo da Agenda -->
+                        <!-- Conteúdo da Aba Agenda -->
                         <div id="content-agenda" class="hidden p-6 space-y-6">
-                            <!-- Cabeçalho da Agenda e Controles de Data -->
+                            <!-- Cabeçalho da Agenda -->
                             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                 <div>
-                                    <h2 id="agenda-title" class="text-2xl font-bold text-gray-300">Agenda - Carregando...</h2>
-                                    <p class="text-sm text-gray-500">Visualize e gerencie os horários.</p>
+                                    <h1 id="agenda-title" class="text-2xl font-bold text-primary">Agenda</h1>
                                 </div>
                                 <div class="flex items-center gap-2 flex-wrap">
-                                    <button id="prev-day-btn" class="btn-secondary !p-2.5" title="Dia Anterior"><i class="fas fa-chevron-left"></i></button>
-                                    <input type="date" id="date-picker" class="form-input !p-2 w-auto">
-                                    <button id="next-day-btn" class="btn-secondary !p-2.5" title="Próximo Dia"><i class="fas fa-chevron-right"></i></button>
+                                    <button id="prev-day-btn" class="btn-secondary !py-2 !px-3"><i class="fas fa-chevron-left"></i></button>
+                                    <input type="date" id="date-picker" class="form-input !p-2 !w-auto">
+                                    <button id="next-day-btn" class="btn-secondary !py-2 !px-3"><i class="fas fa-chevron-right"></i></button>
+                                    <select id="professional-filter" class="form-select !p-2 !w-auto"></select>
+                                    <button id="add-appointment-btn" class="btn-primary !py-2"><i class="fas fa-plus mr-2"></i>Agendamento Manual</button>
                                 </div>
                             </div>
                             
-                            <!-- Filtros e Ações -->
-                            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-[#2a2a2a] p-4 rounded-xl border border-gray-800">
-                                <div>
-                                    <label for="professional-filter" class="text-sm text-gray-400 mr-2">Filtrar por profissional:</label>
-                                    <select id="professional-filter" class="form-select !w-auto">
-                                        <option value="all">Todos Profissionais</option>
-                                    </select>
-                                </div>
-                                <button id="add-appointment-btn" class="btn-primary">
-                                    <i class="fas fa-plus"></i> Novo Agendamento
-                                </button>
-                            </div>
-
-                            <!-- Container da Grade da Agenda -->
-                            <div id="agenda-container" class="bg-[#2a2a2a] p-4 rounded-xl border border-gray-800">
+                            <!-- Grade da Agenda -->
+                            <div id="agenda-container" class="bg-[#2a2a2a] p-4 rounded-xl shadow-lg border border-gray-800">
                                 <div id="loading-agenda" class="text-center py-16 text-gray-500">
-                                    <div class="loader mx-auto" style="width: 40px; height: 40px; border-width: 4px;"></div>
+                                    <div class="loader mx-auto"></div>
                                     <p class="mt-4">A carregar agenda...</p>
                                 </div>
-                                <div id="agenda-grid-view" class="hidden">
-                                    <!-- A grade da agenda será renderizada aqui pelo JavaScript -->
-                                </div>
+                                <div id="agenda-grid-view" class="hidden"></div>
                             </div>
                         </div>
 
-                        <!-- SEÇÕES DE CADASTRO ADICIONADAS PARA CORREÇÃO -->
-
-                        <!-- Conteúdo da Aba Serviços -->
-                        <div id="content-servicos" class="hidden p-6">
-                            <h1 class="text-2xl font-bold text-primary mb-6">Gerenciar Serviços</h1>
+                        <!-- NOVO: Conteúdo da Aba Produtos -->
+                        <div id="content-produtos" class="hidden p-6">
+                            <h1 class="text-2xl font-bold text-primary mb-6">Gerenciar Produtos</h1>
                             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                 <div class="lg:col-span-1">
                                     <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
-                                        <h3 class="text-lg font-bold text-gray-300 mb-4">Adicionar Novo Serviço</h3>
-                                        <form id="add-service-form" class="space-y-4">
-                                            <input type="text" id="service-name" required placeholder="Nome do Serviço" class="form-input w-full">
-                                            <input type="text" id="service-value" required placeholder="R$ 0,00" class="form-input w-full" oninput="window.applyCurrencyMask(event)">
-                                            <input type="text" id="service-promo-value" placeholder="Valor Promocional (Opcional)" class="form-input w-full" oninput="window.applyCurrencyMask(event)">
-                                            <input type="number" id="service-duration" required placeholder="Duração (minutos)" class="form-input w-full">
+                                        <h3 class="text-lg font-bold text-gray-300 mb-4">Adicionar Novo Produto</h3>
+                                        <form id="add-product-form" class="space-y-4">
+                                            <input type="text" id="product-name" required placeholder="Nome do Produto" class="form-input w-full">
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <input type="text" id="product-cost-price" placeholder="Custo (R$)" class="form-input w-full" oninput="window.applyCurrencyMask(event)">
+                                                <input type="text" id="product-sale-price" required placeholder="Venda (R$)" class="form-input w-full" oninput="window.applyCurrencyMask(event)">
+                                            </div>
+                                            <input type="number" id="product-stock" required placeholder="Estoque Atual" class="form-input w-full">
                                             <button type="submit" class="w-full justify-center btn-primary">
-                                                <span class="btn-text">Salvar Serviço</span>
+                                                <span class="btn-text">Salvar Produto</span>
                                                 <div class="loader hidden"></div>
                                             </button>
                                         </form>
@@ -608,10 +620,10 @@
                                 </div>
                                 <div class="lg:col-span-2">
                                     <div class="bg-[#2a2a2a] p-6 rounded-xl shadow-lg border border-gray-800">
-                                        <h3 class="text-lg font-bold text-gray-300 mb-4">Serviços Cadastrados</h3>
-                                        <input type="search" id="service-search" placeholder="Buscar por nome do serviço..." class="form-input w-full mb-4">
-                                        <div id="services-list" class="space-y-4">
-                                            <p id="loading-services">A carregar serviços...</p>
+                                        <h3 class="text-lg font-bold text-gray-300 mb-4">Produtos Cadastrados</h3>
+                                        <input type="search" id="product-search" placeholder="Buscar por nome do produto..." class="form-input w-full mb-4">
+                                        <div id="products-list" class="space-y-4">
+                                            <p id="loading-products">A carregar produtos...</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1309,6 +1321,31 @@
         </div>
     </div>
 
+    <!-- NOVO: Modal de Edição de Produto -->
+    <div id="edit-product-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4">
+        <div class="relative w-full max-w-md">
+             <div class="modal-content rounded-lg shadow-xl p-6">
+                <h3 class="text-xl font-bold text-primary text-center mb-6">Editar Produto</h3>
+                <form id="edit-product-form" class="space-y-4 text-left">
+                    <input type="hidden" id="edit-product-id">
+                    <input type="text" id="edit-product-name" required placeholder="Nome do Produto" class="form-input w-full">
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" id="edit-product-cost-price" placeholder="Custo (R$)" class="form-input w-full" oninput="window.applyCurrencyMask(event)">
+                        <input type="text" id="edit-product-sale-price" required placeholder="Venda (R$)" class="form-input w-full" oninput="window.applyCurrencyMask(event)">
+                    </div>
+                    <input type="number" id="edit-product-stock" required placeholder="Estoque Atual" class="form-input w-full">
+                </form>
+                <div class="mt-8 flex justify-end space-x-4">
+                    <button id="cancel-edit-product-button" class="btn-secondary">Cancelar</button>
+                    <button id="save-edit-product-button" class="btn-primary">
+                        <span class="btn-text">Salvar Alterações</span>
+                        <div class="loader hidden"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de Confirmação -->
     <div id="confirmation-modal" class="hidden fixed inset-0 z-[100] overflow-y-auto modal-backdrop flex items-center justify-center p-4">
         <div class="relative w-full max-w-md">
@@ -1587,11 +1624,15 @@
         let localServicesCache = [];
         let localProfessionalsCache = [];
         let localClientsCache = [];
+        let localProductsCache = []; // NOVO
         let isDragging = false; // Flag para controlar o estado de arrastar
         let globalUnsubscribes = []; // Array para guardar os listeners e desligá-los no logout
         let clientCurrentPage = 1;
         const clientsPerPage = 8;
         let localGoalsCache = [];
+        let dragPlaceholder = null; // NOVO
+        let currentDropzone = null; // NOVO
+        let appInitialized = false; // NOVO: Flag para controle de inicialização
 
 
         // --- NOVAS FUNÇÕES DE MÁSCARA E VALIDAÇÃO ---
@@ -1639,10 +1680,14 @@
                 authSection.classList.add('hidden');
                 panelSection.classList.remove('hidden');
                 userEmailSpan.textContent = user.email;
-                initializeRealtimeCaches(user.uid); // NOVO: Inicia os caches em tempo real
-                initializeGlobalEventListeners(); 
-                initializeAgendaEventListeners();
-                initializeDropzones(); 
+
+                // NOVO: Garante que a lógica principal do app seja inicializada apenas uma vez
+                if (!appInitialized) {
+                    initializeAppLogic(user);
+                    appInitialized = true;
+                }
+
+                initializeRealtimeCaches(user.uid); 
                 document.querySelector('#sidebar .nav-link[data-target="content-dashboard"]').click();
             } else {
                 authSection.classList.remove('hidden');
@@ -1653,6 +1698,8 @@
                 localServicesCache = [];
                 localProfessionalsCache = [];
                 localClientsCache = [];
+                localProductsCache = [];
+                appInitialized = false; // Reseta a flag
             }
         });
         
@@ -1692,49 +1739,13 @@
             }
         });
         loginButton.addEventListener('click', async () => { const email = emailInput.value; const password = passwordInput.value; authError.textContent = ''; try { await signInWithEmailAndPassword(auth, email, password); } catch (error) { console.error("Erro no login:", error); authError.textContent = "Email ou senha inválidos."; } });
-        logoutButton.addEventListener('click', async () => { try { await signOut(auth); } catch (error) { console.error("Erro no logout:", error); } });
-
-        // NOVO: Função para inicializar os caches em tempo real
-        function initializeRealtimeCaches(userId) {
-            // Listener para Serviços
-            const servicesQuery = query(collection(db, "servicos"), where("gestorId", "==", userId));
-            const unsubscribeServices = onSnapshot(servicesQuery, (snapshot) => {
-                localServicesCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            });
-            globalUnsubscribes.push(unsubscribeServices);
-
-            // Listener para Profissionais
-            const professionalsQuery = query(collection(db, "profissionais"), where("gestorId", "==", userId));
-            const unsubscribeProfessionals = onSnapshot(professionalsQuery, (snapshot) => {
-                localProfessionalsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                 // Atualiza o filtro da agenda se a página estiver visível
-                if (document.getElementById('content-agenda').offsetParent !== null) {
-                    populateProfessionalFilter();
-                    renderAgendaGrid();
-                }
-                // NOVO: Atualiza a lista de profissionais se a página estiver visível
-                if (document.getElementById('content-profissionais').offsetParent !== null) {
-                    renderProfessionalsList();
-                }
-            });
-            globalUnsubscribes.push(unsubscribeProfessionals);
-
-            // Listener para Clientes
-            const clientsQuery = query(collection(db, "users"), where("gestorId", "==", userId));
-            const unsubscribeClients = onSnapshot(clientsQuery, (snapshot) => {
-                localClientsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                 // Atualiza os aniversariantes se o dashboard estiver visível
-                if (document.getElementById('content-dashboard').offsetParent !== null) {
-                    renderAniversariantes();
-                }
-                // NOVO: Atualiza a lista de clientes se a página estiver visível
-                if (document.getElementById('content-clientes').offsetParent !== null) {
-                    renderClientsList();
-                }
-            });
-            globalUnsubscribes.push(unsubscribeClients);
-        }
-
+        
+        // NOVO: Função que encapsula toda a lógica do painel para ser iniciada após o login
+        function initializeAppLogic(user) {
+        
+        // --- LISTENERS GERAIS E DE NAVEGAÇÃO ---
+        document.getElementById('logout-button').addEventListener('click', async () => { try { await signOut(auth); } catch (error) { console.error("Erro no logout:", error); } });
+        
         // --- CRUD DE SERVIÇOS ---
         const addServiceForm = document.getElementById('add-service-form');
         const servicesListDiv = document.getElementById('services-list');
@@ -1745,7 +1756,7 @@
         
         addServiceForm.addEventListener('submit', async (e) => { 
             e.preventDefault(); 
-            const user = auth.currentUser; if (!user) return;
+            const currentUser = auth.currentUser; if (!currentUser) return;
             const submitBtn = addServiceForm.querySelector('button[type="submit"]');
             const btnText = submitBtn.querySelector('.btn-text');
             const loader = submitBtn.querySelector('.loader');
@@ -1765,7 +1776,7 @@
                     throw new Error("Um serviço com este nome já existe.");
                 }
 
-                const data = { nome: serviceName, valor: serviceValue, duracaoMinutos: serviceDuration, gestorId: user.uid };
+                const data = { nome: serviceName, valor: serviceValue, duracaoMinutos: serviceDuration, gestorId: currentUser.uid };
                 const promoValue = window.parseCurrency(servicePromoValueInput.value);
                 if (promoValue > 0) { data.promocao = promoValue; }
                 
@@ -1867,6 +1878,145 @@
                 showToast('Erro ao atualizar.', 'error');
             } 
             finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditButton.disabled = false; cancelEditButton.disabled = false; }
+        });
+
+        // --- NOVO: CRUD DE PRODUTOS ---
+        const addProductForm = document.getElementById('add-product-form');
+        const productsListDiv = document.getElementById('products-list');
+        const editProductModal = document.getElementById('edit-product-modal');
+        const cancelEditProductButton = document.getElementById('cancel-edit-product-button');
+        const saveEditProductButton = document.getElementById('save-edit-product-button');
+        
+        addProductForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); 
+            const user = auth.currentUser; if (!user) return;
+            const submitBtn = addProductForm.querySelector('button[type="submit"]');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const loader = submitBtn.querySelector('.loader');
+            btnText.classList.add('hidden');
+            loader.classList.remove('hidden');
+            submitBtn.disabled = true;
+
+            try {
+                const productName = document.getElementById('product-name').value;
+                const costPrice = window.parseCurrency(document.getElementById('product-cost-price').value);
+                const salePrice = window.parseCurrency(document.getElementById('product-sale-price').value);
+                const stock = parseInt(document.getElementById('product-stock').value);
+
+                const data = { 
+                    nome: productName, 
+                    custo: costPrice,
+                    venda: salePrice,
+                    stock: stock,
+                    gestorId: user.uid 
+                };
+                
+                await addDoc(collection(db, "produtos"), data); 
+                addProductForm.reset();
+                showToast('Produto salvo com sucesso!', 'success');
+            } catch (error) { 
+                console.error("Erro ao adicionar produto: ", error); 
+                showToast('Erro ao salvar produto.', 'error');
+            } finally { 
+                btnText.classList.remove('hidden'); 
+                loader.classList.add('hidden'); 
+                submitBtn.disabled = false; 
+            }
+        });
+
+        function renderProductsList() {
+            const loadingP = document.getElementById('loading-products');
+            const listDiv = document.getElementById('products-list');
+            const searchTerm = document.getElementById('product-search').value.trim().toLowerCase();
+
+            const filteredProducts = localProductsCache.filter(product => 
+                product.nome.toLowerCase().includes(searchTerm)
+            );
+
+            loadingP.classList.add('hidden');
+            listDiv.innerHTML = '';
+
+            if (filteredProducts.length === 0) {
+                listDiv.innerHTML = '<p class="text-gray-400">Nenhum produto encontrado.</p>';
+                return;
+            }
+
+            filteredProducts.forEach((product) => {
+                const stockColor = product.stock > 10 ? 'text-green-400' : product.stock > 0 ? 'text-yellow-400' : 'text-red-400';
+                const profit = product.venda - product.custo;
+                const profitColor = profit >= 0 ? 'text-green-500' : 'text-red-500';
+
+                const productCard = document.createElement('div');
+                productCard.className = 'p-4 bg-[#1e1e1e] border border-gray-700 rounded-lg flex justify-between items-center';
+                productCard.innerHTML = `
+                    <div class="flex-grow">
+                        <p class="font-bold text-white">${product.nome}</p>
+                        <div class="text-sm text-gray-400 flex flex-wrap gap-x-4 gap-y-1 mt-1">
+                            <span>Venda: <strong class="text-primary">R$ ${product.venda.toFixed(2).replace('.',',')}</strong></span>
+                            <span>Custo: R$ ${product.custo.toFixed(2).replace('.',',')}</span>
+                            <span>Lucro: <strong class="${profitColor}">R$ ${profit.toFixed(2).replace('.',',')}</strong></span>
+                        </div>
+                    </div>
+                     <div class="text-right mr-6">
+                        <p class="text-sm text-gray-400">Estoque</p>
+                        <p class="font-bold text-lg ${stockColor}">${product.stock}</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button class="text-sm text-gray-300 hover:text-primary font-semibold" data-id="${product.id}" data-action="edit"><i class="fas fa-pencil-alt mr-1"></i>Editar</button>
+                        <button class="text-sm text-red-500 hover:text-red-400 font-semibold flex items-center" data-id="${product.id}" data-action="delete">
+                            <span class="btn-text"><i class="fas fa-trash-alt mr-1"></i>Excluir</span>
+                        </button>
+                    </div>`;
+                listDiv.appendChild(productCard);
+            });
+        }
+
+        productsListDiv.addEventListener('click', async (e) => {
+            const button = e.target.closest('button');
+            if (!button || !button.dataset.id) return;
+            const id = button.dataset.id;
+            const action = button.dataset.action;
+            if (action === 'delete') {
+                window.deleteDocument('produtos', id);
+            }
+            if (action === 'edit') {
+                const productDoc = await getDoc(doc(db, "produtos", id));
+                if (productDoc.exists()) {
+                    const data = productDoc.data();
+                    document.getElementById('edit-product-id').value = id;
+                    document.getElementById('edit-product-name').value = data.nome;
+                    document.getElementById('edit-product-cost-price').value = (data.custo || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    document.getElementById('edit-product-sale-price').value = (data.venda || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    document.getElementById('edit-product-stock').value = data.stock;
+                    editProductModal.classList.remove('hidden');
+                }
+            }
+        });
+
+        cancelEditProductButton.addEventListener('click', () => editProductModal.classList.add('hidden'));
+
+        saveEditProductButton.addEventListener('click', async () => {
+            const btnText = saveEditProductButton.querySelector('.btn-text'); const loader = saveEditProductButton.querySelector('.loader');
+            btnText.classList.add('hidden'); loader.classList.remove('hidden'); saveEditProductButton.disabled = true; cancelEditProductButton.disabled = true;
+            
+            const id = document.getElementById('edit-product-id').value;
+            const productRef = doc(db, "produtos", id);
+            const dataToUpdate = {
+                nome: document.getElementById('edit-product-name').value,
+                custo: window.parseCurrency(document.getElementById('edit-product-cost-price').value),
+                venda: window.parseCurrency(document.getElementById('edit-product-sale-price').value),
+                stock: parseInt(document.getElementById('edit-product-stock').value)
+            };
+            try { 
+                await updateDoc(productRef, dataToUpdate); 
+                editProductModal.classList.add('hidden');
+                showToast('Produto atualizado!', 'success');
+            } 
+            catch (error) { 
+                console.error("Erro ao atualizar produto:", error);
+                showToast('Erro ao atualizar.', 'error');
+            } 
+            finally { btnText.classList.remove('hidden'); loader.classList.add('hidden'); saveEditProductButton.disabled = false; cancelEditProductButton.disabled = false; }
         });
 
         // --- CRUD DE PROFISSIONAIS ---
@@ -2276,6 +2426,9 @@
             agendaGridView.addEventListener('click', (e) => {
                 if (isDragging) return; // Ignora o clique se estiver arrastando um evento
 
+                // NOVO: Ignora o clique se o slot estiver desabilitado
+                if (e.target.classList.contains('disabled')) return;
+
                 const card = e.target.closest('.appointment-card');
                 const column = e.target.closest('.professional-column');
 
@@ -2667,6 +2820,19 @@
                 for (let totalMinutes = overallStartMinutes; totalMinutes < overallEndMinutes; totalMinutes += agendaState.interval) {
                      const line = document.createElement('div');
                      line.className = 'time-slot-line';
+                    
+                     // NOVO: Validação visual para cada slot
+                    try {
+                        const slotTime = new Date(agendaState.currentDate);
+                        slotTime.setHours(Math.floor(totalMinutes / 60), totalMinutes % 60, 0, 0);
+                        if (!isTimeSlotAvailable(prof.id, slotTime, agendaState.interval)) {
+                           line.classList.add('disabled');
+                        }
+                    } catch(e) {
+                        // Se a função isTimeSlotAvailable lançar um erro (ex: fora do expediente), o slot também é inválido
+                        line.classList.add('disabled');
+                    }
+
 
                      // Escurecer slots fora do horário de trabalho do profissional
                      if (schedule && schedule.worksToday) {
@@ -3870,6 +4036,14 @@
                                     serviceSearch.dataset.initialized = 'true';
                                 }
                                 break;
+                            case 'content-produtos': // NOVO
+                                renderProductsList();
+                                const productSearch = document.getElementById('product-search');
+                                if (!productSearch.dataset.initialized) {
+                                    productSearch.addEventListener('input', renderProductsList);
+                                    productSearch.dataset.initialized = 'true';
+                                }
+                                break;
                             case 'content-profissionais': 
                                 renderProfessionalsList();
                                 const profSearch = document.getElementById('professional-search');
@@ -4853,22 +5027,48 @@
                     listeners: {
                         start(event) {
                             isDragging = true;
-                            event.target.classList.add('dragging');
+                            const originalCard = event.target;
+                            originalCard.classList.add('dragging');
+
+                            // Criar o placeholder
+                            dragPlaceholder = document.createElement('div');
+                            dragPlaceholder.className = 'drag-placeholder';
+                            dragPlaceholder.style.height = `${originalCard.offsetHeight}px`;
                         },
                         move(event) {
                             const target = event.target;
                             const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
                             const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-                    target.style.transform = `translate(${x}px, ${y}px)`;
-                    target.setAttribute('data-x', x);
-                    target.setAttribute('data-y', y);
-                },
-                end(event) {
+                            target.style.transform = `translate(${x}px, ${y}px)`;
+                            target.setAttribute('data-x', x);
+                            target.setAttribute('data-y', y);
+                            
+                            // NOVO: Posicionar o placeholder se estiver sobre uma dropzone
+                            if (currentDropzone && dragPlaceholder) {
+                                const linesContainer = currentDropzone.querySelector('div:not(.professional-header)');
+                                const rect = linesContainer.getBoundingClientRect();
+                                const y_in_dropzone = event.clientY - rect.top;
+                                
+                                const slotHeight = 40;
+                                const slotIndex = Math.max(0, Math.round(y_in_dropzone / slotHeight)); // Garante que não seja negativo
+                                const snappedTop = slotIndex * slotHeight;
+                                
+                                dragPlaceholder.style.top = `${snappedTop}px`;
+                            }
+                        },
+                        end(event) {
                             const target = event.target;
                             target.classList.remove('dragging');
                             target.style.transform = '';
                             target.removeAttribute('data-x');
                             target.removeAttribute('data-y');
+
+                            // Limpar placeholder e dropzone
+                            if (dragPlaceholder) {
+                                dragPlaceholder.remove();
+                                dragPlaceholder = null;
+                            }
+                            currentDropzone = null;
 
                             setTimeout(() => { isDragging = false; }, 100);
                         }
@@ -4906,8 +5106,23 @@
                     updateAppointmentOnDrop(appointmentId, newDateTime, newProfessionalId);
                 },
 
-                ondragenter: (event) => { event.target.classList.add('drop-target'); },
-                ondragleave: (event) => { event.target.classList.remove('drop-target'); },
+                ondragenter: (event) => { 
+                    event.target.classList.add('drop-target'); 
+                    // NOVO: Adiciona o placeholder e define a dropzone atual
+                    if (dragPlaceholder) {
+                        const linesContainer = event.target.querySelector('div:not(.professional-header)');
+                        linesContainer.appendChild(dragPlaceholder);
+                        currentDropzone = event.target;
+                    }
+                },
+                ondragleave: (event) => { 
+                    event.target.classList.remove('drop-target'); 
+                    // NOVO: Remove o placeholder e limpa a dropzone atual
+                    if (dragPlaceholder && dragPlaceholder.parentNode === event.target.querySelector('div:not(.professional-header)')) {
+                        dragPlaceholder.remove();
+                    }
+                    currentDropzone = null;
+                },
                 ondropactivate: (event) => { event.target.classList.add('drop-active'); },
                 ondropdeactivate: (event) => {
                     event.target.classList.remove('drop-active');
@@ -5044,16 +5259,10 @@
 
             return true; // Horário disponível
         }
+
+    } // --- FIM DA FUNÇÃO initializeAppLogic ---
+
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
 
