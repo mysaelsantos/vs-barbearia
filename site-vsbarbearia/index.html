@@ -141,7 +141,7 @@
             }
         }
 
-        /* Seletor de Preços (Removido CSS desnecessário, mantendo estrutura base se precisar reutilizar) */
+        /* Seletor de Preços */
         .price-cards-container {
             transition: opacity 0.3s ease-in-out;
         }
@@ -239,7 +239,7 @@
     <section id="home" class="relative min-h-screen flex items-center pt-16">
         <div class="video-background">
             <video autoplay muted loop playsinline id="hero-video" poster="https://i.postimg.cc/28q5gTbm/Design-sem-nome-76.png">
-                <source src="https://files.catbox.moe/fzxnia.mp4" type="video/mp4">
+                <source src="public/vs.mp4" type="video/mp4">
                 Seu navegador não suporta a tag de vídeo.
             </video>
             <div class="video-overlay"></div>
@@ -276,21 +276,22 @@
             </div>
             
             <div id="services-cards-matriz" class="price-cards-container">
-                <div class="bg-dark p-8 rounded-lg mb-12 max-w-4xl mx-auto">
+                
+                <div class="bg-dark px-4 py-8 md:p-8 rounded-lg mb-12 max-w-4xl mx-auto">
                     <h3 class="text-2xl font-bold mb-6 text-center text-primary">Tabela de Preços</h3>
-                    <div class="bg-black p-8 rounded-lg border border-gray-800">
+                    <div class="bg-black px-4 py-6 md:p-8 rounded-lg border border-gray-800">
                         <div class="space-y-6">
                             <div class="flex justify-between items-center border-b border-gray-800 pb-4">
-                                <span class="text-lg">Corte de Cabelo</span>
-                                <span class="text-primary font-bold text-xl">R$ 50,00</span>
+                                <span class="text-base md:text-lg">Corte de Cabelo</span>
+                                <span class="text-primary font-bold text-lg md:text-xl whitespace-nowrap">R$ 50,00</span>
                             </div>
                             <div class="flex justify-between items-center border-b border-gray-800 pb-4">
-                                <span class="text-lg">Barba</span>
-                                <span class="text-primary font-bold text-xl">R$ 50,00</span>
+                                <span class="text-base md:text-lg">Barba</span>
+                                <span class="text-primary font-bold text-lg md:text-xl whitespace-nowrap">R$ 50,00</span>
                             </div>
                             <div class="flex justify-between items-center">
-                                <span class="text-lg">Cabelo + Barba</span>
-                                <span class="text-primary font-bold text-xl">R$ 100,00</span>
+                                <span class="text-base md:text-lg">Cabelo + Barba</span>
+                                <span class="text-primary font-bold text-lg md:text-xl whitespace-nowrap">R$ 100,00</span>
                             </div>
                         </div>
                     </div>
