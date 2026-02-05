@@ -5,14 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <title>VS Barbearia - Barbearia Premium em Nova Serrana</title>
-    <!-- SEO e Meta Tags -->
     <meta name="description" content="VS Barbearia em Nova Serrana. Oferecemos cortes de cabelo, barba, planos mensais e um ambiente premium. Agende seu horário em uma de nossas unidades!">
     <meta name="keywords" content="barbearia, nova serrana, corte de cabelo, barba, visagismo, vs barbearia, vanilton santos">
     
-    <!-- Cor do Tema para Navegadores -->
     <meta name="theme-color" content="#000000">
 
-    <!-- Favicons Configurados -->
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
@@ -20,7 +17,6 @@
     <link rel="shortcut icon" href="favicon.ico">
     <meta name="msapplication-TileColor" content="#000000">
 
-    <!-- Scripts e Estilos Externos -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -145,38 +141,7 @@
             }
         }
 
-        /* Seletor de Preços */
-        .price-toggle {
-            display: inline-flex;
-            background-color: #222;
-            border-radius: 9999px;
-            padding: 4px;
-            position: relative;
-        }
-        .price-toggle-btn {
-            padding: 8px 24px;
-            border: none;
-            background: transparent;
-            color: #ccc;
-            cursor: pointer;
-            position: relative;
-            z-index: 2;
-            transition: color 0.3s ease;
-            font-weight: 600;
-        }
-        .price-toggle-btn.active {
-            color: #111;
-        }
-        .price-toggle-bg {
-            position: absolute;
-            top: 4px;
-            height: calc(100% - 8px);
-            background-color: #fbb62c;
-            border-radius: 9999px;
-            transition: all 0.3s ease-in-out;
-            z-index: 1;
-        }
-        
+        /* Seletor de Preços (Removido CSS desnecessário, mantendo estrutura base se precisar reutilizar) */
         .price-cards-container {
             transition: opacity 0.3s ease-in-out;
         }
@@ -238,7 +203,6 @@
 </head>
 <body class="bg-black text-white">
 
-    <!-- Navbar -->
     <nav class="fixed w-full bg-black bg-opacity-90 z-50 border-b border-primary">
         <div class="container mx-auto px-8 sm:px-16 lg:px-24 py-3 flex justify-between items-center">
             <a href="#home" class="flex items-center">
@@ -259,7 +223,6 @@
                 </button>
             </div>
         </div>
-        <!-- Mobile menu -->
         <div id="mobile-menu" class="hidden md:hidden bg-black bg-opacity-95 border-t border-primary">
             <div class="container mx-auto px-8 sm:px-16 lg:px-24 py-2 flex flex-col space-y-3">
                 <a href="#home" class="text-white hover:text-primary transition py-2">Home</a>
@@ -273,7 +236,6 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
     <section id="home" class="relative min-h-screen flex items-center pt-16">
         <div class="video-background">
             <video autoplay muted loop playsinline id="hero-video" poster="https://i.postimg.cc/28q5gTbm/Design-sem-nome-76.png">
@@ -300,50 +262,35 @@
                 </div>
             </div>
         </div>
-        <!-- Scroll Down Indicator -->
         <a href="#services" class="scroll-down-indicator block md:hidden" aria-label="Rolar para baixo">
             <span></span>
         </a>
     </section>
 
-    <!-- Services Section -->
     <section id="services" class="py-20 bg-black">
         <div class="container mx-auto px-8 sm:px-16 lg:px-24">
             <div class="text-center mb-12 reveal">
                 <h2 class="text-3xl md:text-4xl font-bold mb-4">Nossos <span class="text-primary">Serviços</span></h2>
                 <div class="w-24 h-1 bg-primary mx-auto"></div>
-                <p class="text-gray-300 mt-4 max-w-2xl mx-auto">Oferecemos diversos serviços de qualidade para cuidar da sua aparência. Selecione a unidade para ver os preços.</p>
+                <p class="text-gray-300 mt-4 max-w-2xl mx-auto">Oferecemos diversos serviços de qualidade para cuidar da sua aparência.</p>
             </div>
             
-            <!-- Seletor de Unidade -->
-            <div class="flex flex-col items-center mb-12 reveal">
-                <p class="text-sm text-gray-400 mb-2">Escolha a sua unidade</p>
-                <div class="price-toggle">
-                    <button id="btn-matriz" class="price-toggle-btn active">Matriz</button>
-                    <button id="btn-romeu" class="price-toggle-btn">Romeu Duarte</button>
-                    <div id="price-toggle-slider" class="price-toggle-bg"></div>
-                </div>
-            </div>
-            
-            <!-- Cards de Preços - Matriz -->
             <div id="services-cards-matriz" class="price-cards-container">
-                <div class="bg-dark p-8 rounded-lg mb-12">
-                    <h3 class="text-2xl font-bold mb-4 text-center">Preços Promocionais</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="bg-black p-6 rounded-lg border border-primary">
-                            <h4 class="text-xl font-bold mb-3 text-primary">Promoção de Segunda a Quarta</h4>
-                            <div class="space-y-4">
-                                <div class="flex justify-between items-center border-b border-gray-800 pb-2"><span>Corte de Cabelo</span><span class="text-primary font-bold">R$ 40,00</span></div>
-                                <div class="flex justify-between items-center border-b border-gray-800 pb-2"><span>Barba</span><span class="text-primary font-bold">R$ 40,00</span></div>
-                                <div class="flex justify-between items-center"><span>Cabelo + Barba</span><span class="text-primary font-bold">R$ 75,00</span></div>
+                <div class="bg-dark p-8 rounded-lg mb-12 max-w-4xl mx-auto">
+                    <h3 class="text-2xl font-bold mb-6 text-center text-primary">Tabela de Preços</h3>
+                    <div class="bg-black p-8 rounded-lg border border-gray-800">
+                        <div class="space-y-6">
+                            <div class="flex justify-between items-center border-b border-gray-800 pb-4">
+                                <span class="text-lg">Corte de Cabelo</span>
+                                <span class="text-primary font-bold text-xl">R$ 50,00</span>
                             </div>
-                        </div>
-                        <div class="bg-black p-6 rounded-lg border border-gray-800">
-                            <h4 class="text-xl font-bold mb-3 text-primary">Preço Normal</h4>
-                            <div class="space-y-4">
-                                <div class="flex justify-between items-center border-b border-gray-800 pb-2"><span>Corte de Cabelo</span><span class="text-primary font-bold">R$ 50,00</span></div>
-                                <div class="flex justify-between items-center border-b border-gray-800 pb-2"><span>Barba</span><span class="text-primary font-bold">R$ 50,00</span></div>
-                                <div class="flex justify-between items-center"><span>Cabelo + Barba</span><span class="text-primary font-bold">R$ 100,00</span></div>
+                            <div class="flex justify-between items-center border-b border-gray-800 pb-4">
+                                <span class="text-lg">Barba</span>
+                                <span class="text-primary font-bold text-xl">R$ 50,00</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg">Cabelo + Barba</span>
+                                <span class="text-primary font-bold text-xl">R$ 100,00</span>
                             </div>
                         </div>
                     </div>
@@ -351,71 +298,14 @@
                         <a href="https://app.frizzar.com.br/p/vsbarbearia" target="_blank" class="bg-primary text-black font-bold py-3 px-8 rounded-md hover:bg-yellow-500 transition inline-block">Agendar Agora</a>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="bg-dark p-6 rounded-lg border border-gray-800 hover:border-primary transition flex flex-col h-full">
-                        <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-6"><i class="fas fa-cut text-black text-2xl"></i></div>
-                        <h3 class="text-xl font-bold mb-3">Corte de Cabelo</h3>
-                        <p class="text-gray-400 mb-4 flex-grow">Cortes modernos e clássicos realizados por profissionais experientes que entendem o seu estilo.</p>
-                        <div>
-                            <p class="text-primary font-bold">R$ 50,00</p>
-                            <p class="text-sm text-gray-400">R$ 40,00 de segunda a quarta</p>
-                        </div>
-                    </div>
-                    <div class="bg-dark p-6 rounded-lg border border-gray-800 hover:border-primary transition flex flex-col h-full">
-                        <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-6"><i class="fas fa-user-alt text-black text-2xl"></i></div>
-                        <h3 class="text-xl font-bold mb-3">Barba</h3>
-                        <p class="text-gray-400 mb-4 flex-grow">Modelagem e aparagem de barba com toalha quente e finalização perfeita.</p>
-                        <div>
-                            <p class="text-primary font-bold">R$ 50,00</p>
-                            <p class="text-sm text-gray-400">R$ 40,00 de segunda a quarta</p>
-                        </div>
-                    </div>
-                    <div class="bg-dark p-6 rounded-lg border border-gray-800 hover:border-primary transition flex flex-col h-full">
-                        <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-6"><i class="fas fa-star text-black text-2xl"></i></div>
-                        <h3 class="text-xl font-bold mb-3">Combo Cabelo + Barba</h3>
-                        <p class="text-gray-400 mb-4 flex-grow">Economize com nosso combo completo para quem deseja cuidar do visual por completo.</p>
-                        <div>
-                            <p class="text-primary font-bold">R$ 100,00</p>
-                            <p class="text-sm text-gray-400">R$ 75,00 de segunda a quarta</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Cards de Preços - Romeu Duarte -->
-            <div id="services-cards-romeu" class="hidden price-cards-container">
-                 <div class="bg-dark p-8 rounded-lg mb-12">
-                    <h3 class="text-2xl font-bold mb-4 text-center">Preços Promocionais</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="bg-black p-6 rounded-lg border border-primary">
-                            <h4 class="text-xl font-bold mb-3 text-primary">Promoção de Segunda a Quarta</h4>
-                            <div class="space-y-4">
-                                <div class="flex justify-between items-center border-b border-gray-800 pb-2"><span>Corte de Cabelo</span><span class="text-primary font-bold">R$ 35,00</span></div>
-                                <div class="flex justify-between items-center border-b border-gray-800 pb-2"><span>Barba</span><span class="text-primary font-bold">R$ 40,00</span></div>
-                                <div class="flex justify-between items-center"><span>Cabelo + Barba</span><span class="text-primary font-bold">R$ 75,00</span></div>
-                            </div>
-                        </div>
-                        <div class="bg-black p-6 rounded-lg border border-gray-800">
-                            <h4 class="text-xl font-bold mb-3 text-primary">Preço Normal</h4>
-                            <div class="space-y-4">
-                                <div class="flex justify-between items-center border-b border-gray-800 pb-2"><span>Corte de Cabelo</span><span class="text-primary font-bold">R$ 45,00</span></div>
-                                <div class="flex justify-between items-center border-b border-gray-800 pb-2"><span>Barba</span><span class="text-primary font-bold">R$ 45,00</span></div>
-                                <div class="flex justify-between items-center"><span>Cabelo + Barba</span><span class="text-primary font-bold">R$ 90,00</span></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-8 text-center">
-                        <a href="https://app.frizzar.com.br/p/vsbarbearia" target="_blank" class="bg-primary text-black font-bold py-3 px-8 rounded-md hover:bg-yellow-500 transition inline-block">Agendar Agora</a>
-                    </div>
-                </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div class="bg-dark p-6 rounded-lg border border-gray-800 hover:border-primary transition flex flex-col h-full">
                         <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-6"><i class="fas fa-cut text-black text-2xl"></i></div>
                         <h3 class="text-xl font-bold mb-3">Corte de Cabelo</h3>
                         <p class="text-gray-400 mb-4 flex-grow">Cortes modernos e clássicos realizados por profissionais experientes que entendem o seu estilo.</p>
                         <div>
-                            <p class="text-primary font-bold">R$ 45,00</p>
-                            <p class="text-sm text-gray-400">R$ 35,00 de segunda a quarta</p>
+                            <p class="text-primary font-bold text-xl">R$ 50,00</p>
                         </div>
                     </div>
                     <div class="bg-dark p-6 rounded-lg border border-gray-800 hover:border-primary transition flex flex-col h-full">
@@ -423,8 +313,7 @@
                         <h3 class="text-xl font-bold mb-3">Barba</h3>
                         <p class="text-gray-400 mb-4 flex-grow">Modelagem e aparagem de barba com toalha quente e finalização perfeita.</p>
                         <div>
-                            <p class="text-primary font-bold">R$ 45,00</p>
-                            <p class="text-sm text-gray-400">R$ 40,00 de segunda a quarta</p>
+                            <p class="text-primary font-bold text-xl">R$ 50,00</p>
                         </div>
                     </div>
                     <div class="bg-dark p-6 rounded-lg border border-gray-800 hover:border-primary transition flex flex-col h-full">
@@ -432,8 +321,7 @@
                         <h3 class="text-xl font-bold mb-3">Combo Cabelo + Barba</h3>
                         <p class="text-gray-400 mb-4 flex-grow">Economize com nosso combo completo para quem deseja cuidar do visual por completo.</p>
                         <div>
-                            <p class="text-primary font-bold">R$ 90,00</p>
-                            <p class="text-sm text-gray-400">R$ 75,00 de segunda a quarta</p>
+                            <p class="text-primary font-bold text-xl">R$ 100,00</p>
                         </div>
                     </div>
                 </div>
@@ -446,42 +334,36 @@
         </div>
     </section>
 
-    <!-- Plans Section -->
     <section id="plans" class="py-20 bg-dark">
         <div class="container mx-auto px-8 sm:px-16 lg:px-24">
             <div class="text-center mb-16 reveal">
                 <h2 class="text-3xl md:text-4xl font-bold mb-4">Planos <span class="text-primary">Mensais</span></h2>
                 <div class="w-24 h-1 bg-primary mx-auto"></div>
-                <p class="text-gray-300 mt-4 max-w-2xl mx-auto">Economize com nossos planos mensais e aproveite serviços de qualidade em nossas duas unidades.</p>
+                <p class="text-gray-300 mt-4 max-w-2xl mx-auto">Economize com nossos planos mensais e aproveite serviços de qualidade.</p>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 reveal">
-                <!-- Plano Cabelo Limitado -->
                 <div class="plan-card bg-black rounded-xl overflow-hidden border border-gray-800 hover:border-primary flex flex-col">
                     <div class="p-6 flex flex-col flex-grow">
                         <h3 class="text-xl font-bold mb-2">Cabelo Limitado</h3>
                         <div class="flex items-end mb-6"><span class="text-4xl font-bold text-primary">R$129,90</span><span class="text-gray-400 ml-2">/mês</span></div>
                         <ul class="space-y-3 mb-8 flex-grow">
                             <li class="flex items-center"><i class="fas fa-check text-primary mr-2"></i><span>Plano mensal limitado para cabelo</span></li>
-                            <li class="flex items-center"><i class="fas fa-check text-primary mr-2"></i><span>Válido nas duas unidades</span></li>
                             <li class="flex items-center"><i class="fas fa-check text-primary mr-2"></i><span>Economia de até 35%</span></li>
                         </ul>
                         <a href="https://wa.me/5537996719604?text=Gostaria%20de%20saber%20mais%20sobre%20o%20plano%20Cabelo%20Limitado" target="_blank" class="block w-full bg-primary text-black font-bold py-3 px-4 rounded-md hover:bg-yellow-500 transition text-center">Assinar Plano</a>
                     </div>
                 </div>
-                <!-- Plano Barba Limitado -->
                 <div class="plan-card bg-black rounded-xl overflow-hidden border border-gray-800 hover:border-primary flex flex-col">
                     <div class="p-6 flex flex-col flex-grow">
                         <h3 class="text-xl font-bold mb-2">Barba Limitado</h3>
                         <div class="flex items-end mb-6"><span class="text-4xl font-bold text-primary">R$129,90</span><span class="text-gray-400 ml-2">/mês</span></div>
                         <ul class="space-y-3 mb-8 flex-grow">
                             <li class="flex items-center"><i class="fas fa-check text-primary mr-2"></i><span>Plano mensal limitado para barba</span></li>
-                            <li class="flex items-center"><i class="fas fa-check text-primary mr-2"></i><span>Válido nas duas unidades</span></li>
                             <li class="flex items-center"><i class="fas fa-check text-primary mr-2"></i><span>Economia de até 35%</span></li>
                         </ul>
                         <a href="https://wa.me/5537996719604?text=Gostaria%20de%20saber%20mais%20sobre%20o%20plano%20Barba%20Limitado" target="_blank" class="block w-full bg-primary text-black font-bold py-3 px-4 rounded-md hover:bg-yellow-500 transition text-center">Assinar Plano</a>
                     </div>
                 </div>
-                <!-- Plano Cabelo e Barba Limitado -->
                 <div class="plan-card bg-black rounded-xl overflow-hidden border-2 border-primary transform md:scale-105 shadow-lg shadow-primary/20 flex flex-col">
                     <div class="bg-primary text-black text-center py-2 font-bold">MAIS POPULAR</div>
                     <div class="p-6 flex flex-col flex-grow">
@@ -489,20 +371,17 @@
                         <div class="flex items-end mb-6"><span class="text-4xl font-bold text-primary">R$189,90</span><span class="text-gray-400 ml-2">/mês</span></div>
                         <ul class="space-y-3 mb-8 flex-grow">
                             <li class="flex items-center"><i class="fas fa-check text-primary mr-2"></i><span>Plano mensal limitado para cabelo e barba</span></li>
-                            <li class="flex items-center"><i class="fas fa-check text-primary mr-2"></i><span>Válido nas duas unidades</span></li>
                             <li class="flex items-center"><i class="fas fa-check text-primary mr-2"></i><span>Economia de até 40%</span></li>
                         </ul>
                         <a href="https://wa.me/5537996719604?text=Gostaria%20de%20saber%20mais%20sobre%20o%20plano%20Cabelo%20e%20Barba%20Limitado" target="_blank" class="block w-full bg-primary text-black font-bold py-3 px-4 rounded-md hover:bg-yellow-500 transition text-center">Assinar Plano</a>
                     </div>
                 </div>
-                <!-- Plano Cabelo e Barba Ilimitado -->
                 <div class="plan-card bg-black rounded-xl overflow-hidden border border-gray-800 hover:border-primary flex flex-col">
                     <div class="p-6 flex flex-col flex-grow">
                         <h3 class="text-xl font-bold mb-2">Cabelo e Barba Ilimitado</h3>
                         <div class="flex items-end mb-6"><span class="text-4xl font-bold text-primary">R$259,90</span><span class="text-gray-400 ml-2">/mês</span></div>
                         <ul class="space-y-3 mb-8 flex-grow">
                             <li class="flex items-center"><i class="fas fa-check text-primary mr-2"></i><span>Plano mensal ilimitado para cabelo e barba</span></li>
-                            <li class="flex items-center"><i class="fas fa-check text-primary mr-2"></i><span>Válido nas duas unidades</span></li>
                             <li class="flex items-center"><i class="fas fa-check text-primary mr-2"></i><span>Sem limite de uso</span></li>
                         </ul>
                         <a href="https://wa.me/5537996719604?text=Gostaria%20de%20saber%20mais%20sobre%20o%20plano%20Cabelo%20e%20Barba%20Ilimitado" target="_blank" class="block w-full bg-primary text-black font-bold py-3 px-4 rounded-md hover:bg-yellow-500 transition text-center">Assinar Plano</a>
@@ -519,17 +398,15 @@
         </div>
     </section>
 
-    <!-- Locations Section -->
     <section id="locations" class="py-20 bg-black">
         <div class="container mx-auto px-8 sm:px-16 lg:px-24">
             <div class="text-center mb-16 reveal">
-                <h2 class="text-3xl md:text-4xl font-bold mb-4">Nossas <span class="text-primary">Unidades</span></h2>
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Nossa <span class="text-primary">Unidade</span></h2>
                 <div class="w-24 h-1 bg-primary mx-auto"></div>
-                <p class="text-gray-300 mt-4 max-w-2xl mx-auto">Visite uma de nossas unidades estrategicamente localizadas em Nova Serrana.</p>
+                <p class="text-gray-300 mt-4 max-w-2xl mx-auto">Visite nossa unidade estrategicamente localizada em Nova Serrana.</p>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-10 reveal">
-                <!-- Unidade Matriz -->
-                <div class="bg-dark rounded-xl overflow-hidden flex flex-col">
+            <div class="flex justify-center reveal">
+                <div class="bg-dark rounded-xl overflow-hidden flex flex-col max-w-lg w-full">
                     <div class="h-64 bg-gray-800 relative">
                         <img src="https://i.postimg.cc/jjQygJ63/image-4.png" alt="Interior da Unidade Matriz da VS Barbearia" class="w-full h-full object-cover">
                     </div>
@@ -545,28 +422,10 @@
                         </div>
                     </div>
                 </div>
-                <!-- Unidade Romeu Duarte -->
-                <div class="bg-dark rounded-xl overflow-hidden flex flex-col">
-                    <div class="h-64 bg-gray-800 relative">
-                        <img src="https://i.postimg.cc/hPwbjhKV/image.png" alt="Interior da Unidade Romeu Duarte da VS Barbearia" class="w-full h-full object-cover">
-                    </div>
-                    <div class="p-6 flex flex-col flex-grow">
-                        <h3 class="text-xl font-bold mb-2">Unidade Romeu Duarte</h3>
-                        <div class="space-y-3 mb-6 flex-grow">
-                            <p class="flex items-start"><i class="fas fa-map-pin text-primary mr-3 mt-1"></i><span>Rua Francisco de Paula Batista Freitas, 538</span></p>
-                             <p class="flex items-start"><i class="fas fa-clock text-primary mr-3 mt-1"></i><span>Seg a Sáb: 8h às 20h</span></p>
-                        </div>
-                        <div class="flex flex-wrap gap-3">
-                            <a href="https://app.frizzar.com.br/p/vsbarbearia" target="_blank" class="inline-block bg-primary text-black font-bold py-2 px-6 rounded-md hover:bg-yellow-500 transition"><i class="fas fa-calendar-alt mr-2"></i>Agendar</a>
-                            <a href="https://maps.app.goo.gl/irHEHy6ELasM1o887" target="_blank" class="inline-block bg-blue-600 text-white font-bold py-2 px-6 rounded-md hover:bg-blue-700 transition"><i class="fas fa-map-marker-alt mr-2"></i>Ver Rota</a>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </section>
 
-    <!-- Bolsa Régua Section -->
     <section id="bolsa-regua" class="py-20 bg-dark">
         <div class="container mx-auto px-8 sm:px-16 lg:px-24">
              <div class="text-center mb-16 reveal">
@@ -591,7 +450,6 @@
         </div>
     </section>
 
-    <!-- Gallery Section -->
     <section id="gallery" class="py-20 bg-black">
         <div class="container mx-auto px-8 sm:px-16 lg:px-24">
             <div class="text-center mb-16 reveal">
@@ -617,7 +475,6 @@
         </div>
     </section>
     
-    <!-- Lightbox (Galeria Modal) -->
     <div id="lightbox" class="lightbox">
         <div class="lightbox-content">
             <img id="lightbox-img" src="" alt="Imagem da galeria em tamanho ampliado">
@@ -629,7 +486,6 @@
         <button id="lightbox-close" class="lightbox-close" aria-label="Fechar galeria"><i class="fas fa-times"></i></button>
     </div>
 
-    <!-- About Section -->
     <section id="about" class="py-20 bg-dark">
         <div class="container mx-auto px-8 sm:px-16 lg:px-24">
             <div class="text-center mb-16 reveal">
@@ -647,13 +503,12 @@
                 <div class="md:w-1/2">
                     <h3 class="text-2xl font-bold mb-4">Tradição e Qualidade</h3>
                     <p class="text-gray-300 mb-6">A VS Barbearia nasceu da paixão por oferecer serviços de alta qualidade para homens e mulheres que valorizam cuidados pessoais premium. Rapidamente nos tornamos referência em cortes em Nova Serrana.</p>
-                    <p class="text-gray-300 mb-6">Com duas unidades estrategicamente localizadas, oferecemos serviços de barbearia de excelência com profissionais altamente qualificados para garantir sua satisfação.</p>
+                    <p class="text-gray-300 mb-6">Oferecemos serviços de barbearia de excelência com profissionais altamente qualificados para garantir sua satisfação.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Founder Section -->
     <section id="founder" class="py-20 bg-black">
         <div class="container mx-auto px-8 sm:px-16 lg:px-24">
             <div class="text-center mb-16 reveal">
@@ -681,7 +536,6 @@
         </div>
     </section>
 
-    <!-- Contact Section -->
     <section id="contact" class="py-20 bg-dark">
         <div class="container mx-auto px-8 sm:px-16 lg:px-24">
             <div class="text-center mb-16 reveal">
@@ -739,7 +593,6 @@
         </div>
     </section>
 
-    <!-- Rodapé -->
     <footer class="bg-black border-t border-gray-800">
         <div class="container mx-auto px-8 sm:px-16 lg:px-24 py-8">
             <div class="flex flex-col md:flex-row justify-between items-center text-center md:text-left gap-8">
@@ -764,7 +617,7 @@
             </div>
             <hr class="border-gray-700 my-6">
             <div class="text-center text-gray-500 text-sm">
-                <p>&copy; <span id="current-year"></span> VS Barbearia. Todos os direitos reservados.</p>
+                <p>© <span id="current-year"></span> VS Barbearia. Todos os direitos reservados.</p>
             </div>
             <div class="flex justify-center items-center mt-6">
                 <span class="text-gray-500 text-sm mr-2">Criado por</span>
@@ -775,30 +628,23 @@
         </div>
     </footer>
     
-    <!-- Botão Flutuante do WhatsApp -->
     <a href="https://wa.me/5537996719604?text=Ol%C3%A1%2C%20vim%20pelo%20site%20e%20gostaria%20de%20agendar%20um%20servi%C3%A7o" class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Fale conosco pelo WhatsApp">
         <i class="fab fa-whatsapp"></i>
         <span class="whatsapp-text">WhatsApp</span>
     </a>
 
-    <!-- Notificação para status do formulário -->
     <div id="form-status"></div>
 
-    <!-- SCRIPTS -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
 
             // --- GARANTIR REPRODUÇÃO DO VÍDEO NO MOBILE ---
             const heroVideo = document.getElementById('hero-video');
             if (heroVideo) {
-                // A promessa de play() pode ser rejeitada se o navegador bloquear o autoplay.
-                // O bloco catch evita um erro no console.
                 const playPromise = heroVideo.play();
                 if (playPromise !== undefined) {
                     playPromise.catch(error => {
                         console.log("Autoplay do vídeo foi impedido pelo navegador:", error);
-                        // O vídeo ainda deve ser reproduzido automaticamente em navegadores que permitem,
-                        // desde que os atributos 'autoplay muted playsinline' estejam presentes.
                     });
                 }
             }
@@ -844,57 +690,6 @@
                     icon.classList.add('fa-bars');
                 });
             });
-
-            // --- SELETOR DE PREÇOS ---
-            const btnMatriz = document.getElementById('btn-matriz');
-            const btnRomeu = document.getElementById('btn-romeu');
-            const slider = document.getElementById('price-toggle-slider');
-            const cardsMatriz = document.getElementById('services-cards-matriz');
-            const cardsRomeu = document.getElementById('services-cards-romeu');
-            
-            function moveSlider(button) {
-                if (button && slider) {
-                    slider.style.width = button.offsetWidth + 'px';
-                    slider.style.left = button.offsetLeft + 'px';
-                }
-            }
-            
-            function switchPriceCards(showCards, hideCards) {
-                if (showCards.classList.contains('hidden')) {
-                    hideCards.style.opacity = '0';
-                    setTimeout(() => {
-                        hideCards.classList.add('hidden');
-                        showCards.classList.remove('hidden');
-                        requestAnimationFrame(() => {
-                            showCards.style.opacity = '1';
-                        });
-                    }, 300);
-                }
-            }
-
-            if (btnMatriz && btnRomeu && slider && cardsMatriz && cardsRomeu) {
-                cardsRomeu.style.opacity = '0';
-                
-                window.addEventListener('resize', () => moveSlider(document.querySelector('.price-toggle-btn.active')), { passive: true });
-                moveSlider(btnMatriz);
-
-                btnMatriz.addEventListener('click', () => {
-                    if (btnMatriz.classList.contains('active')) return;
-                    moveSlider(btnMatriz);
-                    btnMatriz.classList.add('active');
-                    btnRomeu.classList.remove('active');
-                    switchPriceCards(cardsMatriz, cardsRomeu);
-                });
-                
-                btnRomeu.addEventListener('click', () => {
-                    if (btnRomeu.classList.contains('active')) return;
-                    moveSlider(btnRomeu);
-                    btnRomeu.classList.add('active');
-                    btnMatriz.classList.remove('active');
-                    switchPriceCards(cardsRomeu, cardsMatriz);
-                });
-            }
-
 
             // --- LIGHTBOX DA GALERIA ---
             const lightbox = document.getElementById('lightbox');
